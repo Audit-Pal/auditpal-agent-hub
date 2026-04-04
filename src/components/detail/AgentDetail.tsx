@@ -4,6 +4,7 @@ import { Badge } from '../common/Badge'
 import { Breadcrumbs } from '../common/Breadcrumbs'
 import { Button } from '../common/Button'
 import { MetricCard } from '../common/MetricCard'
+import { AgentWorkbench } from './AgentWorkbench'
 
 interface LinkedProgramContext {
   program: Program
@@ -16,7 +17,7 @@ interface AgentDetailProps {
   onBack: () => void
 }
 
-type AgentPanel = 'overview' | 'runtime' | 'activity'
+type AgentPanel = 'workbench' | 'overview' | 'runtime' | 'activity'
 
 const accentColorMap = {
   mint: '#3f7d5b',
@@ -28,19 +29,22 @@ const accentColorMap = {
 }
 
 const panelMeta: { id: AgentPanel; label: string; hint: string }[] = [
+  { id: 'workbench', label: 'Workbench', hint: 'GitHub intake and repo-focused analysis' },
   { id: 'overview', label: 'Overview', hint: 'Role, linked programs, and toolchain' },
   { id: 'runtime', label: 'Runtime', hint: 'How this agent moves through each stage' },
   { id: 'activity', label: 'Activity', hint: 'Recent benchmarked work and signals' },
 ]
 
 export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps) {
-  const [activePanel, setActivePanel] = useState<AgentPanel>('overview')
+  const [activePanel, setActivePanel] = useState<AgentPanel>('workbench')
   const accentColor = accentColorMap[agent.accent]
   const validatorScore = agent.validatorScore || 0
   const capabilities = agent.capabilities || []
   const tools = agent.tools || []
   const runtimeFlow = agent.runtimeFlow || []
   const recentExecutions = agent.recentExecutions || []
+  const supportedSurfaces = agent.supportedSurfaces || []
+  const supportedTechnologies = agent.supportedTechnologies || []
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -130,8 +134,8 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                 </div>
               </div>
 
-              <Button variant="outline" size="lg" className="mt-6 w-full" onClick={() => setActivePanel('runtime')}>
-                Inspect runtime
+              <Button variant="outline" size="lg" className="mt-6 w-full" onClick={() => setActivePanel('workbench')}>
+                Open workbench
               </Button>
             </aside>
           </div>
@@ -159,6 +163,10 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-8">
+          {activePanel === 'workbench' && (
+            <AgentWorkbench agent={agent} linkedPrograms={linkedPrograms} />
+          )}
+
           {activePanel === 'overview' && (
             <div className="space-y-8">
               <section className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -204,6 +212,41 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                   </div>
                 </article>
               </section>
+
+              {(supportedSurfaces.length > 0 || supportedTechnologies.length > 0) && (
+                <section className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+                  <div className="flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Coverage map</p>
+                      <h3 className="mt-4 font-serif text-4xl text-[#171717]">What this agent handles best.</h3>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid gap-6 md:grid-cols-2">
+                    <article className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Supported surfaces</p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {supportedSurfaces.map((surface) => (
+                          <Badge key={surface} tone="soft">
+                            {surface}
+                          </Badge>
+                        ))}
+                      </div>
+                    </article>
+
+                    <article className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Technologies</p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {supportedTechnologies.map((technology) => (
+                          <Badge key={technology} tone="accent">
+                            {technology}
+                          </Badge>
+                        ))}
+                      </div>
+                    </article>
+                  </div>
+                </section>
+              )}
 
               <section className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">

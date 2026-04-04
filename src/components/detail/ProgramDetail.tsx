@@ -8,6 +8,7 @@ import { QueueSnapshot } from './QueueSnapshot'
 import { RewardMatrix } from './RewardMatrix'
 import { ScopeTable } from './ScopeTable'
 import { TriageVisualizer } from './TriageVisualizer'
+import { getScopeTargetContextChips, getScopeTargetReference } from '../../utils/scopeTargets'
 
 interface ProgramDetailProps {
   program: Program
@@ -269,7 +270,18 @@ export function ProgramDetail({
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <h4 className="text-xl font-semibold text-[#171717]">{target.label}</h4>
-                            <p className="mt-1 text-sm text-[#6f695f]">{target.assetType}</p>
+                            {target.referenceUrl ? (
+                              <a
+                                href={target.referenceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-1 inline-flex text-sm text-[#315e50] transition hover:text-[#171717]"
+                              >
+                                {getScopeTargetReference(target)}
+                              </a>
+                            ) : (
+                              <p className="mt-1 text-sm text-[#6f695f]">{getScopeTargetReference(target)}</p>
+                            )}
                           </div>
                           <Badge
                             tone={
@@ -286,6 +298,13 @@ export function ProgramDetail({
                           </Badge>
                         </div>
                         <p className="mt-4 text-sm leading-7 text-[#4b463f]">{target.note}</p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {getScopeTargetContextChips(target).map((chip) => (
+                            <Badge key={`${target.id}-${chip}`} tone="soft">
+                              {chip}
+                            </Badge>
+                          ))}
+                        </div>
                         <div className="mt-4 rounded-[20px] border border-[#e6dfd3] bg-white p-4">
                           <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Review status</p>
                           <p className="mt-2 text-sm text-[#171717]">{target.reviewStatus}</p>

@@ -9,6 +9,17 @@ export type Severity = 'Critical' | 'High' | 'Medium' | 'Low'
 export type ProgramTab = 'overview' | 'scope' | 'triage' | 'policy'
 export type ReportSource = 'Crowd report' | 'Exploit feed' | 'Agent disagreement'
 export type SubmissionStatus = 'Submitted' | 'Needs info' | 'Triaged' | 'Resolved'
+export type ScopeReferenceKind =
+  | 'source_file'
+  | 'github_repo'
+  | 'github_org'
+  | 'github_profile'
+  | 'contract_address'
+  | 'package'
+  | 'service'
+  | 'runbook'
+  | 'domain'
+export type ScopeEnvironment = 'Mainnet' | 'Testnet' | 'Production' | 'Staging' | 'Offchain' | 'Audit'
 
 export interface DirectoryMetric {
   label: string
@@ -32,6 +43,12 @@ export interface ScopeTarget {
   severity: Severity
   reviewStatus: string
   note: string
+  referenceKind?: ScopeReferenceKind
+  referenceValue?: string
+  referenceUrl?: string
+  network?: string
+  environment?: ScopeEnvironment
+  tags?: readonly string[]
 }
 
 export interface TriageStage {

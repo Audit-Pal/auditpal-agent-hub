@@ -7,6 +7,10 @@ interface AgentCardProps {
 }
 
 export function AgentCard({ agent, onClick }: AgentCardProps) {
+  const coverageBadges = agent.supportedSurfaces?.length
+    ? agent.supportedSurfaces.slice(0, 2)
+    : (agent.capabilities || []).slice(0, 2)
+
   return (
     <article
       onClick={onClick}
@@ -25,9 +29,9 @@ export function AgentCard({ agent, onClick }: AgentCardProps) {
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        {(agent.capabilities || []).slice(0, 2).map((capability) => (
-          <Badge key={capability} tone="soft">
-            {capability}
+        {coverageBadges.map((item) => (
+          <Badge key={item} tone="soft">
+            {item}
           </Badge>
         ))}
       </div>
@@ -38,8 +42,8 @@ export function AgentCard({ agent, onClick }: AgentCardProps) {
           <p className="mt-2 text-sm text-[#171717]">{agent.minerName || 'Anonymous'}</p>
         </div>
         <div className="text-left md:text-right">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Score</p>
-          <p className="mt-2 text-sm text-[#171717]">{agent.score?.toFixed(1) || '0.0'}</p>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Quick action</p>
+          <p className="mt-2 text-sm text-[#171717]">Open GitHub intake</p>
         </div>
       </div>
     </article>

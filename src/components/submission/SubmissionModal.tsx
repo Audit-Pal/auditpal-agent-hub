@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import type { Program, ResearcherReport, Severity } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
+import { getScopeTargetContextChips, getScopeTargetReference, getScopeTargetSelectionLabel } from '../../utils/scopeTargets'
 
 type SubmissionPayload = Omit<
   ResearcherReport,
@@ -21,7 +22,7 @@ interface FormState {
   reporter: string
   title: string
   severity: Severity
-  target: string
+  targetId: string
   summary: string
   impact: string
   proof: string
@@ -39,7 +40,7 @@ function createInitialState(programs: readonly Program[], programId?: string | n
     reporter: '',
     title: '',
     severity: defaultSeverity,
-    target: selectedProgram?.scopeTargets[0]?.label ?? '',
+    targetId: selectedProgram?.scopeTargets[0]?.id ?? '',
     summary: '',
     impact: '',
     proof: '',
@@ -86,15 +87,15 @@ export function SubmissionModal({
       return
     }
 
-    const scopeLabels = selectedProgram.scopeTargets.map((target) => target.label)
+    const scopeIds = selectedProgram.scopeTargets.map((target) => target.id)
 
-    if (!scopeLabels.includes(form.target)) {
+    if (!scopeIds.includes(form.targetId)) {
       setForm((current) => ({
         ...current,
-        target: scopeLabels[0] ?? '',
+        targetId: scopeIds[0] ?? '',
       }))
     }
-  }, [form.target, selectedProgram])
+  }, [form.targetId, selectedProgram])
 
   if (!isOpen || !selectedProgram) {
     return null
@@ -110,7 +111,7 @@ export function SubmissionModal({
     const nextErrors = [
       !form.reporter.trim() && 'Add your researcher handle or name.',
       !form.title.trim() && 'Add a concise report title.',
-      !form.target.trim() && 'Choose the affected in-scope target.',
+      !form.targetId.trim() && 'Choose the affected in-scope target.',
       !form.summary.trim() && 'Describe the issue clearly.',
       !form.impact.trim() && 'Explain the security impact.',
       !form.proof.trim() && 'Include proof or replay notes.',
@@ -125,12 +126,14 @@ export function SubmissionModal({
 
     setErrors([])
 
+    const selectedTarget = selectedProgram.scopeTargets.find((target) => target.id === form.targetId)
+
     onSubmit({
       programId: form.programId,
       reporter: form.reporter.trim(),
       title: form.title.trim(),
       severity: form.severity,
-      target: form.target.trim(),
+      target: selectedTarget ? getScopeTargetSelectionLabel(selectedTarget) : form.targetId.trim(),
       summary: form.summary.trim(),
       impact: form.impact.trim(),
       proof: form.proof.trim(),
@@ -234,13 +237,13 @@ export function SubmissionModal({
             <label className="mt-5 block space-y-2">
               <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Target</span>
               <select
-                value={form.target}
-                onChange={(event) => updateForm('target', event.target.value)}
+                value={form.targetId}
+                onChange={(event) => updateForm('targetId', event.target.value)}
                 className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
               >
                 {selectedProgram.scopeTargets.map((target) => (
-                  <option key={target.id} value={target.label}>
-                    {target.label}
+                  <option key={target.id} value={target.id}>
+                    {getScopeTargetSelectionLabel(target)}
                   </option>
                 ))}
               </select>
@@ -363,7 +366,14 @@ export function SubmissionModal({
                 {selectedProgram.scopeTargets.slice(0, 3).map((target) => (
                   <div key={target.id} className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
                     <p className="font-medium text-[#171717]">{target.label}</p>
-                    <p className="mt-1 text-sm text-[#6f695f]">{target.location}</p>
+                    <p className="mt-1 text-sm text-[#6f695f]">{getScopeTargetReference(target)}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {getScopeTargetContextChips(target).slice(0, 3).map((chip) => (
+                        <Badge key={`${target.id}-${chip}`} tone="soft">
+                          {chip}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>

@@ -446,7 +446,7 @@ export default function App() {
                 The service layer behind triage and review.
               </h1>
               <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4b463f]">
-                These pages stay secondary to the marketplace, but they are now visually aligned and easier to understand as a product operations layer.
+                These pages now do more than describe the agents. Open any runtime to paste a GitHub link, parse the target, click investigation categories, and prepare an agent-specific analysis brief.
               </p>
             </div>
 
