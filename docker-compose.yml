@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: auditpal_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: auditpal
+      POSTGRES_PASSWORD: auditpal_secret
+      POSTGRES_DB: auditpal_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U auditpal -d auditpal_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: auditpal_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://auditpal:auditpal_secret@postgres:5432/auditpal_db?schema=public
+      JWT_ACCESS_SECRET: change_me_access_secret_at_least_32_chars_!!
+      JWT_REFRESH_SECRET: change_me_refresh_secret_at_least_32_chars_!!
+      ACCESS_TOKEN_TTL: 15m
+      REFRESH_TOKEN_TTL: 7d
+      PORT: 3001
+      NODE_ENV: production
+    ports:
+      - '3001:3001'
+    command: >
+      sh -c "bunx prisma migrate deploy && bun run db:seed && bun run start"
+
+volumes:
+  postgres_data:

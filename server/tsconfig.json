@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "strict": true,
+        "skipLibCheck": true,
+        "outDir": "dist",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ]
+        },
+        "types": [
+            "bun-types"
+        ]
+    },
+    "include": [
+        "src",
+        "prisma"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

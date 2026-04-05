@@ -1,0 +1,29 @@
+{
+    "name": "auditpal-server",
+    "version": "1.0.0",
+    "description": "AuditPal API — Bun + Hono + Prisma + Zod",
+    "module": "src/index.ts",
+    "scripts": {
+        "dev": "bun run --watch src/index.ts",
+        "start": "bun run src/index.ts",
+        "db:generate": "prisma generate",
+        "db:migrate": "prisma migrate deploy",
+        "db:migrate:dev": "prisma migrate dev",
+        "db:push": "prisma db push",
+        "db:seed": "bun run src/db/seed.ts",
+        "db:studio": "prisma studio",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@hono/zod-validator": "^0.4.3",
+        "@prisma/client": "^6.5.0",
+        "hono": "^4.7.7",
+        "jose": "^5.9.6",
+        "zod": "^3.24.2"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "prisma": "^6.5.0",
+        "typescript": "^5.8.3"
+    }
+}
