@@ -1,7 +1,8 @@
 import type { TriageStage } from '../../types/platform'
+import { formatEnum } from '../../utils/formatters'
 
 interface TriageVisualizerProps {
-    stages: readonly TriageStage[]
+  stages: readonly TriageStage[]
 }
 
 export function TriageVisualizer({ stages }: TriageVisualizerProps) {
@@ -24,7 +25,7 @@ export function TriageVisualizer({ stages }: TriageVisualizerProps) {
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#171717] text-sm font-semibold text-white">
                 {index + 1}
               </span>
-              <span className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">{stage.automation}</span>
+              <span className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">{formatEnum(stage.automation)}</span>
             </div>
             <h4 className="mt-5 text-xl font-semibold text-[#171717]">{stage.title}</h4>
             <p className="mt-2 text-sm text-[#6f695f]">{stage.owner}</p>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { platformMock } from './data/platformMock'
-import type { ProgramKind, ResearcherReport } from './types/platform'
+import { useEffect, useState, useCallback } from 'react'
+import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
+import type { ProgramKind, ResearcherReport, Program, Agent } from './types/platform'
 
 import { Badge } from './components/common/Badge'
 import { Button } from './components/common/Button'
@@ -16,12 +16,11 @@ import { Shell } from './components/layout/Shell'
 import { TopNav } from './components/layout/TopNav'
 import { ReportCenter } from './components/submission/ReportCenter'
 import { SubmissionModal } from './components/submission/SubmissionModal'
+import { api } from './lib/api'
+import { useAuth } from './contexts/AuthContext'
+import { LoginModal } from './components/auth/LoginModal'
 
-type View = 'home' | 'programs' | 'reports' | 'agents' | 'agent_leaderboard' | 'program_detail' | 'agent_detail'
-type AgentHubHash = 'agents' | 'agents/leaderboard'
 type SortBy = 'recent' | 'bounty' | 'reviews' | 'name'
-
-const REPORT_STORAGE_KEY = 'auditpal:researcher-reports'
 
 function formatUsd(value: number) {
   return new Intl.NumberFormat('en-US', {
@@ -31,32 +30,12 @@ function formatUsd(value: number) {
   }).format(value)
 }
 
-function getInitialReports() {
-  if (typeof window === 'undefined') {
-    return [] as ResearcherReport[]
-  }
-
-  try {
-    const raw = window.localStorage.getItem(REPORT_STORAGE_KEY)
-
-    if (!raw) {
-      return [] as ResearcherReport[]
-    }
-
-    return JSON.parse(raw) as ResearcherReport[]
-  } catch {
-    return [] as ResearcherReport[]
-  }
-}
-
-function createReportId(programCode: string, currentCount: number) {
-  return `${programCode}-R${String(currentCount + 1).padStart(3, '0')}`
-}
-
 export default function App() {
-  const [view, setView] = useState<View>('home')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [agentBackTarget, setAgentBackTarget] = useState<AgentHubHash>('agents')
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const [agentBackTarget, setAgentBackTarget] = useState<string>('/agents')
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedKind, setSelectedKind] = useState<string>('All kinds')
@@ -64,61 +43,60 @@ export default function App() {
   const [selectedPlatform, setSelectedPlatform] = useState<string>('All platforms')
   const [sortBy, setSortBy] = useState<SortBy>('recent')
 
-  const [reports, setReports] = useState<ResearcherReport[]>(getInitialReports)
+  const [programs, setPrograms] = useState<Program[]>([])
+  const [agents, setAgents] = useState<Agent[]>([])
+  const [metrics, setMetrics] = useState<any>(null)
+  const [reports, setReports] = useState<ResearcherReport[]>([])
+
   const [isSubmissionOpen, setIsSubmissionOpen] = useState(false)
   const [submissionProgramId, setSubmissionProgramId] = useState<string | null>(null)
+  const [isLoginOpen, setIsLoginOpen] = useState(false)
 
-  useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash.replace('#', '')
+  const fetchData = useCallback(async () => {
+    try {
+      const [programsRes, agentsRes, metricsRes] = await Promise.all([
+        api.get<Program[]>('/programs'),
+        api.get<Agent[]>('/agents'),
+        api.get<any>('/metrics')
+      ])
 
-      if (!hash || hash === 'home') {
-        setView('home')
-        setSelectedId(null)
-      } else if (hash === 'programs') {
-        setView('programs')
-        setSelectedId(null)
-      } else if (hash === 'reports') {
-        setView('reports')
-        setSelectedId(null)
-      } else if (hash === 'agents') {
-        setView('agents')
-        setSelectedId(null)
-        setAgentBackTarget('agents')
-      } else if (hash === 'agents/leaderboard') {
-        setView('agent_leaderboard')
-        setSelectedId(null)
-        setAgentBackTarget('agents/leaderboard')
-      } else if (hash.startsWith('program/')) {
-        setView('program_detail')
-        setSelectedId(hash.replace('program/', ''))
-      } else if (hash.startsWith('agent/')) {
-        setView('agent_detail')
-        setSelectedId(hash.replace('agent/', ''))
-      }
+      if (programsRes.success) setPrograms(programsRes.data)
+      if (agentsRes.success) setAgents(agentsRes.data)
+      if (metricsRes.success) setMetrics(metricsRes.data)
+    } catch (error) {
+      console.error('Failed to fetch initial data', error)
     }
-
-    window.addEventListener('hashchange', handleHash)
-    handleHash()
-
-    return () => window.removeEventListener('hashchange', handleHash)
   }, [])
 
+  const fetchReports = useCallback(async () => {
+    if (!user) return
+    try {
+      const res = await api.get<ResearcherReport[]>('/reports')
+      if (res.success) setReports(res.data)
+    } catch (error) {
+      console.error('Failed to fetch reports', error)
+    }
+  }, [user])
+
   useEffect(() => {
-    window.localStorage.setItem(REPORT_STORAGE_KEY, JSON.stringify(reports))
-  }, [reports])
+    fetchData()
+  }, [fetchData])
 
-  const navigate = (to: 'home' | 'programs' | 'reports' | 'agents' | 'agents/leaderboard' | `program/${string}` | `agent/${string}`) => {
-    window.location.hash = to
-  }
+  useEffect(() => {
+    if (user) {
+      fetchReports()
+    } else {
+      setReports([])
+    }
+  }, [user, fetchReports])
 
-  const openAgent = (id: string, source: AgentHubHash) => {
+  const openAgent = (id: string, source: string) => {
     setAgentBackTarget(source)
-    navigate(`agent/${id}`)
+    navigate(`/agent/${id}`)
   }
 
   const openSubmission = (programId?: string | null) => {
-    setSubmissionProgramId(programId ?? selectedId ?? platformMock.programs[0]?.id ?? null)
+    setSubmissionProgramId(programId ?? programs[0]?.id ?? null)
     setIsSubmissionOpen(true)
   }
 
@@ -126,47 +104,42 @@ export default function App() {
     setIsSubmissionOpen(false)
   }
 
-  const handleSubmitReport = (
+  const handleSubmitReport = async (
     submission: Omit<
       ResearcherReport,
-      'id' | 'programName' | 'programCode' | 'submittedAt' | 'status' | 'route' | 'responseSla' | 'nextAction'
+      'id' | 'humanId' | 'program' | 'submittedAt' | 'status' | 'source' | 'route' | 'responseSla' | 'nextAction'
     >,
   ) => {
-    const program = platformMock.programs.find((item) => item.id === submission.programId)
-
-    if (!program) {
+    if (!user) {
+      alert('Please log in to submit a report.')
       return
     }
 
-    const reportCountForProgram = reports.filter((report) => report.programId === program.id).length
-    const route =
-      submission.severity === 'Critical' || submission.severity === 'High'
-        ? 'Priority triage queue'
-        : 'Standard intake queue'
+    try {
+      const res = await api.post<ResearcherReport>('/reports', {
+        ...submission,
+        reporterName: user.name,
+      })
 
-    const nextReport: ResearcherReport = {
-      ...submission,
-      id: createReportId(program.code, reportCountForProgram),
-      programName: program.name,
-      programCode: program.code,
-      submittedAt: new Date().toISOString(),
-      status: 'Submitted',
-      route,
-      responseSla: program.header.responseSla,
-      nextAction: `Expect a first triage touch within ${program.header.responseSla}.`,
+      if (res.success) {
+        setReports((current) => [res.data, ...current])
+        setIsSubmissionOpen(false)
+        navigate('/reports')
+      } else {
+        alert(res.error || 'Submission failed')
+      }
+    } catch (error) {
+      console.error('Report submission failed', error)
+      alert('An unexpected error occurred during submission.')
     }
-
-    setReports((current) => [nextReport, ...current])
-    setIsSubmissionOpen(false)
-    navigate('reports')
   }
 
-  const featuredPrograms = platformMock.programs.filter((program) => platformMock.hiddenGemIds.includes(program.id))
-  const kindOptions = [...new Set(platformMock.programs.map((program) => program.kind))]
-  const categoryOptions = [...new Set(platformMock.programs.flatMap((program) => program.categories))]
-  const platformOptions = [...new Set(platformMock.programs.flatMap((program) => program.platforms))]
+  const featuredPrograms = programs.filter((p) => p.isNew)
+  const kindOptions = [...new Set(programs.map((program) => program.kind))]
+  const categoryOptions = [...new Set(programs.flatMap((program) => program.categories || []))]
+  const platformOptions = [...new Set(programs.flatMap((program) => program.platforms || []))]
 
-  const filteredPrograms = platformMock.programs
+  const filteredPrograms = programs
     .filter((program) => {
       const query = searchQuery.trim().toLowerCase()
       const matchesQuery =
@@ -175,11 +148,11 @@ export default function App() {
         program.company.toLowerCase().includes(query) ||
         program.tagline.toLowerCase().includes(query) ||
         program.description.toLowerCase().includes(query) ||
-        program.languages.some((language) => language.toLowerCase().includes(query))
+        (program.languages || []).some((language) => language.toLowerCase().includes(query))
 
       const matchesKind = selectedKind === 'All kinds' || program.kind === selectedKind
-      const matchesCategory = selectedCategory === 'All categories' || program.categories.includes(selectedCategory as never)
-      const matchesPlatform = selectedPlatform === 'All platforms' || program.platforms.includes(selectedPlatform as never)
+      const matchesCategory = selectedCategory === 'All categories' || (program.categories || []).includes(selectedCategory as never)
+      const matchesPlatform = selectedPlatform === 'All platforms' || (program.platforms || []).includes(selectedPlatform as never)
 
       return matchesQuery && matchesKind && matchesCategory && matchesPlatform
     })
@@ -187,45 +160,23 @@ export default function App() {
       if (sortBy === 'bounty') {
         return right.maxBountyUsd - left.maxBountyUsd
       }
-
       if (sortBy === 'reviews') {
         return right.scopeReviews - left.scopeReviews
       }
-
       if (sortBy === 'name') {
         return left.name.localeCompare(right.name)
       }
-
       return right.updatedAt.localeCompare(left.updatedAt)
     })
 
-  const currentProgram = platformMock.programs.find((program) => program.id === selectedId)
-  const currentAgent = platformMock.agents.find((agent) => agent.id === selectedId)
-  const currentAgentLinks = currentAgent
-    ? platformMock.programs.flatMap((program) =>
-      program.linkedAgents
-        .filter((link) => link.agentId === currentAgent.id)
-        .map((link) => ({ program, link })),
-    )
-    : []
+  const totalPrograms = metrics?.programs?.total ?? 0
+  const totalBountyCapacity = metrics?.programs?.totalBountyCapacityUsd ?? 0
+  const totalQueueItems = metrics?.reports?.total ?? 0
+  const totalResearchersTouching = programs.reduce((total, program) => total + program.scopeReviews, 0)
 
-  const totalPrograms = platformMock.programs.length
-  const totalBountyCapacity = platformMock.programs.reduce((total, program) => total + program.maxBountyUsd, 0)
-  const totalQueueItems = platformMock.programs.reduce((total, program) => total + program.reportQueue.length, 0) + reports.length
-  const totalResearchersTouching = platformMock.programs.reduce((total, program) => total + program.scopeReviews, 0)
-  const liveSignals = platformMock.programs
-    .flatMap((program) =>
-      program.reportQueue.slice(0, 1).map((item) => ({
-        ...item,
-        programName: program.name,
-        programId: program.id,
-      })),
-    )
-    .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt))
-    .slice(0, 4)
-
+  const liveSignals: any[] = []
   const sortedReports = [...reports].sort((left, right) => right.submittedAt.localeCompare(left.submittedAt))
-  const topRankedAgent = [...platformMock.agents].sort((a, b) => (a.rank || 99) - (b.rank || 99))[0]
+  const topRankedAgent = [...agents].sort((a, b) => (a.rank || 99) - (b.rank || 99))[0]
 
   const clearFilters = () => {
     setSearchQuery('')
@@ -235,7 +186,9 @@ export default function App() {
     setSortBy('recent')
   }
 
-  function renderHome() {
+  // --- Page components ---
+
+  function Home() {
     return (
       <div className="space-y-10">
         <section className="rounded-[38px] border border-[#d9d1c4] bg-[#fffdf8] p-8 shadow-[0_24px_80px_rgba(30,24,16,0.08)] md:p-10">
@@ -246,11 +199,11 @@ export default function App() {
                 Security programs built for serious researchers and security teams.
               </h1>
               <p className="mt-6 max-w-3xl text-lg leading-8 text-[#4b463f]">
-                This front-end now behaves more like a HackenProof-style marketplace: curated programs, readable policies, working submission flow, and a clean text-first UI that keeps the platform credible.
+                This front-end now behaves more like a HackenProof-style marketplace: curated programs, readable policies, working submission flow, and a clean text-first UI.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Button variant="primary" size="lg" onClick={() => navigate('programs')}>
+                <Button variant="primary" size="lg" onClick={() => navigate('/programs')}>
                   Explore programs
                 </Button>
                 <Button variant="outline" size="lg" onClick={() => openSubmission()}>
@@ -268,12 +221,12 @@ export default function App() {
 
             <aside className="space-y-4">
               <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fbf8f2] p-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Why it feels fuller now</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Platform focus</p>
                 <div className="mt-4 space-y-3">
                   {[
-                    'Landing experience designed like a product, not a demo.',
-                    'Programs can be filtered, explored, and submitted against immediately.',
-                    'Researchers get a working inbox with local persistence.',
+                    'Design prioritized for credibility and precision.',
+                    'Direct researcher-to-program submission flow.',
+                    'Unified workspace for AI-assisted triage results.',
                   ].map((item, index) => (
                     <div key={item} className="rounded-[22px] border border-[#e6dfd3] bg-white p-4">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Point {index + 1}</p>
@@ -287,7 +240,7 @@ export default function App() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">AI triage layer</p>
                 <h2 className="mt-3 text-2xl font-semibold text-[#171717]">{topRankedAgent?.name}</h2>
                 <p className="mt-3 text-sm leading-7 text-[#4b463f]">{topRankedAgent?.headline}</p>
-                <Button variant="ghost" size="md" className="mt-5" onClick={() => navigate('agents')}>
+                <Button variant="ghost" size="md" className="mt-5" onClick={() => navigate('/agents')}>
                   Review AI ops
                 </Button>
               </section>
@@ -295,7 +248,7 @@ export default function App() {
           </div>
         </section>
 
-        <HiddenGems programs={featuredPrograms} onProgramClick={(id) => navigate(`program/${id}`)} />
+        <HiddenGems programs={featuredPrograms} onProgramClick={(id) => navigate(`/program/${id}`)} />
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <article className="rounded-[36px] border border-[#d9d1c4] bg-[#fffdf8] p-8 shadow-[0_20px_60px_rgba(30,24,16,0.06)]">
@@ -308,18 +261,9 @@ export default function App() {
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {[
-                {
-                  title: 'Discover',
-                  body: 'Browse active programs by chain, surface, and reward size with readable filters and scope summaries.',
-                },
-                {
-                  title: 'Submit',
-                  body: 'Use the working submission modal to create structured findings against any program in the directory.',
-                },
-                {
-                  title: 'Track',
-                  body: 'See your submitted reports in the report center with program context, status, and expected response time.',
-                },
+                { title: 'Discover', body: 'Browse active programs by chain, surface, and reward size.' },
+                { title: 'Submit', body: 'Use the working submission modal to create structured findings.' },
+                { title: 'Track', body: 'See your submitted reports in the report center.' },
               ].map((step, index) => (
                 <article key={step.title} className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Step {index + 1}</p>
@@ -336,7 +280,7 @@ export default function App() {
               {liveSignals.map((signal) => (
                 <button
                   key={signal.id}
-                  onClick={() => navigate(`program/${signal.programId}`)}
+                  onClick={() => navigate(`/program/${signal.programId}`)}
                   className="w-full rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-left transition hover:border-[#171717]"
                 >
                   <div className="flex flex-wrap items-center gap-2">
@@ -356,7 +300,7 @@ export default function App() {
     )
   }
 
-  function renderProgramsDirectory() {
+  function ProgramsDirectory() {
     return (
       <div className="space-y-8">
         <section className="rounded-[38px] border border-[#d9d1c4] bg-[#fffdf8] p-8 shadow-[0_24px_80px_rgba(30,24,16,0.08)] md:p-10">
@@ -367,23 +311,18 @@ export default function App() {
                 Find clear scope, fast triage, and serious rewards.
               </h1>
               <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4b463f]">
-                The design is intentionally minimal and text-led so programs feel trustworthy first. That lets the information do the work instead of over-styling the marketplace.
+                Curated programs and readable policies let the information do the work.
               </p>
             </div>
-
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline" size="md" onClick={clearFilters}>
-                Reset filters
-              </Button>
-              <Button variant="primary" size="md" onClick={() => openSubmission()}>
-                Submit a report
-              </Button>
+              <Button variant="outline" size="md" onClick={clearFilters}>Reset filters</Button>
+              <Button variant="primary" size="md" onClick={() => openSubmission()}>Submit a report</Button>
             </div>
           </div>
         </section>
 
         {!searchQuery && selectedKind === 'All kinds' && selectedCategory === 'All categories' && selectedPlatform === 'All platforms' && (
-          <HiddenGems programs={featuredPrograms} onProgramClick={(id) => navigate(`program/${id}`)} />
+          <HiddenGems programs={featuredPrograms} onProgramClick={(id) => navigate(`/program/${id}`)} />
         )}
 
         <FilterBar
@@ -407,14 +346,11 @@ export default function App() {
         {filteredPrograms.length === 0 ? (
           <section className="rounded-[34px] border border-[#d9d1c4] bg-[#fffdf8] p-8 text-center shadow-[0_20px_60px_rgba(30,24,16,0.06)]">
             <h2 className="font-serif text-4xl text-[#171717]">No programs match the current filters.</h2>
-            <p className="mt-4 text-base leading-8 text-[#4b463f]">
-              Try widening the query or clearing the filters to bring the full catalog back.
-            </p>
           </section>
         ) : (
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             {filteredPrograms.map((program) => (
-              <ProgramCard key={program.id} program={program} onClick={() => navigate(`program/${program.id}`)} />
+              <ProgramCard key={program.id} program={program} onClick={() => navigate(`/program/${program.id}`)} />
             ))}
           </div>
         )}
@@ -422,19 +358,19 @@ export default function App() {
     )
   }
 
-  function renderReports() {
+  function Reports() {
     return (
       <ReportCenter
         reports={sortedReports}
-        onBrowsePrograms={() => navigate('programs')}
+        onBrowsePrograms={() => navigate('/programs')}
         onNewSubmission={() => openSubmission()}
-        onOpenProgram={(programId) => navigate(`program/${programId}`)}
+        onOpenProgram={(programId) => navigate(`/program/${programId}`)}
       />
     )
   }
 
-  function renderAgentDirectory() {
-    const sortedAgents = [...platformMock.agents].sort((a, b) => a.name.localeCompare(b.name))
+  function AgentsDirectory() {
+    const sortedAgents = [...agents].sort((a, b) => a.name.localeCompare(b.name))
 
     return (
       <div className="space-y-8">
@@ -445,12 +381,8 @@ export default function App() {
               <h1 className="mt-4 font-serif text-5xl leading-none text-[#171717] md:text-6xl">
                 The service layer behind triage and review.
               </h1>
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4b463f]">
-                These pages now do more than describe the agents. Open any runtime to paste a GitHub link, parse the target, click investigation categories, and prepare an agent-specific analysis brief.
-              </p>
             </div>
-
-            <Button variant="outline" size="md" onClick={() => navigate('agents/leaderboard')}>
+            <Button variant="outline" size="md" onClick={() => navigate('/agents/leaderboard')}>
               Open leaderboard
             </Button>
           </div>
@@ -458,14 +390,14 @@ export default function App() {
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           {sortedAgents.map((agent) => (
-            <AgentCard key={agent.id} agent={agent} onClick={() => openAgent(agent.id, 'agents')} />
+            <AgentCard key={agent.id} agent={agent} onClick={() => openAgent(agent.id, '/agents')} />
           ))}
         </div>
       </div>
     )
   }
 
-  function renderAgentLeaderboardPage() {
+  function AgentLeaderboardPage() {
     return (
       <div className="space-y-8">
         <section className="rounded-[38px] border border-[#d9d1c4] bg-[#fffdf8] p-8 shadow-[0_24px_80px_rgba(30,24,16,0.08)] md:p-10">
@@ -473,25 +405,64 @@ export default function App() {
             <div className="max-w-4xl">
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#7b7468]">Validator leaderboard</p>
               <h1 className="mt-4 font-serif text-5xl leading-none text-[#171717] md:text-6xl">
-                Ranked agent performance from validator benchmarks.
+                Ranked agent performance.
               </h1>
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4b463f]">
-                This keeps the original AI benchmarking idea but presents it inside the same calmer, more product-grade visual system.
-              </p>
             </div>
-
             <div className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
               <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Current champion</p>
               <p className="mt-3 text-2xl font-semibold text-[#171717]">{topRankedAgent?.name}</p>
-              <p className="mt-2 text-sm text-[#4b463f]">
-                {topRankedAgent?.minerName} · score {topRankedAgent?.score?.toFixed(1)}
-              </p>
             </div>
           </div>
         </section>
-
-        <AgentLeaderboard agents={[...platformMock.agents]} onAgentClick={(id) => openAgent(id, 'agents/leaderboard')} />
+        <AgentLeaderboard agents={[...agents]} onAgentClick={(id) => openAgent(id, '/agents/leaderboard')} />
       </div>
+    )
+  }
+
+  function ProgramDetailPage() {
+    const { id } = useParams<{ id: string }>()
+    const [program, setProgram] = useState<Program | null>(null)
+
+    useEffect(() => {
+      if (id) {
+        api.get<Program>(`/programs/${id}`).then(res => {
+          if (res.success) setProgram(res.data)
+        })
+      }
+    }, [id])
+
+    if (!program) return null
+
+    return (
+      <ProgramDetail
+        program={program}
+        submissionCount={reports.filter((report) => report.programId === program.id).length}
+        onBack={() => navigate('/programs')}
+        onStartSubmission={() => openSubmission(program.id)}
+      />
+    )
+  }
+
+  function AgentDetailPage() {
+    const { id } = useParams<{ id: string }>()
+    const [agent, setAgent] = useState<Agent | null>(null)
+
+    useEffect(() => {
+      if (id) {
+        api.get<Agent>(`/agents/${id}`).then(res => {
+          if (res.success) setAgent(res.data)
+        })
+      }
+    }, [id])
+
+    if (!agent) return null
+
+    return (
+      <AgentDetail
+        agent={agent}
+        linkedPrograms={agent.linkedPrograms || []}
+        onBack={() => navigate(agentBackTarget)}
+      />
     )
   }
 
@@ -499,40 +470,34 @@ export default function App() {
     <Shell
       navigation={
         <TopNav
-          view={view}
+          pathname={location.pathname}
           reportCount={reports.length}
-          onNavigate={navigate}
           onSubmit={() => openSubmission()}
+          onLogin={() => setIsLoginOpen(true)}
         />
       }
     >
-      {view === 'home' && renderHome()}
-      {view === 'programs' && renderProgramsDirectory()}
-      {view === 'reports' && renderReports()}
-      {view === 'agents' && renderAgentDirectory()}
-      {view === 'agent_leaderboard' && renderAgentLeaderboardPage()}
-      {view === 'program_detail' && currentProgram && (
-        <ProgramDetail
-          program={currentProgram}
-          submissionCount={reports.filter((report) => report.programId === currentProgram.id).length}
-          onBack={() => navigate('programs')}
-          onStartSubmission={() => openSubmission(currentProgram.id)}
-        />
-      )}
-      {view === 'agent_detail' && currentAgent && (
-        <AgentDetail
-          agent={currentAgent}
-          linkedPrograms={currentAgentLinks}
-          onBack={() => navigate(agentBackTarget)}
-        />
-      )}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/programs" element={<ProgramsDirectory />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/agents" element={<AgentsDirectory />} />
+        <Route path="/agents/leaderboard" element={<AgentLeaderboardPage />} />
+        <Route path="/program/:id" element={<ProgramDetailPage />} />
+        <Route path="/agent/:id" element={<AgentDetailPage />} />
+      </Routes>
 
       <SubmissionModal
         isOpen={isSubmissionOpen}
-        programs={platformMock.programs}
+        programs={programs}
         initialProgramId={submissionProgramId}
         onClose={closeSubmission}
         onSubmit={handleSubmitReport}
+      />
+
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
       />
     </Shell>
   )

@@ -1,5 +1,6 @@
 import type { Program } from '../../types/platform'
 import { Badge } from '../common/Badge'
+import { formatEnum, formatUsd } from '../../utils/formatters'
 
 interface HiddenGemsProps {
   programs: Program[]
@@ -32,17 +33,17 @@ export function HiddenGems({ programs, onProgramClick }: HiddenGemsProps) {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d9d1c4] bg-[#f6f2ea] text-base font-semibold text-[#171717]">
                 {program.logoMark}
               </div>
-              <Badge tone="soft">{program.kind}</Badge>
+              <Badge tone="soft">{formatEnum(program.kind)}</Badge>
             </div>
 
-            <h3 className="mt-5 font-serif text-3xl leading-tight text-[#171717]">{program.name}</h3>
+            <h3 className="mt-5 font-serif text-3xl leading-tight text-[#171717] line-clamp-1">{program.name}</h3>
             <p className="mt-2 text-sm text-[#6f695f]">{program.company}</p>
-            <p className="mt-4 text-sm leading-7 text-[#4b463f]">{program.tagline}</p>
+            <p className="mt-4 text-sm leading-7 text-[#4b463f] line-clamp-2">{program.tagline}</p>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              {program.platforms.slice(0, 3).map((platform) => (
+              {(program.platforms || []).slice(0, 3).map((platform) => (
                 <Badge key={platform} tone="soft">
-                  {platform}
+                  {formatEnum(platform)}
                 </Badge>
               ))}
             </div>
@@ -50,11 +51,7 @@ export function HiddenGems({ programs, onProgramClick }: HiddenGemsProps) {
             <div className="mt-6 border-t border-[#ebe4d8] pt-5">
               <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Maximum bounty</p>
               <p className="mt-2 text-3xl font-semibold text-[#171717]">
-                {new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
-                  maximumFractionDigits: 0,
-                }).format(program.maxBountyUsd)}
+                {formatUsd(program.maxBountyUsd)}
               </p>
             </div>
           </article>

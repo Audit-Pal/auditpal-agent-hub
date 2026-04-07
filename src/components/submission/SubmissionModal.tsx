@@ -3,10 +3,12 @@ import type { Program, ResearcherReport, Severity } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
 import { getScopeTargetContextChips, getScopeTargetReference, getScopeTargetSelectionLabel } from '../../utils/scopeTargets'
+import { formatEnum } from '../../utils/formatters'
+import { useAuth } from '../../contexts/AuthContext'
 
 type SubmissionPayload = Omit<
   ResearcherReport,
-  'id' | 'programName' | 'programCode' | 'submittedAt' | 'status' | 'route' | 'responseSla' | 'nextAction'
+  'id' | 'humanId' | 'program' | 'submittedAt' | 'status' | 'source' | 'route' | 'responseSla' | 'nextAction'
 >
 
 interface SubmissionModalProps {
@@ -19,7 +21,6 @@ interface SubmissionModalProps {
 
 interface FormState {
   programId: string
-  reporter: string
   title: string
   severity: Severity
   targetId: string
@@ -30,17 +31,16 @@ interface FormState {
   stayedInScope: boolean
 }
 
-const defaultSeverity: Severity = 'Medium'
+const defaultSeverity: Severity = 'MEDIUM'
 
 function createInitialState(programs: readonly Program[], programId?: string | null): FormState {
   const selectedProgram = programs.find((program) => program.id === programId) ?? programs[0]
 
   return {
     programId: selectedProgram?.id ?? '',
-    reporter: '',
     title: '',
     severity: defaultSeverity,
-    targetId: selectedProgram?.scopeTargets[0]?.id ?? '',
+    targetId: selectedProgram?.scopeTargets?.[0]?.id ?? '',
     summary: '',
     impact: '',
     proof: '',
@@ -56,6 +56,7 @@ export function SubmissionModal({
   onClose,
   onSubmit,
 }: SubmissionModalProps) {
+  const { user } = useAuth()
   const [form, setForm] = useState<FormState>(() => createInitialState(programs, initialProgramId))
   const [errors, setErrors] = useState<string[]>([])
   const selectedProgram = programs.find((program) => program.id === form.programId) ?? programs[0]
@@ -87,7 +88,7 @@ export function SubmissionModal({
       return
     }
 
-    const scopeIds = selectedProgram.scopeTargets.map((target) => target.id)
+    const scopeIds = (selectedProgram.scopeTargets || []).map((target) => target.id)
 
     if (!scopeIds.includes(form.targetId)) {
       setForm((current) => ({
@@ -109,12 +110,12 @@ export function SubmissionModal({
     event.preventDefault()
 
     const nextErrors = [
-      !form.reporter.trim() && 'Add your researcher handle or name.',
-      !form.title.trim() && 'Add a concise report title.',
+      !user && 'You must be logged in to submit a report.',
+      form.title.trim().length < 5 && 'Add a report title (min 5 characters).',
       !form.targetId.trim() && 'Choose the affected in-scope target.',
-      !form.summary.trim() && 'Describe the issue clearly.',
-      !form.impact.trim() && 'Explain the security impact.',
-      !form.proof.trim() && 'Include proof or replay notes.',
+      form.summary.trim().length < 20 && 'Describe the issue clearly (min 20 characters).',
+      form.impact.trim().length < 10 && 'Explain the security impact (min 10 characters).',
+      form.proof.trim().length < 10 && 'Include proof or replay notes (min 10 characters).',
       !form.agreedRules && 'Confirm that you reviewed the program rules.',
       !form.stayedInScope && 'Confirm that testing stayed inside the published scope.',
     ].filter(Boolean) as string[]
@@ -126,11 +127,11 @@ export function SubmissionModal({
 
     setErrors([])
 
-    const selectedTarget = selectedProgram.scopeTargets.find((target) => target.id === form.targetId)
+    const selectedTarget = (selectedProgram.scopeTargets || []).find((target) => target.id === form.targetId)
 
     onSubmit({
       programId: form.programId,
-      reporter: form.reporter.trim(),
+      reporterName: user?.name || 'Anonymous',
       title: form.title.trim(),
       severity: form.severity,
       target: selectedTarget ? getScopeTargetSelectionLabel(selectedTarget) : form.targetId.trim(),
@@ -160,7 +161,7 @@ export function SubmissionModal({
                   Start a new finding
                 </h2>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-[#5f5a51]">
-                  This is a working front-end submission flow. Reports are stored locally so you can test the end-to-end experience and see them appear in the report center immediately.
+                  Complete the technical brief for your finding. All fields are required to ensure the triage layer can validate your report effectively.
                 </p>
               </div>
               <Button type="button" variant="ghost" size="sm" onClick={onClose}>
@@ -195,16 +196,12 @@ export function SubmissionModal({
                 </select>
               </label>
 
-              <label className="space-y-2">
+              <div className="space-y-2">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Researcher</span>
-                <input
-                  type="text"
-                  value={form.reporter}
-                  onChange={(event) => updateForm('reporter', event.target.value)}
-                  placeholder="name, handle, or team"
-                  className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition placeholder:text-[#989286] focus:border-[#171717]"
-                />
-              </label>
+                <div className="w-full rounded-2xl border border-[#d9d1c4] bg-[#f6f2ea] px-4 py-3 text-sm text-[#7b7468]">
+                  {user?.name || 'Log in required'}
+                </div>
+              </div>
             </div>
 
             <div className="mt-5 grid gap-5 md:grid-cols-[minmax(0,1fr)_220px]">
@@ -226,10 +223,10 @@ export function SubmissionModal({
                   onChange={(event) => updateForm('severity', event.target.value as Severity)}
                   className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
                 >
-                  <option value="Critical">Critical</option>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
+                  <option value="CRITICAL">Critical</option>
+                  <option value="HIGH">High</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="LOW">Low</option>
                 </select>
               </label>
             </div>
@@ -241,7 +238,7 @@ export function SubmissionModal({
                 onChange={(event) => updateForm('targetId', event.target.value)}
                 className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
               >
-                {selectedProgram.scopeTargets.map((target) => (
+                {(selectedProgram.scopeTargets || []).map((target) => (
                   <option key={target.id} value={target.id}>
                     {getScopeTargetSelectionLabel(target)}
                   </option>
@@ -308,13 +305,13 @@ export function SubmissionModal({
 
             <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[#ebe4d8] pt-6">
               <p className="text-sm text-[#6f695f]">
-                Expected first triage touch: <span className="font-semibold text-[#171717]">{selectedProgram.header.responseSla}</span>
+                Expected first triage touch: <span className="font-semibold text-[#171717]">{selectedProgram.responseSla}</span>
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button type="button" variant="outline" size="md" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary" size="md">
+                <Button type="submit" variant="primary" size="md" disabled={!user}>
                   Submit report
                 </Button>
               </div>
@@ -329,16 +326,16 @@ export function SubmissionModal({
               <h3 className="mt-3 font-serif text-3xl text-[#171717]">{selectedProgram.name}</h3>
               <p className="mt-2 text-sm leading-7 text-[#5f5a51]">{selectedProgram.tagline}</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                {selectedProgram.categories.map((category) => (
+                {(selectedProgram.categories || []).map((category) => (
                   <Badge key={category} tone="soft">
-                    {category}
+                    {formatEnum(category)}
                   </Badge>
                 ))}
               </div>
               <div className="mt-5 rounded-3xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Response promise</p>
-                <p className="mt-2 text-xl font-semibold text-[#171717]">{selectedProgram.header.responseSla}</p>
-                <p className="mt-1 text-sm text-[#6f695f]">Payout window: {selectedProgram.header.payoutWindow}</p>
+                <p className="mt-2 text-xl font-semibold text-[#171717]">{selectedProgram.responseSla}</p>
+                <p className="mt-1 text-sm text-[#6f695f]">Payout window: {selectedProgram.payoutWindow}</p>
               </div>
             </section>
 
@@ -347,7 +344,7 @@ export function SubmissionModal({
                 Submission checklist
               </p>
               <div className="mt-4 space-y-3">
-                {selectedProgram.submissionChecklist.map((item, index) => (
+                {(selectedProgram.submissionChecklist || []).map((item, index) => (
                   <div key={item} className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">
                       Step {index + 1}
@@ -363,7 +360,7 @@ export function SubmissionModal({
                 Priority targets
               </p>
               <div className="mt-4 space-y-3">
-                {selectedProgram.scopeTargets.slice(0, 3).map((target) => (
+                {(selectedProgram.scopeTargets || []).slice(0, 3).map((target) => (
                   <div key={target.id} className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
                     <p className="font-medium text-[#171717]">{target.label}</p>
                     <p className="mt-1 text-sm text-[#6f695f]">{getScopeTargetReference(target)}</p>

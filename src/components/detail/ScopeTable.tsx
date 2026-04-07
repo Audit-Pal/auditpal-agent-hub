@@ -1,16 +1,17 @@
 import type { ScopeTarget, Severity } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { getScopeTargetContextChips, getScopeTargetReference } from '../../utils/scopeTargets'
+import { formatEnum } from '../../utils/formatters'
 
 interface ScopeTableProps {
-    targets: readonly ScopeTarget[]
+  targets: readonly ScopeTarget[]
 }
 
 const severityTone: Record<Severity, 'critical' | 'high' | 'medium' | 'low'> = {
-  Critical: 'critical',
-  High: 'high',
-  Medium: 'medium',
-  Low: 'low',
+  CRITICAL: 'critical',
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
 }
 
 export function ScopeTable({ targets }: ScopeTableProps) {
@@ -37,7 +38,7 @@ export function ScopeTable({ targets }: ScopeTableProps) {
                   <div className="flex flex-wrap gap-2">
                     {getScopeTargetContextChips(target).map((chip) => (
                       <Badge key={`${target.id}-${chip}`} tone="soft">
-                        {chip}
+                        {formatEnum(chip)}
                       </Badge>
                     ))}
                   </div>
@@ -60,7 +61,7 @@ export function ScopeTable({ targets }: ScopeTableProps) {
                   <p className="mt-2 text-sm text-[#6f695f]">{target.location}</p>
                 </td>
                 <td className="px-4 py-5">
-                  <Badge tone={severityTone[target.severity]}>{target.severity}</Badge>
+                  <Badge tone={severityTone[target.severity]}>{formatEnum(target.severity)}</Badge>
                 </td>
               </tr>
             ))}

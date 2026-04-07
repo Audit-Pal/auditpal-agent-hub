@@ -1,31 +1,25 @@
 import type { SeverityReward, Severity } from '../../types/platform'
+import { formatEnum, formatUsd } from '../../utils/formatters'
 
 interface RewardMatrixProps {
-    matrix: readonly SeverityReward[]
+  matrix: readonly SeverityReward[]
 }
 
 const severityColors: Record<Severity, string> = {
-  Critical: 'text-[#9f3d28]',
-  High: 'text-[#9d5a17]',
-  Medium: 'text-[#8a6700]',
-  Low: 'text-[#315e50]',
+  CRITICAL: 'text-[#9f3d28]',
+  HIGH: 'text-[#9d5a17]',
+  MEDIUM: 'text-[#8a6700]',
+  LOW: 'text-[#315e50]',
 }
 
 const severityBgs: Record<Severity, string> = {
-  Critical: 'bg-[#fdf0ed]',
-  High: 'bg-[#fff5ea]',
-  Medium: 'bg-[#fff9e7]',
-  Low: 'bg-[#f1f7f2]',
+  CRITICAL: 'bg-[#fdf0ed]',
+  HIGH: 'bg-[#fff5ea]',
+  MEDIUM: 'bg-[#fff9e7]',
+  LOW: 'bg-[#f1f7f2]',
 }
 
 export function RewardMatrix({ matrix }: RewardMatrixProps) {
-  const formatUsd = (value: number) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(value)
-
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -42,7 +36,7 @@ export function RewardMatrix({ matrix }: RewardMatrixProps) {
             className={`rounded-[28px] border border-[#e6dfd3] p-5 ${severityBgs[reward.severity]}`}
           >
             <p className={`text-[11px] font-semibold uppercase tracking-[0.28em] ${severityColors[reward.severity]}`}>
-              {reward.severity}
+              {formatEnum(reward.severity)}
             </p>
             <p className="mt-4 text-3xl font-semibold text-[#171717]">{formatUsd(reward.maxRewardUsd)}</p>
             <div className="mt-5 space-y-3 text-sm text-[#4b463f]">

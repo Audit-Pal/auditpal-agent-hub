@@ -6,7 +6,7 @@ import { successResponse } from '../../lib/response'
 export const metricsRoutes = new Hono()
 
 // ── GET /metrics ──────────────────────────────────────────────────────────────
-metricsRoutes.get('/', authMiddleware, async (c) => {
+metricsRoutes.get('/', async (c) => {
     const [
         totalPrograms,
         bountyCapacity,

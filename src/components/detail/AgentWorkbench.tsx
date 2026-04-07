@@ -3,6 +3,7 @@ import type { Agent, AgentLink, Program } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
 import { getScopeTargetSearchText } from '../../utils/scopeTargets'
+import { formatEnum } from '../../utils/formatters'
 
 interface LinkedProgramContext {
   program: Program
@@ -202,13 +203,13 @@ function inferSuggestedCategories(agent: Agent, parsed: ParsedGitHubLink | null)
   }
 
   for (const surface of agent.supportedSurfaces || []) {
-    if (surface === 'Smart Contract') {
+    if (surface === 'SMART_CONTRACT') {
       picked.add('smart-contracts')
     }
-    if (surface === 'Web' || surface === 'Apps') {
+    if (surface === 'WEB' || surface === 'APPS') {
       picked.add('frontend-mobile')
     }
-    if (surface === 'Blockchain') {
+    if (surface === 'BLOCKCHAIN') {
       picked.add('business-logic')
     }
   }
@@ -291,11 +292,10 @@ function scoreProgram(program: Program, categories: readonly CategoryId[], token
     program.company,
     program.tagline,
     program.description,
-    ...program.categories,
-    ...program.languages,
-    ...program.projectTypes,
-    ...program.platforms,
-    ...program.scopeTargets.map((target) => getScopeTargetSearchText(target)),
+    ...(program.categories || []).map(c => formatEnum(c)),
+    ...(program.languages || []).map(l => formatEnum(l)),
+    ...(program.platforms || []).map(p => formatEnum(p)),
+    ...(program.scopeTargets || []).map((target) => getScopeTargetSearchText(target)),
   ]
     .join(' ')
     .toLowerCase()
@@ -308,32 +308,29 @@ function scoreProgram(program: Program, categories: readonly CategoryId[], token
     }
   }
 
-  if (categories.includes('smart-contracts') && program.categories.includes('Smart Contract')) {
+  if (categories.includes('smart-contracts') && (program.categories || []).includes('SMART_CONTRACT')) {
     score += 4
   }
 
-  if (categories.includes('bridge-risk') && program.projectTypes.includes('Bridge')) {
+  // Fallback scoring for other categories based on description keywords since projectTypes are gone
+  if (categories.includes('bridge-risk') && haystack.includes('bridge')) {
     score += 5
   }
 
-  if (categories.includes('wallet-safety') && program.projectTypes.includes('Wallet')) {
+  if (categories.includes('wallet-safety') && haystack.includes('wallet')) {
     score += 5
   }
 
-  if (categories.includes('governance') && program.projectTypes.includes('Treasury')) {
+  if (categories.includes('governance') && haystack.includes('governance')) {
     score += 4
   }
 
-  if (categories.includes('oracle-market') && program.projectTypes.includes('Lending')) {
+  if (categories.includes('oracle-market') && haystack.includes('oracle')) {
     score += 4
   }
 
-  if (categories.includes('identity-auth') && program.projectTypes.includes('Identity')) {
+  if (categories.includes('identity-auth') && haystack.includes('identity')) {
     score += 4
-  }
-
-  if (categories.includes('backend-infra') && program.projectTypes.includes('Infrastructure')) {
-    score += 3
   }
 
   return score
@@ -351,7 +348,7 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
   const activeCategoryDetails = categoryCatalog.filter((category) => activeCategories.includes(category.id))
   const vulnerabilityLeads = buildLeads(agent, parsed, activeCategories)
   const supportedTechnologies = agent.supportedTechnologies || []
-  const recommendedPrograms = [...linkedPrograms]
+  const recommendedPrograms = [...(linkedPrograms || [])]
     .map((entry) => ({
       ...entry,
       score: scoreProgram(entry.program, activeCategories, parsed?.tokens || []),
@@ -377,7 +374,7 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
               Send a GitHub target into {agent.name}.
             </h2>
             <p className="mt-4 max-w-3xl text-base leading-8 text-[#4b463f]">
-              Paste a GitHub profile or repository link, then click the categories you care about. The workbench will parse the link, infer likely surfaces, and prepare a vulnerability-oriented brief for this selected agent.
+              Paste a GitHub profile or repository link, then click the categories you care about. The workbench will parse the link, infer likely surfaces, and prepare a vulnerability-oriented brief.
             </p>
 
             <div className="mt-6 grid gap-5">
@@ -493,7 +490,7 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
               <div className="mt-4 flex flex-wrap gap-2">
                 {(agent.supportedSurfaces || []).map((surface) => (
                   <Badge key={surface} tone="soft">
-                    {surface}
+                    {formatEnum(surface)}
                   </Badge>
                 ))}
               </div>
@@ -567,7 +564,7 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <h3 className="text-xl font-semibold text-[#171717]">{program.name}</h3>
-                        <p className="mt-1 text-sm text-[#6f695f]">{program.company} · {program.kind}</p>
+                        <p className="mt-1 text-sm text-[#6f695f]">{program.company} · {formatEnum(program.kind)}</p>
                       </div>
                       <Badge tone={score > 0 ? 'accent' : 'soft'}>
                         {score > 0 ? `Match ${score}` : 'Context link'}
@@ -575,9 +572,9 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
                     </div>
                     <p className="mt-4 text-sm leading-7 text-[#4b463f]">{link.purpose}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {program.categories.map((category) => (
+                      {(program.categories || []).map((category) => (
                         <Badge key={category} tone="soft">
-                          {category}
+                          {formatEnum(category)}
                         </Badge>
                       ))}
                     </div>
@@ -614,7 +611,7 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
               <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Smart contract lens</p>
                 <p className="mt-4 text-sm leading-7 text-[#4b463f]">
-                  This repo looks suitable for a contract-heavy pass. Atlas-style coverage should focus on access control, bridge settlement, accounting drift, replay resistance, and emergency controls first.
+                  This repo looks suitable for a contract-heavy pass. Atlas-style coverage should focus on access control, bridge settlement, and replay resistance first.
                 </p>
               </section>
             )}

@@ -1,5 +1,6 @@
 import type { Program } from '../../types/platform'
 import { Badge } from '../common/Badge'
+import { formatEnum, formatUsd } from '../../utils/formatters'
 
 interface ProgramCardProps {
   program: Program
@@ -7,12 +8,17 @@ interface ProgramCardProps {
 }
 
 export function ProgramCard({ program, onClick }: ProgramCardProps) {
-  const formatUsd = (value: number) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(value)
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    } catch {
+      return dateStr
+    }
+  }
 
   return (
     <article
@@ -34,18 +40,18 @@ export function ProgramCard({ program, onClick }: ProgramCardProps) {
               {program.isNew && <Badge tone="new">New</Badge>}
             </div>
             <p className="mt-2 text-sm text-[#6f695f]">
-              {program.company} · {program.kind}
+              {program.company} · {formatEnum(program.kind)}
             </p>
           </div>
         </div>
 
         <div className="rounded-full border border-[#ebe4d8] bg-[#fbf8f2] px-3 py-2 text-right">
           <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Updated</p>
-          <p className="mt-1 text-sm text-[#171717]">{program.updatedAt}</p>
+          <p className="mt-1 text-sm text-[#171717]">{formatDate(program.updatedAt)}</p>
         </div>
       </div>
 
-      <p className="relative mt-6 text-base leading-8 text-[#4b463f]">{program.description}</p>
+      <p className="relative mt-6 text-base leading-8 text-[#4b463f] line-clamp-3">{program.description}</p>
 
       <div className="mt-6 grid gap-3 md:grid-cols-3">
         <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
@@ -54,24 +60,24 @@ export function ProgramCard({ program, onClick }: ProgramCardProps) {
         </div>
         <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
           <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Response SLA</p>
-          <p className="mt-2 text-2xl font-semibold text-[#171717]">{program.header.responseSla}</p>
+          <p className="mt-2 text-2xl font-semibold text-[#171717]">{program.responseSla}</p>
         </div>
         <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
           <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Scope targets</p>
-          <p className="mt-2 text-2xl font-semibold text-[#171717]">{program.scopeTargets.length}</p>
+          <p className="mt-2 text-2xl font-semibold text-[#171717]">{(program.scopeTargets || []).length}</p>
         </div>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#ebe4d8] pt-5">
         <div className="flex flex-wrap gap-2">
-          {program.platforms.slice(0, 3).map((platform) => (
+          {(program.platforms || []).slice(0, 3).map((platform) => (
             <Badge key={platform} tone="soft">
-              {platform}
+              {formatEnum(platform)}
             </Badge>
           ))}
-          {program.languages.slice(0, 2).map((language) => (
+          {(program.languages || []).slice(0, 2).map((language) => (
             <Badge key={language} tone="soft">
-              {language}
+              {formatEnum(language)}
             </Badge>
           ))}
         </div>

@@ -2,10 +2,10 @@ import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { prisma } from '../../db/client'
 import { agentQuerySchema } from '../../schemas/agent.schema'
-import { authMiddleware } from '../../middleware/auth'
 import { errorResponse, successResponse, paginatedResponse } from '../../lib/response'
+import type { HonoEnv } from '../../types/hono'
 
-export const agentRoutes = new Hono()
+export const agentRoutes = new Hono<HonoEnv>()
 
 const agentDetail = {
     metrics: true,
@@ -19,7 +19,7 @@ const agentDetail = {
 }
 
 // ── GET /agents ───────────────────────────────────────────────────────────────
-agentRoutes.get('/', authMiddleware, zValidator('query', agentQuerySchema), async (c) => {
+agentRoutes.get('/', zValidator('query', agentQuerySchema), async (c) => {
     const q = c.req.valid('query')
 
     const where = {
@@ -48,7 +48,7 @@ agentRoutes.get('/', authMiddleware, zValidator('query', agentQuerySchema), asyn
 })
 
 // ── GET /agents/:id ───────────────────────────────────────────────────────────
-agentRoutes.get('/:id', authMiddleware, async (c) => {
+agentRoutes.get('/:id', async (c) => {
     const { id } = c.req.param()
 
     const agent = await prisma.agent.findUnique({

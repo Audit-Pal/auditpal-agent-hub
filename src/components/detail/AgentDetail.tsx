@@ -5,6 +5,7 @@ import { Breadcrumbs } from '../common/Breadcrumbs'
 import { Button } from '../common/Button'
 import { MetricCard } from '../common/MetricCard'
 import { AgentWorkbench } from './AgentWorkbench'
+import { formatEnum } from '../../utils/formatters'
 
 interface LinkedProgramContext {
   program: Program
@@ -19,7 +20,7 @@ interface AgentDetailProps {
 
 type AgentPanel = 'workbench' | 'overview' | 'runtime' | 'activity'
 
-const accentColorMap = {
+const accentColorMap: Record<string, string> = {
   mint: '#3f7d5b',
   violet: '#6f6a93',
   orange: '#9d5a17',
@@ -37,7 +38,7 @@ const panelMeta: { id: AgentPanel; label: string; hint: string }[] = [
 
 export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps) {
   const [activePanel, setActivePanel] = useState<AgentPanel>('workbench')
-  const accentColor = accentColorMap[agent.accent]
+  const accentColor = accentColorMap[agent.accentTone?.toLowerCase()] || '#171717'
   const validatorScore = agent.validatorScore || 0
   const capabilities = agent.capabilities || []
   const tools = agent.tools || []
@@ -45,6 +46,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
   const recentExecutions = agent.recentExecutions || []
   const supportedSurfaces = agent.supportedSurfaces || []
   const supportedTechnologies = agent.supportedTechnologies || []
+  const metrics = agent.metrics || []
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -193,10 +195,10 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                           <div>
                             <h4 className="text-xl font-semibold text-[#171717]">{program.name}</h4>
                             <p className="mt-1 text-sm text-[#6f695f]">
-                              {program.company} · {program.kind}
+                              {program.company} · {formatEnum(program.kind)}
                             </p>
                           </div>
-                          <Badge tone="soft">{program.platforms[0]}</Badge>
+                          <Badge tone="soft">{formatEnum(program.platforms[0] || 'OFFCHAIN')}</Badge>
                         </div>
                         <p className="mt-4 text-sm leading-7 text-[#4b463f]">{link.purpose}</p>
                         <div className="mt-4 rounded-[20px] border border-[#e6dfd3] bg-white p-4 text-sm leading-7 text-[#4b463f]">
@@ -206,7 +208,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                     ))}
                     {linkedPrograms.length === 0 && (
                       <div className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5 text-sm leading-7 text-[#4b463f]">
-                        No linked programs were found for this agent in the mock dataset yet.
+                        No linked programs were found for this agent in the database yet.
                       </div>
                     )}
                   </div>
@@ -228,7 +230,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                       <div className="mt-4 flex flex-wrap gap-2">
                         {supportedSurfaces.map((surface) => (
                           <Badge key={surface} tone="soft">
-                            {surface}
+                            {formatEnum(surface)}
                           </Badge>
                         ))}
                       </div>
@@ -260,7 +262,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                   {tools.map((tool) => (
                     <article key={tool.name} className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
                       <p className="text-lg font-semibold text-[#171717]">{tool.name}</p>
-                      {tool.access && <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">{tool.access}</p>}
+                      {tool.access && <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">{formatEnum(tool.access)}</p>}
                       <p className="mt-4 text-sm leading-7 text-[#4b463f]">{tool.useCase}</p>
                     </article>
                   ))}
@@ -295,7 +297,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                       <div className="mt-5 flex flex-wrap gap-2">
                         {stage.outputs.map((output) => (
                           <Badge key={output} tone="soft">
-                            {output}
+                            {formatEnum(output)}
                           </Badge>
                         ))}
                       </div>
@@ -349,7 +351,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                         </div>
                         <div className="text-right">
                           <Badge tone="accent">{execution.status || 'Successful run'}</Badge>
-                          <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">{execution.timestamp}</p>
+                          <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">{execution.timestamp.toString()}</p>
                         </div>
                       </div>
                     </article>
@@ -369,7 +371,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                   <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Benchmark position</p>
                   <p className="mt-4 text-4xl font-semibold text-[#171717]">#{agent.rank || '-'}</p>
                   <p className="mt-3 text-sm leading-7 text-[#4b463f]">
-                    This rank comes directly from the mock validator benchmark view rather than user voting.
+                    This rank comes directly from the validator benchmark view.
                   </p>
                 </article>
               </section>
@@ -381,7 +383,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
           <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Performance metrics</p>
             <div className="mt-4 grid gap-4">
-              {agent.metrics.map((metric) => (
+              {metrics.map((metric) => (
                 <MetricCard key={metric.label} label={metric.label} value={metric.value} note={metric.note} accent={accentColor} />
               ))}
             </div>
@@ -390,7 +392,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
           <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Operator note</p>
             <p className="mt-4 text-sm leading-7 text-[#4b463f]">
-              The AI Ops section stays secondary to the bounty marketplace, but the pages still feel intentional and useful instead of being an afterthought.
+              The AI Ops section stays secondary to the bounty marketplace, but the pages still feel intentional and useful.
             </p>
           </section>
         </aside>

@@ -9,8 +9,9 @@ import {
 import { authMiddleware, requireRole } from '../../middleware/auth'
 import { errorResponse, successResponse, paginatedResponse } from '../../lib/response'
 import { Prisma } from '@prisma/client'
+import type { HonoEnv } from '../../types/hono'
 
-export const programRoutes = new Hono()
+export const programRoutes = new Hono<HonoEnv>()
 
 const programDetail = {
     rewardTiers: true,
@@ -18,11 +19,12 @@ const programDetail = {
     triageStages: { orderBy: { order: 'asc' as const } },
     policySections: { orderBy: { order: 'asc' as const } },
     evidenceFields: true,
+    reportQueue: { take: 10, orderBy: { submittedAt: 'desc' as const } },
     linkedAgents: { include: { agent: { select: { id: true, name: true, logoMark: true, accentTone: true } } } },
 } satisfies Prisma.ProgramInclude
 
 // ── GET /programs ─────────────────────────────────────────────────────────────
-programRoutes.get('/', zValidator('query', programQuerySchema), authMiddleware, async (c) => {
+programRoutes.get('/', zValidator('query', programQuerySchema), async (c) => {
     const q = c.req.valid('query')
 
     const where: Prisma.ProgramWhereInput = {
@@ -73,7 +75,7 @@ programRoutes.get('/', zValidator('query', programQuerySchema), authMiddleware, 
 })
 
 // ── GET /programs/:id ─────────────────────────────────────────────────────────
-programRoutes.get('/:id', authMiddleware, async (c) => {
+programRoutes.get('/:id', async (c) => {
     const { id } = c.req.param()
 
     const program = await prisma.program.findUnique({

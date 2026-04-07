@@ -9,8 +9,9 @@ import {
 import { authMiddleware, requireRole } from '../../middleware/auth'
 import { errorResponse, successResponse, paginatedResponse } from '../../lib/response'
 import { Prisma } from '@prisma/client'
+import type { HonoEnv } from '../../types/hono'
 
-export const reportRoutes = new Hono()
+export const reportRoutes = new Hono<HonoEnv>()
 
 /** Generate human-readable report ID like "AP-1021-R003" */
 async function generateHumanId(programCode: string): Promise<string> {
@@ -89,16 +90,7 @@ reportRoutes.post(
         })
         if (!program) return errorResponse(c, 404, 'Program not found')
 
-        // Check reputation requirement for bounty hunters
-        if (user.role === 'BOUNTY_HUNTER') {
-            const dbUser = await prisma.user.findUnique({
-                where: { id: user.sub },
-                select: { reputation: true },
-            })
-            if ((dbUser?.reputation ?? 0) < program.reputationRequired) {
-                return errorResponse(c, 403, `Minimum reputation of ${program.reputationRequired} required`)
-            }
-        }
+        // ── Reputation check skipped for demo ──────────────────────────────────────
 
         const humanId = await generateHumanId(program.code)
         const route =

@@ -1,18 +1,19 @@
 import type { ReportSnapshot, Severity } from '../../types/platform'
 import { Badge } from '../common/Badge'
+import { formatEnum } from '../../utils/formatters'
 
 interface QueueSnapshotProps {
-    queue: readonly ReportSnapshot[]
+  queue: readonly ReportSnapshot[]
 }
 
 const severityTone: Record<Severity, 'critical' | 'high' | 'medium' | 'low'> = {
-  Critical: 'critical',
-  High: 'high',
-  Medium: 'medium',
-  Low: 'low',
+  CRITICAL: 'critical',
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
 }
 
-export function QueueSnapshot({ queue }: QueueSnapshotProps) {
+export function QueueSnapshot({ queue = [] }: QueueSnapshotProps) {
   const formatUsd = (value: number) =>
     new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -36,8 +37,8 @@ export function QueueSnapshot({ queue }: QueueSnapshotProps) {
               <div className="max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone="soft">{report.id}</Badge>
-                  <Badge tone={severityTone[report.severity]}>{report.severity}</Badge>
-                  <Badge tone="accent">{report.status}</Badge>
+                  <Badge tone={severityTone[report.severity]}>{formatEnum(report.severity)}</Badge>
+                  <Badge tone="accent">{formatEnum(report.status)}</Badge>
                 </div>
                 <h4 className="mt-4 text-xl font-semibold text-[#171717]">{report.title}</h4>
                 <p className="mt-3 text-sm leading-7 text-[#4b463f]">{report.note}</p>
@@ -45,7 +46,7 @@ export function QueueSnapshot({ queue }: QueueSnapshotProps) {
 
               <div className="min-w-[220px] rounded-[24px] border border-[#e6dfd3] bg-white p-4">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Estimated reward</p>
-                <p className="mt-2 text-2xl font-semibold text-[#171717]">{formatUsd(report.rewardEstimateUsd)}</p>
+                <p className="mt-2 text-2xl font-semibold text-[#171717]">{formatUsd(report.rewardEstimateUsd || 0)}</p>
                 <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Route</p>
                 <p className="mt-2 text-sm text-[#171717]">{report.route}</p>
               </div>

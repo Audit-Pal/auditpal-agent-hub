@@ -9,6 +9,7 @@ import { RewardMatrix } from './RewardMatrix'
 import { ScopeTable } from './ScopeTable'
 import { TriageVisualizer } from './TriageVisualizer'
 import { getScopeTargetContextChips, getScopeTargetReference } from '../../utils/scopeTargets'
+import { formatEnum, formatUsd } from '../../utils/formatters'
 
 interface ProgramDetailProps {
   program: Program
@@ -17,7 +18,7 @@ interface ProgramDetailProps {
   onStartSubmission: () => void
 }
 
-const accentColorMap = {
+const accentColorMap: Record<string, string> = {
   mint: '#3f7d5b',
   violet: '#6f6a93',
   orange: '#9d5a17',
@@ -33,20 +34,16 @@ const tabMeta: { id: ProgramTab; label: string; hint: string }[] = [
   { id: 'policy', label: 'Policy', hint: 'Rewards, exclusions, and disclosure rails' },
 ]
 
-function formatUsd(value: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value)
-}
-
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(value))
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(new Date(value))
+  } catch (e) {
+    return value
+  }
 }
 
 export function ProgramDetail({
@@ -56,9 +53,9 @@ export function ProgramDetail({
   onStartSubmission,
 }: ProgramDetailProps) {
   const [activeTab, setActiveTab] = useState<ProgramTab>('overview')
-  const accentColor = accentColorMap[program.accent]
-  const focusArea = program.policySections.find((section) => section.title === 'Focus Area')
-  const policySections = program.policySections.filter((section) => section.title !== 'Focus Area')
+  const accentColor = accentColorMap[program.accentTone?.toLowerCase()] || '#171717'
+  const focusArea = (program.policySections || []).find((section) => section.title === 'Focus Area')
+  const policySections = (program.policySections || []).filter((section) => section.title !== 'Focus Area')
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -79,7 +76,7 @@ export function ProgramDetail({
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.25fr)_320px]">
             <div className="space-y-6">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="soft">{program.kind}</Badge>
+                <Badge tone="soft">{formatEnum(program.kind)}</Badge>
                 <Badge tone="accent">{program.triagedLabel}</Badge>
                 <Badge tone="soft">Updated {formatDate(program.updatedAt)}</Badge>
               </div>
@@ -105,12 +102,12 @@ export function ProgramDetail({
               <p className="max-w-4xl text-base leading-8 text-[#5f5a51]">{program.description}</p>
 
               <div className="flex flex-wrap gap-2">
-                {program.platforms.map((platform) => (
+                {(program.platforms || []).map((platform) => (
                   <Badge key={platform} tone="soft">
-                    {platform}
+                    {formatEnum(platform)}
                   </Badge>
                 ))}
-                {program.languages.map((language) => (
+                {(program.languages || []).map((language) => (
                   <Badge key={language} tone="soft">
                     {language}
                   </Badge>
@@ -129,11 +126,11 @@ export function ProgramDetail({
                 <div className="space-y-3 rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-sm text-[#4b463f]">
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-[#7b7468]">Response SLA</span>
-                    <span className="text-[#171717]">{program.header.responseSla}</span>
+                    <span className="text-[#171717]">{program.responseSla}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-[#7b7468]">Payout window</span>
-                    <span className="text-[#171717]">{program.header.payoutWindow}</span>
+                    <span className="text-[#171717]">{program.payoutWindow}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-[#7b7468]">Your submissions</span>
@@ -141,7 +138,7 @@ export function ProgramDetail({
                   </div>
                 </div>
 
-                <p className="text-sm leading-7 text-[#5f5a51]">{program.header.duplicatePolicy}</p>
+                <p className="text-sm leading-7 text-[#5f5a51]">{program.duplicatePolicy}</p>
 
                 <div className="grid gap-3">
                   <Button variant="primary" size="lg" className="w-full" onClick={onStartSubmission}>
@@ -162,10 +159,10 @@ export function ProgramDetail({
         </div>
 
         <div className="grid gap-4 border-t border-[#ebe4d8] px-6 py-6 md:px-8 xl:grid-cols-4">
-          <MetricCard label="Maximum bounty" value={formatUsd(program.maxBountyUsd)} note={program.header.payoutCurrency} accent={accentColor} />
+          <MetricCard label="Maximum bounty" value={formatUsd(program.maxBountyUsd)} note={program.payoutCurrency} accent={accentColor} />
           <MetricCard label="Paid out" value={formatUsd(program.paidUsd)} note="Accepted and verified" accent={accentColor} />
-          <MetricCard label="Scope assets" value={program.scopeTargets.length} note="Contracts, services, and controls" accent={accentColor} />
-          <MetricCard label="Scope reviews" value={program.scopeReviews.toLocaleString()} note="Historic program interactions" accent={accentColor} />
+          <MetricCard label="Scope assets" value={(program.scopeTargets || []).length} note="Contracts, services, and controls" accent={accentColor} />
+          <MetricCard label="Scope reviews" value={(program.scopeReviews || 0).toLocaleString()} note="Historic program interactions" accent={accentColor} />
         </div>
       </section>
 
@@ -198,7 +195,7 @@ export function ProgramDetail({
                   <h2 className="mt-4 font-serif text-4xl text-[#171717] md:text-5xl">What this program is designed to catch.</h2>
                   <p className="mt-5 text-base leading-8 text-[#4b463f]">{program.description}</p>
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
-                    {program.summaryHighlights.map((highlight) => (
+                    {(program.summaryHighlights || []).map((highlight) => (
                       <div key={highlight} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
                         <p className="text-sm leading-7 text-[#4b463f]">{highlight}</p>
                       </div>
@@ -210,7 +207,7 @@ export function ProgramDetail({
                   <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Focus area</p>
                   <h3 className="mt-4 font-serif text-4xl text-[#171717]">What reviewers care about most.</h3>
                   <div className="mt-6 space-y-4">
-                    {focusArea?.items.map((item) => (
+                    {(focusArea?.items || []).map((item) => (
                       <div key={item} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
                         <p className="text-sm leading-7 text-[#4b463f]">{item}</p>
                       </div>
@@ -231,7 +228,7 @@ export function ProgramDetail({
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {program.linkedAgents.map((link) => (
+                  {(program.linkedAgents || []).map((link) => (
                     <article key={link.agentId} className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
                       <Badge tone="accent">{link.agentId.replace(/-/g, ' ')}</Badge>
                       <h4 className="mt-4 text-xl font-semibold text-[#171717]">{link.purpose}</h4>
@@ -265,7 +262,7 @@ export function ProgramDetail({
                 <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Target notes</p>
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
-                    {program.scopeTargets.map((target) => (
+                    {(program.scopeTargets || []).map((target) => (
                       <article key={target.id} className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
                         <div className="flex items-start justify-between gap-4">
                           <div>
@@ -285,23 +282,23 @@ export function ProgramDetail({
                           </div>
                           <Badge
                             tone={
-                              target.severity === 'Critical'
+                              target.severity === 'CRITICAL'
                                 ? 'critical'
-                                : target.severity === 'High'
+                                : target.severity === 'HIGH'
                                   ? 'high'
-                                  : target.severity === 'Medium'
+                                  : target.severity === 'MEDIUM'
                                     ? 'medium'
                                     : 'low'
                             }
                           >
-                            {target.severity}
+                            {formatEnum(target.severity)}
                           </Badge>
                         </div>
                         <p className="mt-4 text-sm leading-7 text-[#4b463f]">{target.note}</p>
                         <div className="mt-4 flex flex-wrap gap-2">
                           {getScopeTargetContextChips(target).map((chip) => (
                             <Badge key={`${target.id}-${chip}`} tone="soft">
-                              {chip}
+                              {formatEnum(chip)}
                             </Badge>
                           ))}
                         </div>
@@ -317,7 +314,7 @@ export function ProgramDetail({
                 <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Evidence bundle</p>
                   <div className="mt-6 space-y-4">
-                    {program.evidenceBundle.map((field) => (
+                    {(program.evidenceFields || []).map((field) => (
                       <div key={field.name} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">
                           {field.name.replace(/_/g, ' ')}
@@ -334,25 +331,25 @@ export function ProgramDetail({
           {activeTab === 'triage' && (
             <div className="space-y-8">
               <section className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                <TriageVisualizer stages={program.triageFlow} />
+                <TriageVisualizer stages={program.triageStages} />
               </section>
 
               <section className="grid gap-4 md:grid-cols-2">
-                {program.triageFlow.map((stage, index) => (
+                {(program.triageStages || []).map((stage, index) => (
                   <article key={stage.title} className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Step {index + 1}</p>
                         <h3 className="mt-3 text-2xl font-semibold text-[#171717]">{stage.title}</h3>
                       </div>
-                      <Badge tone={stage.automation === 'Human' ? 'soft' : 'accent'}>{stage.automation}</Badge>
+                      <Badge tone={stage.automation === 'HUMAN' ? 'soft' : 'accent'}>{formatEnum(stage.automation)}</Badge>
                     </div>
                     <p className="mt-4 text-sm text-[#6f695f]">{stage.owner}</p>
                     <p className="mt-4 text-sm leading-7 text-[#4b463f]">{stage.trigger}</p>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      {stage.outputs.map((output) => (
+                      {(stage.outputs || []).map((output) => (
                         <Badge key={output} tone="soft">
-                          {output}
+                          {formatEnum(output)}
                         </Badge>
                       ))}
                     </div>
@@ -373,7 +370,7 @@ export function ProgramDetail({
           {activeTab === 'policy' && (
             <div className="space-y-8">
               <section className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                <RewardMatrix matrix={program.rewardMatrix} />
+                <RewardMatrix matrix={program.rewardTiers} />
               </section>
 
               <section className="grid gap-6 md:grid-cols-2">
@@ -394,11 +391,11 @@ export function ProgramDetail({
               <section className="grid gap-6 md:grid-cols-2">
                 <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Duplicate policy</p>
-                  <p className="mt-4 text-sm leading-7 text-[#4b463f]">{program.header.duplicatePolicy}</p>
+                  <p className="mt-4 text-sm leading-7 text-[#4b463f]">{program.duplicatePolicy}</p>
                 </article>
                 <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Disclosure model</p>
-                  <p className="mt-4 text-sm leading-7 text-[#4b463f]">{program.header.disclosureModel}</p>
+                  <p className="mt-4 text-sm leading-7 text-[#4b463f]">{program.disclosureModel}</p>
                 </article>
               </section>
             </div>
@@ -418,12 +415,12 @@ export function ProgramDetail({
                 <span className="text-[#171717]">{formatDate(program.startedAt)}</span>
               </div>
               <div className="flex items-center justify-between gap-4 border-b border-[#ebe4d8] pb-3">
-                <span className="text-[#7b7468]">Project types</span>
-                <span className="text-right text-[#171717]">{program.projectTypes.join(', ')}</span>
+                <span className="text-[#7b7468]">Categories</span>
+                <span className="text-right text-[#171717]">{(program.categories || []).map(cat => formatEnum(cat)).join(', ')}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
                 <span className="text-[#7b7468]">Proof of concept</span>
-                <span className="text-[#171717]">{program.header.pocRequired ? 'Required' : 'Optional'}</span>
+                <span className="text-[#171717]">{program.pocRequired ? 'Required' : 'Optional'}</span>
               </div>
             </div>
           </section>
@@ -431,7 +428,7 @@ export function ProgramDetail({
           <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Submission checklist</p>
             <div className="mt-4 space-y-3">
-              {program.submissionChecklist.map((item, index) => (
+              {(program.submissionChecklist || []).map((item, index) => (
                 <div key={item} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Step {index + 1}</p>
                   <p className="mt-2 text-sm leading-7 text-[#4b463f]">{item}</p>
