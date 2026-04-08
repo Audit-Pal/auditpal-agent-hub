@@ -9,7 +9,20 @@ export interface User {
     name: string;
     role: UserRole;
     reputation: number;
+    bio?: string;
+    avatarUrl?: string;
+    githubHandle?: string;
     organizationName?: string;
+    createdAt?: string;
+    hasApiKey?: boolean;
+    apiKeyPreview?: string;
+    apiKeyCreatedAt?: string;
+    apiKeyLastUsedAt?: string;
+}
+
+interface GenerateApiKeyResponse {
+    apiKey: string;
+    user: User;
 }
 
 interface AuthContextType {
@@ -18,6 +31,8 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<boolean>;
     register: (payload: any) => Promise<boolean>;
     logout: () => void;
+    refreshProfile: () => Promise<User | null>;
+    generateApiKey: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,21 +41,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const refreshProfile = async () => {
+        try {
+            const res = await api.get<User>('/auth/me');
+            if (res.success) {
+                setUser(res.data);
+                return res.data;
+            }
+        } catch (error) {
+            console.error('Profile refresh failed', error);
+        }
+
+        api.clearTokens();
+        setUser(null);
+        return null;
+    };
+
     useEffect(() => {
         const initAuth = async () => {
             const accessToken = localStorage.getItem('auditpal:access-token');
             if (accessToken) {
-                try {
-                    const res = await api.get<User>('/auth/me');
-                    if (res.success) {
-                        setUser(res.data);
-                    } else {
-                        api.clearTokens();
-                    }
-                } catch (error) {
-                    console.error('Auth initialization failed', error);
-                    api.clearTokens();
-                }
+                await refreshProfile();
             }
             setLoading(false);
         };
@@ -81,13 +102,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
     };
 
+    const generateApiKey = async () => {
+        try {
+            const res = await api.post<GenerateApiKeyResponse>('/auth/api-key');
+            if (res.success) {
+                setUser(res.data.user);
+                return res.data.apiKey;
+            }
+        } catch (error) {
+            console.error('API key generation failed', error);
+        }
+
+        return null;
+    };
+
     const logout = () => {
         api.clearTokens();
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, refreshProfile, generateApiKey }}>
             {children}
         </AuthContext.Provider>
     );

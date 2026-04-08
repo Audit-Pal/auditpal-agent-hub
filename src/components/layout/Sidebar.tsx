@@ -7,7 +7,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ view, onNavigate }: SidebarProps) {
-    const isProgramsActive = view === 'programs' || view === 'program_detail'
+    const isBountiesActive = view === 'programs' || view === 'program_detail'
     const isAgentsActive = view === 'agents'
     const isLeaderboardActive = view === 'agent_leaderboard'
 
@@ -29,15 +29,15 @@ export function Sidebar({ view, onNavigate }: SidebarProps) {
             </div>
 
             <div className="mb-4 px-4">
-                <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.28em]">Programs</p>
+                <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.28em]">Bounties</p>
             </div>
 
             <div className="flex flex-col space-y-2">
                 <button
                     onClick={() => onNavigate('programs')}
-                    className={navItemClass(isProgramsActive)}
+                    className={navItemClass(isBountiesActive)}
                 >
-                    <span className="block text-sm font-semibold">Programs</span>
+                    <span className="block text-sm font-semibold">Bounties</span>
                     <span className="block text-[10px] font-bold uppercase tracking-widest text-zinc-600 mt-1">
                         Bounty directory
                     </span>

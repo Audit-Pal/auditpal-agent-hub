@@ -1,20 +1,22 @@
 import { z } from 'zod'
+import { agentSubmitReportSchema } from './submission.schema'
 
 const severityEnum = z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'])
-const reportSourceEnum = z.enum(['CROWD_REPORT', 'EXPLOIT_FEED', 'AGENT_DISAGREEMENT'])
-const reportStatusEnum = z.enum(['SUBMITTED', 'NEEDS_INFO', 'TRIAGED', 'DUPLICATE', 'REJECTED', 'RESOLVED'])
+export const reportStatusEnum = z.enum([
+    'SUBMITTED',
+    'NEEDS_INFO',
+    'TRIAGED',
+    'DUPLICATE',
+    'REJECTED',
+    'RESOLVED',
+    'LOW_EFFORT',
+    'AI_TRIAGE_PENDING',
+    'AI_TRIAGED',
+    'ESCALATED',
+    'ACCEPTED',
+])
 
-export const submitReportSchema = z.object({
-    programId: z.string().min(1),
-    title: z.string().min(5).max(200),
-    severity: severityEnum,
-    target: z.string().min(1),
-    summary: z.string().min(20),
-    impact: z.string().min(10),
-    proof: z.string().min(10),
-    reporterName: z.string().min(2).max(100),
-    source: reportSourceEnum.default('CROWD_REPORT'),
-})
+export const submitReportSchema = agentSubmitReportSchema
 
 export const updateReportStatusSchema = z.object({
     status: reportStatusEnum,

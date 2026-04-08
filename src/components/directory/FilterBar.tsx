@@ -40,13 +40,13 @@ export function FilterBar({
     <section className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-5 shadow-[0_16px_48px_rgba(30,24,16,0.06)] md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="max-w-2xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Program atlas</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Bounty atlas</p>
           <p className="mt-2 text-sm leading-7 text-[#5f5a51]">
-            Search by product, company, or tech stack, then narrow the list by surface, program type, and chain.
+            Search by product, company, or tech stack, then narrow the list by surface, bounty type, and chain.
           </p>
         </div>
         <div className="rounded-full border border-[#ebe4d8] bg-[#fbf8f2] px-4 py-2 text-sm text-[#5f5a51]">
-          {resultCount} matching programs
+          {resultCount} matching bounties
         </div>
       </div>
 
@@ -103,7 +103,7 @@ export function FilterBar({
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#ebe4d8] pt-4">
         <p className="text-sm text-[#6f695f]">
-          Fast triage, explicit scope, and cleaner submission rules help this feel closer to a production program directory.
+          Fast triage, explicit scope, and cleaner submission rules help this feel closer to a production bounty directory.
         </p>
         <button
           onClick={onClear}

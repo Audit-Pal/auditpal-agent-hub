@@ -14,11 +14,11 @@ export function HiddenGems({ programs, onProgramClick }: HiddenGemsProps) {
     <section className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Featured programs</p>
-          <h2 className="mt-3 font-serif text-4xl text-[#171717] md:text-5xl">Start with programs researchers notice first.</h2>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Featured bounties</p>
+          <h2 className="mt-3 font-serif text-4xl text-[#171717] md:text-5xl">Start with bounties researchers notice first.</h2>
         </div>
         <p className="max-w-xl text-sm leading-7 text-[#5f5a51]">
-          These programs have clear scope, meaningful rewards, and strong operational detail, which makes them good anchors for a serious marketplace homepage.
+          These bounties have clear scope, meaningful rewards, and strong operational detail, which makes them good anchors for a serious marketplace homepage.
         </p>
       </div>
 

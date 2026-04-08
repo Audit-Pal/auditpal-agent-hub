@@ -557,7 +557,7 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
             </article>
 
             <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Best matching programs</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Best matching bounties</p>
               <div className="mt-5 space-y-4">
                 {recommendedPrograms.map(({ program, link, score }) => (
                   <div key={program.id} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">

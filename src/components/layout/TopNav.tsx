@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../common/Button'
 import { useAuth } from '../../contexts/AuthContext'
@@ -9,9 +10,9 @@ const navItems: { label: string; path: string; active: (pathname: string) => boo
     active: (path) => path === '/',
   },
   {
-    label: 'Programs',
-    path: '/programs',
-    active: (path) => path.startsWith('/programs') || path.startsWith('/program/'),
+    label: 'Bounties',
+    path: '/bounties',
+    active: (path) => path.startsWith('/bounties') || path.startsWith('/bounty/') || path.startsWith('/programs') || path.startsWith('/program/'),
   },
   {
     label: 'Reports',
@@ -28,12 +29,85 @@ const navItems: { label: string; path: string; active: (pathname: string) => boo
 interface TopNavProps {
   pathname: string
   reportCount: number
-  onSubmit: () => void
   onLogin: () => void
 }
 
-export function TopNav({ pathname, reportCount, onSubmit, onLogin }: TopNavProps) {
-  const { user, logout } = useAuth()
+function formatRole(role: string) {
+  return role
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function formatDate(value?: string) {
+  if (!value) return 'Not yet'
+
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(new Date(value))
+  } catch {
+    return value
+  }
+}
+
+export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
+  const { user, logout, generateApiKey } = useAuth()
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isGeneratingKey, setIsGeneratingKey] = useState(false)
+  const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null)
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const profileRef = useRef<HTMLDivElement | null>(null)
+  const canGenerateApiKey = user?.role === 'BOUNTY_HUNTER' || user?.role === 'ADMIN'
+
+  useEffect(() => {
+    if (!isProfileOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [isProfileOpen])
+
+  useEffect(() => {
+    setGeneratedApiKey(null)
+    setCopyState('idle')
+    setIsProfileOpen(false)
+  }, [user?.id])
+
+  const handleGenerateApiKey = async () => {
+    if (!canGenerateApiKey) return
+
+    setIsGeneratingKey(true)
+    const apiKey = await generateApiKey()
+    setIsGeneratingKey(false)
+
+    if (!apiKey) {
+      window.alert('Unable to generate an API key right now.')
+      return
+    }
+
+    setGeneratedApiKey(apiKey)
+    setCopyState('idle')
+  }
+
+  const handleCopyApiKey = async () => {
+    if (!generatedApiKey) return
+
+    try {
+      await navigator.clipboard.writeText(generatedApiKey)
+      setCopyState('copied')
+    } catch {
+      setCopyState('failed')
+    }
+  }
 
   return (
     <header className="sticky top-4 z-40">
@@ -78,21 +152,108 @@ export function TopNav({ pathname, reportCount, onSubmit, onLogin }: TopNavProps
 
           <div className="ml-auto flex flex-wrap items-center gap-3">
             {user ? (
-              <div className="flex items-center gap-3 mr-2 px-3 py-1.5 rounded-full bg-[#f6f2ea] border border-[#ebe4d8]">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#171717] text-[10px] font-bold text-white uppercase">
-                  {user.name.substring(0, 2)}
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-xs font-semibold text-[#171717] leading-none">{user.name}</p>
-                  <p className="text-[9px] uppercase tracking-wider text-[#7b7468] mt-0.5">{user.role}</p>
-                </div>
+              <div className="relative mr-2" ref={profileRef}>
                 <button
-                  onClick={logout}
-                  className="ml-2 p-1 text-[#7b7468] hover:text-[#171717] transition"
-                  title="Logout"
+                  onClick={() => setIsProfileOpen((current) => !current)}
+                  className="flex items-center gap-3 rounded-full border border-[#ebe4d8] bg-[#f6f2ea] px-3 py-1.5 text-left transition hover:border-[#171717]"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#171717] text-[10px] font-bold text-white uppercase">
+                    {user.name.substring(0, 2)}
+                  </div>
+                  <div className="hidden sm:block">
+                    <p className="text-xs font-semibold text-[#171717] leading-none">{user.name}</p>
+                    <p className="mt-0.5 text-[9px] uppercase tracking-wider text-[#7b7468]">{formatRole(user.role)}</p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-[#7b7468] transition ${isProfileOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6"></path></svg>
                 </button>
+
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[min(92vw,380px)] rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-5 shadow-[0_28px_70px_rgba(30,24,16,0.14)]">
+                    <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Profile</p>
+                      <p className="mt-3 text-lg font-semibold text-[#171717]">{user.name}</p>
+                      <p className="mt-1 text-sm text-[#5f5a51]">{user.email}</p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className="rounded-full border border-[#e3dbcf] bg-white px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#6f695f]">
+                          {formatRole(user.role)}
+                        </span>
+                        {user.organizationName && (
+                          <span className="rounded-full border border-[#e3dbcf] bg-white px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[#6f695f]">
+                            {user.organizationName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Submission API key</p>
+                          <p className="mt-2 text-sm leading-7 text-[#4b463f]">
+                            Generate a platform API key here, then use it in the <code>X-API-Key</code> header when posting reports to <code>/api/v1/reports/submit</code>.
+                          </p>
+                        </div>
+                      </div>
+
+                      {canGenerateApiKey ? (
+                        <>
+                          <div className="mt-4 space-y-3 text-sm text-[#4b463f]">
+                            <div className="flex items-center justify-between gap-4 border-b border-[#e6dfd3] pb-3">
+                              <span className="text-[#7b7468]">Current key</span>
+                              <span className="text-right text-[#171717]">{user.apiKeyPreview ?? 'Not generated yet'}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 border-b border-[#e6dfd3] pb-3">
+                              <span className="text-[#7b7468]">Generated</span>
+                              <span className="text-right text-[#171717]">{formatDate(user.apiKeyCreatedAt)}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-[#7b7468]">Last used</span>
+                              <span className="text-right text-[#171717]">{formatDate(user.apiKeyLastUsedAt)}</span>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <Button variant="primary" size="md" onClick={handleGenerateApiKey} disabled={isGeneratingKey}>
+                              {isGeneratingKey ? 'Generating...' : user.hasApiKey ? 'Regenerate API key' : 'Generate API key'}
+                            </Button>
+                            {generatedApiKey && (
+                              <Button variant="outline" size="md" onClick={handleCopyApiKey}>
+                                {copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : 'Copy key'}
+                              </Button>
+                            )}
+                          </div>
+
+                          {generatedApiKey && (
+                            <div className="mt-4 rounded-[20px] border border-[#e3dbcf] bg-white p-4">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">New key</p>
+                              <p className="mt-2 text-sm leading-7 text-[#4b463f]">This raw key is only shown now. Save it in your agent or automation secret store.</p>
+                              <pre className="mt-3 overflow-x-auto rounded-[18px] border border-[#ebe4d8] bg-[#fbf8f2] p-3 text-xs leading-6 text-[#171717]"><code>{generatedApiKey}</code></pre>
+                            </div>
+                          )}
+
+                          <div className="mt-4 rounded-[20px] border border-[#e3dbcf] bg-white p-4">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Request header</p>
+                            <pre className="mt-3 overflow-x-auto rounded-[18px] border border-[#ebe4d8] bg-[#fbf8f2] p-3 text-xs leading-6 text-[#171717]"><code>X-API-Key: &lt;auditpal_platform_api_key&gt;</code></pre>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="mt-4 rounded-[20px] border border-[#e3dbcf] bg-white p-4 text-sm leading-7 text-[#4b463f]">
+                          API key generation is available for bounty hunter and admin accounts because the submission API accepts hunter-style report intake.
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        logout()
+                        setIsProfileOpen(false)
+                      }}
+                      className="mt-4 w-full rounded-full border border-[#d9d1c4] px-4 py-2.5 text-sm text-[#5f5a51] transition hover:border-[#171717] hover:text-[#171717]"
+                    >
+                      Log out
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <button
@@ -103,9 +264,6 @@ export function TopNav({ pathname, reportCount, onSubmit, onLogin }: TopNavProps
               </button>
             )}
 
-            <Button variant="primary" size="md" onClick={onSubmit}>
-              Submit report
-            </Button>
           </div>
         </div>
       </div>

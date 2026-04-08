@@ -14,7 +14,7 @@ app.use(
     cors({
         origin: ['http://localhost:5173', 'http://localhost:3000'],
         allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-        allowHeaders: ['Content-Type', 'Authorization'],
+        allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
         credentials: true,
     })
 )

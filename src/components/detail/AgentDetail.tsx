@@ -31,7 +31,7 @@ const accentColorMap: Record<string, string> = {
 
 const panelMeta: { id: AgentPanel; label: string; hint: string }[] = [
   { id: 'workbench', label: 'Workbench', hint: 'GitHub intake and repo-focused analysis' },
-  { id: 'overview', label: 'Overview', hint: 'Role, linked programs, and toolchain' },
+  { id: 'overview', label: 'Overview', hint: 'Role, linked bounties, and toolchain' },
   { id: 'runtime', label: 'Runtime', hint: 'How this agent moves through each stage' },
   { id: 'activity', label: 'Activity', hint: 'Recent benchmarked work and signals' },
 ]
@@ -121,7 +121,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                   <p className="mt-2 text-2xl font-semibold text-[#171717]">{validatorScore.toFixed(2)}</p>
                 </div>
                 <div className="rounded-[22px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Programs</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Bounties</p>
                   <p className="mt-2 text-2xl font-semibold text-[#171717]">{linkedPrograms.length}</p>
                 </div>
               </div>
@@ -187,7 +187,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                 </article>
 
                 <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Linked programs</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Linked bounties</p>
                   <div className="mt-6 space-y-4">
                     {linkedPrograms.map(({ program, link }) => (
                       <article key={program.id} className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
@@ -208,7 +208,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                     ))}
                     {linkedPrograms.length === 0 && (
                       <div className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5 text-sm leading-7 text-[#4b463f]">
-                        No linked programs were found for this agent in the database yet.
+                        No linked bounties were found for this agent in the database yet.
                       </div>
                     )}
                   </div>
@@ -361,10 +361,10 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
 
               <section className="grid gap-6 md:grid-cols-2">
                 <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Program footprint</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Bounty footprint</p>
                   <p className="mt-4 text-4xl font-semibold text-[#171717]">{linkedPrograms.length}</p>
                   <p className="mt-3 text-sm leading-7 text-[#4b463f]">
-                    Programs currently depend on this agent for routing, provenance, or dispute handling.
+                    Bounties currently depend on this agent for routing, provenance, or dispute handling.
                   </p>
                 </article>
                 <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">

@@ -438,18 +438,65 @@ async function main() {
 
     // 3. Create an admin user if not present
     console.log('   → Seeding admin user...')
-    const adminExists = await prisma.user.findUnique({ where: { email: 'admin@auditpal.io' } })
-    if (!adminExists) {
-        await prisma.user.create({
-            data: {
-                email: 'admin@auditpal.io',
-                passwordHash: await Bun.password.hash('Admin1234!'),
-                name: 'AuditPal Admin',
-                role: 'ADMIN',
-                reputation: 9999,
-            },
-        })
-    }
+    await prisma.user.upsert({
+        where: { email: 'admin@auditpal.io' },
+        update: {
+            passwordHash: await Bun.password.hash('Admin1234!'),
+            name: 'AuditPal Admin',
+            role: 'ADMIN',
+            reputation: 9999,
+        },
+        create: {
+            email: 'admin@auditpal.io',
+            passwordHash: await Bun.password.hash('Admin1234!'),
+            name: 'AuditPal Admin',
+            role: 'ADMIN',
+            reputation: 9999,
+        },
+    })
+
+    console.log('   → Seeding demo users...')
+    await prisma.user.upsert({
+        where: { email: 'hunter@auditpal.io' },
+        update: {
+            passwordHash: await Bun.password.hash('Hunter1234!'),
+            name: 'Demo Bounty Hunter',
+            role: 'BOUNTY_HUNTER',
+            reputation: 420,
+            organizationName: null,
+        },
+        create: {
+            email: 'hunter@auditpal.io',
+            passwordHash: await Bun.password.hash('Hunter1234!'),
+            name: 'Demo Bounty Hunter',
+            role: 'BOUNTY_HUNTER',
+            reputation: 420,
+        },
+    })
+
+    const organizationUser = await prisma.user.upsert({
+        where: { email: 'org@auditpal.io' },
+        update: {
+            passwordHash: await Bun.password.hash('Org1234!'),
+            name: 'Atlas Validator',
+            role: 'ORGANIZATION',
+            organizationName: 'Atlas Labs',
+            reputation: 1200,
+        },
+        create: {
+            email: 'org@auditpal.io',
+            passwordHash: await Bun.password.hash('Org1234!'),
+            name: 'Atlas Validator',
+            role: 'ORGANIZATION',
+            organizationName: 'Atlas Labs',
+            reputation: 1200,
+        },
+    })
+
+    await prisma.program.updateMany({
+        where: { ownerId: null },
+        data: { ownerId: organizationUser.id },
+    })
 
     console.log('✅ Seed complete.')
 }

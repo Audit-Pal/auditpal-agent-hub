@@ -1,6 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
-import type { ProgramKind, ResearcherReport, Program, Agent } from './types/platform'
+import type {
+  ProgramKind,
+  ResearcherReport,
+  Program,
+  ProgramTab,
+  Agent,
+  ReportSubmissionInput,
+  ValidationAction,
+} from './types/platform'
 
 import { Badge } from './components/common/Badge'
 import { Button } from './components/common/Button'
@@ -57,7 +65,7 @@ export default function App() {
       const [programsRes, agentsRes, metricsRes] = await Promise.all([
         api.get<Program[]>('/programs'),
         api.get<Agent[]>('/agents'),
-        api.get<any>('/metrics')
+        api.get<any>('/metrics'),
       ])
 
       if (programsRes.success) setPrograms(programsRes.data)
@@ -70,6 +78,7 @@ export default function App() {
 
   const fetchReports = useCallback(async () => {
     if (!user) return
+
     try {
       const res = await api.get<ResearcherReport[]>('/reports')
       if (res.success) setReports(res.data)
@@ -104,25 +113,20 @@ export default function App() {
     setIsSubmissionOpen(false)
   }
 
-  const handleSubmitReport = async (
-    submission: Omit<
-      ResearcherReport,
-      'id' | 'humanId' | 'program' | 'submittedAt' | 'status' | 'source' | 'route' | 'responseSla' | 'nextAction'
-    >,
-  ) => {
+  const handleSubmitReport = async (submission: ReportSubmissionInput) => {
     if (!user) {
-      alert('Please log in to submit a report.')
+      setIsLoginOpen(true)
       return
     }
 
     try {
-      const res = await api.post<ResearcherReport>('/reports', {
+      const res = await api.post<ResearcherReport>('/reports/submit', {
         ...submission,
         reporterName: user.name,
       })
 
       if (res.success) {
-        setReports((current) => [res.data, ...current])
+        setReports((current) => [res.data, ...current.filter((report) => report.id !== res.data.id)])
         setIsSubmissionOpen(false)
         navigate('/reports')
       } else {
@@ -132,6 +136,32 @@ export default function App() {
       console.error('Report submission failed', error)
       alert('An unexpected error occurred during submission.')
     }
+  }
+
+  const handleValidateReport = async (reportId: string, action: ValidationAction, notes?: string) => {
+    if (!user) {
+      setIsLoginOpen(true)
+      return false
+    }
+
+    try {
+      const res = await api.post<ResearcherReport>(`/reports/${reportId}/validate`, {
+        action,
+        notes,
+      })
+
+      if (res.success) {
+        setReports((current) => current.map((report) => (report.id === reportId ? res.data : report)))
+        return true
+      }
+
+      alert(res.error || 'Validation failed')
+    } catch (error) {
+      console.error('Report validation failed', error)
+      alert('An unexpected error occurred during validation.')
+    }
+
+    return false
   }
 
   const featuredPrograms = programs.filter((p) => p.isNew)
@@ -186,8 +216,6 @@ export default function App() {
     setSortBy('recent')
   }
 
-  // --- Page components ---
-
   function Home() {
     return (
       <div className="space-y-10">
@@ -196,25 +224,22 @@ export default function App() {
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#7b7468]">AuditPal platform</p>
               <h1 className="mt-4 max-w-4xl font-serif text-5xl leading-none text-[#171717] md:text-7xl">
-                Security programs built for serious researchers and security teams.
+                Security bounties built for serious researchers and security teams.
               </h1>
               <p className="mt-6 max-w-3xl text-lg leading-8 text-[#4b463f]">
-                This front-end now behaves more like a HackenProof-style marketplace: curated programs, readable policies, working submission flow, and a clean text-first UI.
+                This front-end now behaves more like a HackenProof-style marketplace: curated bounties, readable policies, working submission flow, and a clean text-first UI.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Button variant="primary" size="lg" onClick={() => navigate('/programs')}>
-                  Explore programs
-                </Button>
-                <Button variant="outline" size="lg" onClick={() => openSubmission()}>
-                  Submit a report
+                <Button variant="primary" size="lg" onClick={() => navigate('/bounties')}>
+                  Explore bounties
                 </Button>
               </div>
 
               <div className="mt-10 grid gap-4 md:grid-cols-4">
-                <MetricCard label="Active programs" value={totalPrograms} note="Across bug bounty, audit, and simulation tracks" />
+                <MetricCard label="Active bounties" value={totalPrograms} note="Across bug bounty, audit, and simulation tracks" />
                 <MetricCard label="Bounty capacity" value={formatUsd(totalBountyCapacity)} note="Visible maximum reward capacity" />
-                <MetricCard label="Reports in motion" value={totalQueueItems} note="Mock queue plus your local submissions" />
+                <MetricCard label="Reports in motion" value={totalQueueItems} note="Platform submissions currently in queue" />
                 <MetricCard label="Research touches" value={totalResearchersTouching.toLocaleString()} note="Historic scope reviews across the catalog" />
               </div>
             </div>
@@ -225,7 +250,7 @@ export default function App() {
                 <div className="mt-4 space-y-3">
                   {[
                     'Design prioritized for credibility and precision.',
-                    'Direct researcher-to-program submission flow.',
+                    'Direct researcher-to-bounty submission flow.',
                     'Unified workspace for AI-assisted triage results.',
                   ].map((item, index) => (
                     <div key={item} className="rounded-[22px] border border-[#e6dfd3] bg-white p-4">
@@ -248,7 +273,7 @@ export default function App() {
           </div>
         </section>
 
-        <HiddenGems programs={featuredPrograms} onProgramClick={(id) => navigate(`/program/${id}`)} />
+        <HiddenGems programs={featuredPrograms} onProgramClick={(id) => navigate('/bounty/' + id)} />
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <article className="rounded-[36px] border border-[#d9d1c4] bg-[#fffdf8] p-8 shadow-[0_20px_60px_rgba(30,24,16,0.06)]">
@@ -261,7 +286,7 @@ export default function App() {
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {[
-                { title: 'Discover', body: 'Browse active programs by chain, surface, and reward size.' },
+                { title: 'Discover', body: 'Browse active bounties by chain, surface, and reward size.' },
                 { title: 'Submit', body: 'Use the working submission modal to create structured findings.' },
                 { title: 'Track', body: 'See your submitted reports in the report center.' },
               ].map((step, index) => (
@@ -280,7 +305,7 @@ export default function App() {
               {liveSignals.map((signal) => (
                 <button
                   key={signal.id}
-                  onClick={() => navigate(`/program/${signal.programId}`)}
+                  onClick={() => navigate('/bounty/' + signal.programId)}
                   className="w-full rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-left transition hover:border-[#171717]"
                 >
                   <div className="flex flex-wrap items-center gap-2">
@@ -306,23 +331,22 @@ export default function App() {
         <section className="rounded-[38px] border border-[#d9d1c4] bg-[#fffdf8] p-8 shadow-[0_24px_80px_rgba(30,24,16,0.08)] md:p-10">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-4xl">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#7b7468]">Program directory</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#7b7468]">Bounty directory</p>
               <h1 className="mt-4 font-serif text-5xl leading-none text-[#171717] md:text-6xl">
                 Find clear scope, fast triage, and serious rewards.
               </h1>
               <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4b463f]">
-                Curated programs and readable policies let the information do the work.
+                Curated bounties and readable policies let the information do the work.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" size="md" onClick={clearFilters}>Reset filters</Button>
-              <Button variant="primary" size="md" onClick={() => openSubmission()}>Submit a report</Button>
             </div>
           </div>
         </section>
 
         {!searchQuery && selectedKind === 'All kinds' && selectedCategory === 'All categories' && selectedPlatform === 'All platforms' && (
-          <HiddenGems programs={featuredPrograms} onProgramClick={(id) => navigate(`/program/${id}`)} />
+          <HiddenGems programs={featuredPrograms} onProgramClick={(id) => navigate('/bounty/' + id)} />
         )}
 
         <FilterBar
@@ -345,12 +369,12 @@ export default function App() {
 
         {filteredPrograms.length === 0 ? (
           <section className="rounded-[34px] border border-[#d9d1c4] bg-[#fffdf8] p-8 text-center shadow-[0_20px_60px_rgba(30,24,16,0.06)]">
-            <h2 className="font-serif text-4xl text-[#171717]">No programs match the current filters.</h2>
+            <h2 className="font-serif text-4xl text-[#171717]">No bounties match the current filters.</h2>
           </section>
         ) : (
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             {filteredPrograms.map((program) => (
-              <ProgramCard key={program.id} program={program} onClick={() => navigate(`/program/${program.id}`)} />
+              <ProgramCard key={program.id} program={program} onClick={() => navigate('/bounty/' + program.id)} />
             ))}
           </div>
         )}
@@ -362,9 +386,11 @@ export default function App() {
     return (
       <ReportCenter
         reports={sortedReports}
-        onBrowsePrograms={() => navigate('/programs')}
-        onNewSubmission={() => openSubmission()}
-        onOpenProgram={(programId) => navigate(`/program/${programId}`)}
+        viewerRole={user?.role ?? null}
+        viewerName={user?.name ?? null}
+        onBrowsePrograms={() => navigate('/bounties')}
+        onOpenProgram={(programId) => navigate('/bounty/' + programId)}
+        onValidate={handleValidateReport}
       />
     )
   }
@@ -419,13 +445,13 @@ export default function App() {
     )
   }
 
-  function ProgramDetailPage() {
+  function ProgramDetailPage({ initialTab = 'overview' }: { initialTab?: ProgramTab }) {
     const { id } = useParams<{ id: string }>()
     const [program, setProgram] = useState<Program | null>(null)
 
     useEffect(() => {
       if (id) {
-        api.get<Program>(`/programs/${id}`).then(res => {
+        api.get<Program>(`/programs/${id}`).then((res) => {
           if (res.success) setProgram(res.data)
         })
       }
@@ -437,8 +463,10 @@ export default function App() {
       <ProgramDetail
         program={program}
         submissionCount={reports.filter((report) => report.programId === program.id).length}
-        onBack={() => navigate('/programs')}
+        onBack={() => navigate('/bounties')}
         onStartSubmission={() => openSubmission(program.id)}
+        initialTab={initialTab}
+        detailPath={'/bounty/' + program.id}
       />
     )
   }
@@ -449,7 +477,7 @@ export default function App() {
 
     useEffect(() => {
       if (id) {
-        api.get<Agent>(`/agents/${id}`).then(res => {
+        api.get<Agent>(`/agents/${id}`).then((res) => {
           if (res.success) setAgent(res.data)
         })
       }
@@ -472,18 +500,21 @@ export default function App() {
         <TopNav
           pathname={location.pathname}
           reportCount={reports.length}
-          onSubmit={() => openSubmission()}
           onLogin={() => setIsLoginOpen(true)}
         />
       }
     >
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/bounties" element={<ProgramsDirectory />} />
         <Route path="/programs" element={<ProgramsDirectory />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/agents" element={<AgentsDirectory />} />
         <Route path="/agents/leaderboard" element={<AgentLeaderboardPage />} />
+        <Route path="/bounty/:id" element={<ProgramDetailPage />} />
+        <Route path="/bounty/:id/submission" element={<ProgramDetailPage initialTab="submission" />} />
         <Route path="/program/:id" element={<ProgramDetailPage />} />
+        <Route path="/program/:id/submission" element={<ProgramDetailPage initialTab="submission" />} />
         <Route path="/agent/:id" element={<AgentDetailPage />} />
       </Routes>
 

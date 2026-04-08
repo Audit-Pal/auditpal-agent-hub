@@ -87,6 +87,11 @@ enum ReportStatus {
   DUPLICATE
   REJECTED
   RESOLVED
+  LOW_EFFORT
+  AI_TRIAGE_PENDING
+  AI_TRIAGED
+  ESCALATED
+  ACCEPTED
 }
 
 enum ReportSource {
@@ -111,6 +116,10 @@ model User {
   githubHandle      String?
   /// For ORGANIZATION role — the company/org name using Agent-as-a-service
   organizationName  String?
+  apiKeyHash        String?        @unique
+  apiKeyPreview     String?
+  apiKeyCreatedAt   DateTime?
+  apiKeyLastUsedAt  DateTime?
   isActive          Boolean        @default(true)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
@@ -294,6 +303,18 @@ model Report {
   responseSla     String?
   nextAction      String?
   note            String?      @db.Text
+
+  // Code and KG fields
+  codeSnippet     String?      @db.Text
+  errorLocation   String?      @db.Text
+  structuredData  Json?        // For future Knowledge Graph construction
+
+  // New triage fields
+  aiScore         Float?
+  aiSummary       String?      @db.Text
+  validationDecision String?   // 'ACCEPT', 'REJECT', 'ESCALATE'
+  validationNotes String?      @db.Text
+
   submittedAt     DateTime     @default(now())
   resolvedAt      DateTime?
   updatedAt       DateTime     @updatedAt

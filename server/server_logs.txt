@@ -1,0 +1,19 @@
+🚀 AuditPal API running on http://localhost:3001
+   API: http://localhost:3001/api/v1
+   Health: http://localhost:3001/health
+ 7 |       if (typeof entryNamespace?.default?.fetch === 'function')  {
+ 8 |         const server = Bun.serve(entryNamespace.default);
+ 9 |         console.debug(`Started ${server.development ? 'development ' : ''}server: ${server.protocol}://${server.hostname}:${server.port}`);
+10 |       }
+11 |    }, reportError);
+12 |    const server = Bun.serve(entryNamespace.default);
+               ^
+error: Failed to start server. Is port 3001 in use?
+ syscall: "listen",
+   errno: 0,
+    code: "EADDRINUSE"
+
+      at bun:main:12:28
+      at loadAndEvaluateModule (1:11)
+
+Bun v1.2.17 (Linux x64)

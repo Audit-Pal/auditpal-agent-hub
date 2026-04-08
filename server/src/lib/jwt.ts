@@ -11,7 +11,7 @@ export interface TokenPayload extends JWTPayload {
     sub: string        // user id
     email: string
     role: string
-    type: 'access' | 'refresh'
+    type: 'access' | 'refresh' | 'api_key'
 }
 
 export async function signAccessToken(payload: Omit<TokenPayload, 'type' | 'iat' | 'exp'>) {

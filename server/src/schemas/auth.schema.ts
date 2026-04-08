@@ -13,6 +13,14 @@ export const registerSchema = z.object({
     role: z.enum(['BOUNTY_HUNTER', 'ORGANIZATION']).default('BOUNTY_HUNTER'),
     organizationName: z.string().min(2).max(120).optional(),
     githubHandle: z.string().optional(),
+}).superRefine((value, ctx) => {
+    if (value.role === 'ORGANIZATION' && !value.organizationName?.trim()) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['organizationName'],
+            message: 'Organization name is required for organization accounts',
+        })
+    }
 })
 
 export const loginSchema = z.object({

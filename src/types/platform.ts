@@ -6,9 +6,21 @@ export type ProjectType = 'BRIDGE' | 'WALLET' | 'LENDING' | 'INFRASTRUCTURE' | '
 export type PlatformTag = 'ETHEREUM' | 'ARBITRUM' | 'BASE' | 'MONAD' | 'SUI' | 'SOLANA' | 'OFFCHAIN'
 export type ProgramKind = 'BUG_BOUNTY' | 'CROWDSOURCED_AUDIT' | 'ATTACK_SIMULATION'
 export type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
-export type ProgramTab = 'overview' | 'scope' | 'triage' | 'policy'
+export type ProgramTab = 'overview' | 'scope' | 'submission' | 'triage' | 'policy'
 export type ReportSource = 'CROWD_REPORT' | 'EXPLOIT_FEED' | 'AGENT_DISAGREEMENT'
-export type SubmissionStatus = 'SUBMITTED' | 'NEEDS_INFO' | 'TRIAGED' | 'DUPLICATE' | 'REJECTED' | 'RESOLVED'
+export type ValidationAction = 'ACCEPT' | 'REJECT' | 'ESCALATE'
+export type SubmissionStatus =
+  | 'SUBMITTED'
+  | 'NEEDS_INFO'
+  | 'TRIAGED'
+  | 'DUPLICATE'
+  | 'REJECTED'
+  | 'RESOLVED'
+  | 'LOW_EFFORT'
+  | 'AI_TRIAGE_PENDING'
+  | 'AI_TRIAGED'
+  | 'ESCALATED'
+  | 'ACCEPTED'
 export type ScopeReferenceKind =
   | 'SOURCE_FILE'
   | 'GITHUB_REPO'
@@ -20,6 +32,74 @@ export type ScopeReferenceKind =
   | 'RUNBOOK'
   | 'DOMAIN'
 export type ScopeEnvironment = 'MAINNET' | 'TESTNET' | 'PRODUCTION' | 'STAGING' | 'OFFCHAIN' | 'AUDIT'
+
+export interface KnowledgeGraphEntity {
+  id: string
+  type: string
+  name: string
+  properties?: Record<string, unknown>
+}
+
+export interface KnowledgeGraphRelation {
+  sourceId: string
+  targetId: string
+  type: string
+  properties?: Record<string, unknown>
+}
+
+export interface ReportGraphContext {
+  reporterAgent?: string
+  vulnerabilityClass?: string
+  affectedAsset?: string
+  affectedComponent?: string
+  attackVector?: string
+  rootCause?: string
+  prerequisites?: string
+  referenceIds: readonly string[]
+  transactionHashes: readonly string[]
+  contractAddresses: readonly string[]
+  repositoryLinks: readonly string[]
+  filePaths: readonly string[]
+  tags: readonly string[]
+}
+
+export interface ReportStructuredData {
+  version: string
+  narrative?: {
+    title: string
+    summary: string
+    impact: string
+    proof: string
+    severity: Severity
+    source: ReportSource
+  }
+  graphContext: ReportGraphContext
+  artifacts?: {
+    codeSnippet?: string
+    errorLocation?: string
+  }
+  entities: readonly KnowledgeGraphEntity[]
+  relations: readonly KnowledgeGraphRelation[]
+}
+
+export interface ReportSubmissionInput {
+  programId: string
+  reporterName: string
+  title: string
+  severity: Severity
+  target: string
+  summary: string
+  impact: string
+  proof: string
+  source?: ReportSource
+  codeSnippet?: string
+  errorLocation?: string
+  graphContext?: Partial<ReportGraphContext>
+  knowledgeGraph?: {
+    entities: readonly KnowledgeGraphEntity[]
+    relations: readonly KnowledgeGraphRelation[]
+  }
+}
 
 export interface DirectoryMetric {
   label: string
@@ -205,8 +285,15 @@ export interface ResearcherReport {
   id: string
   humanId: string
   programId: string
-  program?: Partial<Program>
-  reporterId?: string
+  programName?: string
+  programCode?: string
+  program?: Partial<Program> & { ownerId?: string | null }
+  reporter?: {
+    id: string
+    name: string
+    email: string
+  }
+  reporterId?: string | null
   reporterName: string
   title: string
   severity: Severity
@@ -217,7 +304,19 @@ export interface ResearcherReport {
   status: SubmissionStatus
   source: ReportSource
   route: string
-  responseSla: string
-  nextAction: string
+  responseSla?: string | null
+  nextAction?: string | null
   submittedAt: string
+  resolvedAt?: string | null
+  updatedAt?: string
+  decisionOwner?: string | null
+  rewardEstimateUsd?: number | null
+  note?: string | null
+  codeSnippet?: string | null
+  errorLocation?: string | null
+  structuredData?: ReportStructuredData | null
+  aiScore?: number | null
+  aiSummary?: string | null
+  validationDecision?: ValidationAction | null
+  validationNotes?: string | null
 }

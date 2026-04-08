@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'crypto'
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { prisma } from '../../db/client'
@@ -9,9 +10,70 @@ import {
     parseRefreshExpiry,
 } from '../../lib/jwt'
 import { errorResponse, successResponse } from '../../lib/response'
-import { authMiddleware } from '../../middleware/auth'
+import { authMiddleware, requireRole } from '../../middleware/auth'
 
 export const authRoutes = new Hono()
+
+const userProfileSelect = {
+    id: true,
+    email: true,
+    name: true,
+    role: true,
+    reputation: true,
+    bio: true,
+    avatarUrl: true,
+    githubHandle: true,
+    organizationName: true,
+    createdAt: true,
+    apiKeyPreview: true,
+    apiKeyCreatedAt: true,
+    apiKeyLastUsedAt: true,
+} as const
+
+function serializeUserProfile(user: {
+    id: string
+    email: string
+    name: string
+    role: string
+    reputation: number
+    bio?: string | null
+    avatarUrl?: string | null
+    githubHandle?: string | null
+    organizationName?: string | null
+    createdAt?: Date
+    apiKeyPreview?: string | null
+    apiKeyCreatedAt?: Date | null
+    apiKeyLastUsedAt?: Date | null
+}) {
+    return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        reputation: user.reputation,
+        bio: user.bio ?? undefined,
+        avatarUrl: user.avatarUrl ?? undefined,
+        githubHandle: user.githubHandle ?? undefined,
+        organizationName: user.organizationName ?? undefined,
+        createdAt: user.createdAt,
+        hasApiKey: Boolean(user.apiKeyPreview),
+        apiKeyPreview: user.apiKeyPreview ?? undefined,
+        apiKeyCreatedAt: user.apiKeyCreatedAt ?? undefined,
+        apiKeyLastUsedAt: user.apiKeyLastUsedAt ?? undefined,
+    }
+}
+
+function generatePlatformApiKey() {
+    return 'auditpal_live_' + randomBytes(24).toString('base64url')
+}
+
+function hashPlatformApiKey(apiKey: string) {
+    return createHash('sha256').update(apiKey).digest('hex')
+}
+
+function buildApiKeyPreview(apiKey: string) {
+    return apiKey.slice(0, 18) + '...' + apiKey.slice(-4)
+}
 
 // ── POST /register ───────────────────────────────────────────────────────────
 authRoutes.post('/register', zValidator('json', registerSchema), async (c) => {
@@ -31,7 +93,7 @@ authRoutes.post('/register', zValidator('json', registerSchema), async (c) => {
             organizationName: body.role === 'ORGANIZATION' ? body.organizationName : null,
             githubHandle: body.githubHandle,
         },
-        select: { id: true, email: true, name: true, role: true, reputation: true, createdAt: true },
+        select: userProfileSelect,
     })
 
     const tokenPayload = { sub: user.id, email: user.email, role: user.role }
@@ -48,7 +110,11 @@ authRoutes.post('/register', zValidator('json', registerSchema), async (c) => {
         },
     })
 
-    return successResponse(c, { user, accessToken, refreshToken: refreshTokenStr }, 201)
+    return successResponse(c, {
+        user: serializeUserProfile(user),
+        accessToken,
+        refreshToken: refreshTokenStr,
+    }, 201)
 })
 
 // ── POST /login ───────────────────────────────────────────────────────────────
@@ -76,10 +142,7 @@ authRoutes.post('/login', zValidator('json', loginSchema), async (c) => {
     })
 
     return successResponse(c, {
-        user: {
-            id: user.id, email: user.email, name: user.name,
-            role: user.role, reputation: user.reputation,
-        },
+        user: serializeUserProfile(user),
         accessToken,
         refreshToken: refreshTokenStr,
     })
@@ -101,7 +164,6 @@ authRoutes.post('/refresh', zValidator('json', refreshSchema), async (c) => {
         return errorResponse(c, 401, 'Refresh token signature invalid')
     }
 
-    // Rotate: revoke old, issue new pair
     const [, newAccess, newRefreshStr] = await Promise.all([
         prisma.refreshToken.update({
             where: { id: stored.id },
@@ -137,12 +199,31 @@ authRoutes.get('/me', authMiddleware, async (c) => {
     const { sub } = c.get('user')
     const user = await prisma.user.findUnique({
         where: { id: sub },
-        select: {
-            id: true, email: true, name: true, role: true, reputation: true,
-            bio: true, avatarUrl: true, githubHandle: true, organizationName: true,
-            createdAt: true,
-        },
+        select: userProfileSelect,
     })
     if (!user) return errorResponse(c, 404, 'User not found')
-    return successResponse(c, user)
+    return successResponse(c, serializeUserProfile(user))
+})
+
+// ── POST /api-key ─────────────────────────────────────────────────────────────
+authRoutes.post('/api-key', authMiddleware, requireRole('BOUNTY_HUNTER', 'ADMIN'), async (c) => {
+    const { sub } = c.get('user')
+    const apiKey = generatePlatformApiKey()
+    const createdAt = new Date()
+
+    const user = await prisma.user.update({
+        where: { id: sub },
+        data: {
+            apiKeyHash: hashPlatformApiKey(apiKey),
+            apiKeyPreview: buildApiKeyPreview(apiKey),
+            apiKeyCreatedAt: createdAt,
+            apiKeyLastUsedAt: null,
+        },
+        select: userProfileSelect,
+    })
+
+    return successResponse(c, {
+        apiKey,
+        user: serializeUserProfile(user),
+    })
 })
