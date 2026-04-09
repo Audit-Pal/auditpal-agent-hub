@@ -312,7 +312,7 @@ export function ProgramDetail({
       </section>
 
       <nav className="sticky top-24 z-20 rounded-[28px] border border-[#d9d1c4] bg-[rgba(255,253,248,0.92)] p-2 shadow-[0_18px_48px_rgba(30,24,16,0.05)] backdrop-blur-xl">
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
           {tabMeta.map((tab) => {
             const isActive = activeTab === tab.id
 

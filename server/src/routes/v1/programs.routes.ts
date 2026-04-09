@@ -62,11 +62,16 @@ programRoutes.get('/', zValidator('query', programQuerySchema), async (c) => {
             take: q.limit,
             select: {
                 id: true, code: true, name: true, company: true, kind: true,
+                description: true,
                 tagline: true, accentTone: true, logoMark: true, isNew: true,
                 maxBountyUsd: true, paidUsd: true, scopeReviews: true,
                 categories: true, platforms: true, languages: true,
                 triagedLabel: true, startedAt: true, updatedAt: true,
-                reputationRequired: true, responseSla: true, payoutCurrency: true,
+                reputationRequired: true, pocRequired: true, liveMessage: true,
+                responseSla: true, payoutCurrency: true, payoutWindow: true,
+                duplicatePolicy: true, disclosureModel: true,
+                summaryHighlights: true, submissionChecklist: true,
+                scopeTargets: true,
             },
         }),
     ])

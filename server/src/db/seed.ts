@@ -11,6 +11,7 @@ const prisma = new PrismaClient()
 const agents = [
     {
         id: 'atlas-triage-agent',
+        slug: 'atlas-triage-agent',
         name: 'Atlas Triage Agent',
         accentTone: 'mint',
         logoMark: 'AT',
@@ -74,6 +75,7 @@ const agents = [
     },
     {
         id: 'meridian-source-agent',
+        slug: 'meridian-source-agent',
         name: 'Meridian Source Agent',
         accentTone: 'violet',
         logoMark: 'MS',
@@ -116,6 +118,7 @@ const agents = [
     },
     {
         id: 'oracle-dispute-agent',
+        slug: 'oracle-dispute-agent',
         name: 'Oracle Dispute Agent',
         accentTone: 'orange',
         logoMark: 'OD',
@@ -150,6 +153,7 @@ const agents = [
     },
     {
         id: 'forge-taxonomy-agent',
+        slug: 'forge-taxonomy-agent',
         name: 'Forge Taxonomy Agent',
         accentTone: 'rose',
         logoMark: 'FT',
@@ -229,8 +233,89 @@ const programs = [
             { severity: 'LOW' as const, maxRewardUsd: 3000, triageSla: '72 h', payoutWindow: 'Discretionary', examples: ['Limited edge case', 'Visibility issue with security impact', 'Defense in depth weakness'] },
         ],
         scopeTargets: [
-            { label: 'BridgeRouter deployment', location: 'Ethereum / contracts/core/BridgeRouter.sol', assetType: 'Smart Contract', severity: 'CRITICAL' as const, reviewStatus: 'Verified source and live deployment', referenceKind: 'CONTRACT_ADDRESS' as const, referenceValue: '0x4D7A9e7b6fA2dA11aA2b3e4C5D6eF7089A12bC34', referenceUrl: 'https://etherscan.io/address/0x4D7A9e7b6fA2dA11aA2b3e4C5D6eF7089A12bC34', network: 'Ethereum', environment: 'MAINNET' as const, tags: ['Bridge core', 'Router'], note: 'Handles deposit accounting, fee paths, and outbound route authorization.' },
-            { label: 'FinalityInbox canary deployment', location: 'Arbitrum / contracts/settlement/FinalityInbox.sol', assetType: 'Smart Contract', severity: 'CRITICAL' as const, reviewStatus: 'Verified source and replay fixture coverage', referenceKind: 'CONTRACT_ADDRESS' as const, referenceValue: '0x1A72c5E0c2f3CefA18D4a08d4D2aa27BbC9038F2', network: 'Arbitrum Sepolia', environment: 'TESTNET' as const, tags: ['Settlement', 'Watcher finality'], note: 'Accepts watcher attestations and final settlement release messages.' },
+            {
+                label: 'BridgeRouter deployment',
+                location: 'Ethereum / contracts/core/BridgeRouter.sol',
+                assetType: 'Smart Contract',
+                severity: 'CRITICAL' as const,
+                reviewStatus: 'Verified source and live deployment',
+                referenceKind: 'CONTRACT_ADDRESS' as const,
+                referenceValue: '0x4D7A9e7b6fA2dA11aA2b3e4C5D6eF7089A12bC34',
+                referenceUrl: 'https://etherscan.io/address/0x4D7A9e7b6fA2dA11aA2b3e4C5D6eF7089A12bC34',
+                network: 'Ethereum',
+                environment: 'MAINNET' as const,
+                tags: ['Bridge core', 'Router'],
+                note: 'Handles deposit accounting, fee paths, and outbound route authorization.',
+                sourceCode: `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+/**
+ * @title BridgeRouter
+ * @dev Handles cross-chain asset routing and fee distribution.
+ * VULNERABILITY: Precision loss in fee calculation.
+ */
+contract BridgeRouter {
+    uint256 public constant FEE_PRECISION = 10000; // 100.00%
+    uint256 public feeBps = 10; // 0.1%
+
+    mapping(address => uint256) public balances;
+
+    event Deposit(address indexed user, uint256 amount, uint256 destinationChain);
+
+    function deposit(uint256 amount, uint256 destinationChain) external {
+        uint256 fee = (amount * feeBps) / FEE_PRECISION;
+        uint256 netAmount = amount - fee;
+        
+        // Mock transfer from user...
+        balances[msg.sender] += netAmount;
+        
+        emit Deposit(msg.sender, netAmount, destinationChain);
+    }
+
+    function setFee(uint256 newFeeBps) external {
+        // Access control missing (Mock bug)
+        feeBps = newFeeBps;
+    }
+}`
+            },
+            {
+                label: 'FinalityInbox canary deployment',
+                location: 'Arbitrum / contracts/settlement/FinalityInbox.sol',
+                assetType: 'Smart Contract',
+                severity: 'CRITICAL' as const,
+                reviewStatus: 'Verified source and replay fixture coverage',
+                referenceKind: 'CONTRACT_ADDRESS' as const,
+                referenceValue: '0x1A72c5E0c2f3CefA18D4a08d4D2aa27BbC9038F2',
+                network: 'Arbitrum Sepolia',
+                environment: 'TESTNET' as const,
+                tags: ['Settlement', 'Watcher finality'],
+                note: 'Accepts watcher attestations and final settlement release messages.',
+                sourceCode: `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+/**
+ * @title FinalityInbox
+ * @dev Accepts watcher attestations for cross-chain settlement.
+ * VULNERABILITY: Reentrancy in releaseFunds.
+ */
+contract FinalityInbox {
+    mapping(bytes32 => bool) public processedMessages;
+    mapping(address => uint256) public pendingWithdrawals;
+
+    function releaseFunds(address recipient, uint256 amount, bytes32 messageId) external {
+        require(!processedMessages[messageId], "Already processed");
+        
+        // Mock validation logic...
+        processedMessages[messageId] = true;
+        
+        // VULNERABLE: State update after external call
+        (bool success, ) = recipient.call{value: amount}("");
+        require(success, "Transfer failed");
+    }
+    
+    receive() external payable {}
+}`
+            },
             { label: 'Bridge relayer repository', location: 'Offchain / relayer/watchtower', assetType: 'Infrastructure', severity: 'HIGH' as const, reviewStatus: 'Private deployment with signed fixture replay', referenceKind: 'GITHUB_REPO' as const, referenceValue: 'github.com/atlas-labs/bridge-relayer', referenceUrl: 'https://github.com/atlas-labs/bridge-relayer', environment: 'PRODUCTION' as const, tags: ['GitHub scope', 'Offchain workers'], note: 'Queue workers that sign and transmit relay payloads to supported chains.' },
         ],
         triageStages: [

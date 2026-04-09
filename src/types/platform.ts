@@ -130,6 +130,7 @@ export interface ScopeTarget {
   network?: string
   environment?: ScopeEnvironment
   tags?: readonly string[]
+  sourceCode?: string
 }
 
 export interface TriageStage {

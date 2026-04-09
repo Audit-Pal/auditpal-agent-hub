@@ -128,6 +128,7 @@ model User {
   reports           Report[]
   refreshTokens     RefreshToken[]
   ownedPrograms     Program[]      @relation("ProgramOwner")
+  ownedAgents       Agent[]        @relation("AgentOwner")
 
   @@map("users")
 }
@@ -233,6 +234,7 @@ model ScopeTarget {
   network        String?
   environment    ScopeEnvironment?
   tags           String[]
+  sourceCode     String?             @db.Text
 
   program        Program             @relation(fields: [programId], references: [id], onDelete: Cascade)
 
@@ -334,6 +336,7 @@ model Report {
 
 model Agent {
   id                     String              @id
+  slug                   String?             @unique
   name                   String
   accentTone             String              @default("mint")
   logoMark               String
@@ -348,10 +351,12 @@ model Agent {
   guardrails             String[]
   supportedSurfaces      ProgramCategory[]
   isActive               Boolean             @default(true)
+  ownerId                String?
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
 
   // Relations
+  owner                  User?               @relation("AgentOwner", fields: [ownerId], references: [id])
   metrics                AgentMetric[]
   tools                  AgentTool[]
   runtimeFlow            AgentStage[]
