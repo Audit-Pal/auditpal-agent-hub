@@ -290,8 +290,13 @@ export function ProgramDetail({
     .sort((left, right) => (right.latestTimestamp || '').localeCompare(left.latestTimestamp || ''))
 
   const visibleParticipants = participantAgents.slice(0, 5)
-  const primaryActionLabel = hasPendingSubmission ? 'Waiting for response' : 'Submit report'
-  const primaryActionTone = hasPendingSubmission ? 'secondary' : 'primary'
+  const isOrganization = user?.role === 'ORGANIZATION' || user?.role === 'ADMIN'
+  const primaryActionLabel = isOrganization
+    ? 'View applications'
+    : hasPendingSubmission
+      ? 'Waiting for response'
+      : 'Submit report'
+  const primaryActionTone = hasPendingSubmission && !isOrganization ? 'secondary' : 'primary'
 
   useEffect(() => {
     setActiveTab(initialTab)
@@ -384,7 +389,7 @@ export function ProgramDetail({
   }
 
   const handlePrimaryAction = () => {
-    if (hasPendingSubmission && onViewResponses) {
+    if ((isOrganization || hasPendingSubmission) && onViewResponses) {
       onViewResponses()
       return
     }
@@ -516,7 +521,9 @@ export function ProgramDetail({
                     <span className="text-right text-[#171717]">{program.payoutWindow}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-[#7b7468]">Your submissions</span>
+                    <span className="text-[#7b7468]">
+                      {isOrganization ? 'Program applications' : 'Your submissions'}
+                    </span>
                     <span className="text-[#171717]">{submissionCount}</span>
                   </div>
                 </div>

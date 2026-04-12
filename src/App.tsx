@@ -276,20 +276,24 @@ function Reports({
   user,
   navigate,
   handleValidateReport,
+  handleEditReport,
 }: {
   sortedReports: ResearcherReport[]
   user: any
   navigate: (path: string) => void
   handleValidateReport: (reportId: string, action: ValidationAction, notes?: string) => Promise<boolean>
+  handleEditReport: (report: ResearcherReport) => void
 }) {
   return (
     <ReportCenter
       reports={sortedReports}
       viewerRole={user?.role ?? null}
       viewerName={user?.name ?? null}
+      viewerId={user?.id ?? null}
       onBrowsePrograms={() => navigate('/bounties')}
       onOpenProgram={(programId) => navigate('/bounty/' + programId)}
       onValidate={handleValidateReport}
+      onEditReport={handleEditReport}
     />
   )
 }
@@ -456,6 +460,7 @@ export default function App() {
 
   const [isSubmissionOpen, setIsSubmissionOpen] = useState(false)
   const [submissionProgramId, setSubmissionProgramId] = useState<string | null>(null)
+  const [editingReport, setEditingReport] = useState<ResearcherReport | null>(null)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
 
   const fetchData = useCallback(async () => {
@@ -504,11 +509,19 @@ export default function App() {
 
   const openSubmission = (programId?: string | null) => {
     setSubmissionProgramId(programId ?? programs[0]?.id ?? null)
+    setEditingReport(null)
+    setIsSubmissionOpen(true)
+  }
+
+  const handleEditReport = (report: ResearcherReport) => {
+    setEditingReport(report)
+    setSubmissionProgramId(report.programId)
     setIsSubmissionOpen(true)
   }
 
   const closeSubmission = () => {
     setIsSubmissionOpen(false)
+    setEditingReport(null)
   }
 
   const handleSubmitReport = async (submission: ReportSubmissionInput) => {
@@ -518,6 +531,28 @@ export default function App() {
     }
 
     try {
+      if (editingReport) {
+        const res = await api.patch<ResearcherReport>(`/reports/${editingReport.id}`, {
+          title: submission.title,
+          severity: submission.severity,
+          target: submission.target,
+          summary: submission.summary,
+          impact: submission.impact,
+          proof: submission.proof,
+          codeSnippet: submission.codeSnippet,
+          errorLocation: submission.errorLocation,
+        })
+
+        if (res.success) {
+          setReports((current) => current.map((r) => (r.id === res.data.id ? res.data : r)))
+          setIsSubmissionOpen(false)
+          setEditingReport(null)
+        } else {
+          alert(res.error || 'Update failed')
+        }
+        return
+      }
+
       const res = await api.post<ResearcherReport>('/reports/submit', {
         ...submission,
         reporterName: user.name,
@@ -700,6 +735,7 @@ export default function App() {
               user={user}
               navigate={navigate}
               handleValidateReport={handleValidateReport}
+              handleEditReport={handleEditReport}
             />
           }
         />
@@ -777,6 +813,7 @@ export default function App() {
         isOpen={isSubmissionOpen}
         programs={programs}
         initialProgramId={submissionProgramId}
+        initialData={editingReport}
         onClose={closeSubmission}
         onSubmit={handleSubmitReport}
       />

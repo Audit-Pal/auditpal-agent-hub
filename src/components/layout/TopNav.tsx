@@ -16,7 +16,7 @@ const navItems: { label: string; path: string; active: (pathname: string) => boo
     active: (path) => path.startsWith('/bounties') || path.startsWith('/bounty/') || path.startsWith('/programs') || path.startsWith('/program/'),
   },
   {
-    label: 'Reports',
+    label: 'Applications',
     path: '/reports',
     active: (path) => path === '/reports',
   },

@@ -26,6 +26,17 @@ export const updateReportStatusSchema = z.object({
     nextAction: z.string().optional(),
 })
 
+export const editReportSchema = z.object({
+    title: z.string().min(5),
+    severity: severityEnum,
+    target: z.string().min(1),
+    summary: z.string().min(10),
+    impact: z.string().min(5),
+    proof: z.string().min(5),
+    codeSnippet: z.string().optional(),
+    errorLocation: z.string().optional(),
+})
+
 export const reportQuerySchema = z.object({
     programId: z.string().optional(),
     status: reportStatusEnum.optional(),

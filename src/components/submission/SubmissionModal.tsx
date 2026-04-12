@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import type { Program, ReportSubmissionInput, Severity } from '../../types/platform'
+import type { Program, ReportSubmissionInput, Severity, ResearcherReport } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
 import { getScopeTargetSelectionLabel } from '../../utils/scopeTargets'
@@ -11,6 +11,7 @@ interface SubmissionModalProps {
   isOpen: boolean
   programs: readonly Program[]
   initialProgramId?: string | null
+  initialData?: ResearcherReport | null
   onClose: () => void
   onSubmit: (submission: ReportSubmissionInput) => void
 }
@@ -129,12 +130,12 @@ function buildKnowledgeGraph(form: FormState, selectedProgram: Program, targetLa
       },
       ...(agentId
         ? [
-            {
-              id: agentId,
-              type: 'Agent',
-              name: form.reporterAgent.trim(),
-            },
-          ]
+          {
+            id: agentId,
+            type: 'Agent',
+            name: form.reporterAgent.trim(),
+          },
+        ]
         : []),
     ],
     relations: [
@@ -189,6 +190,7 @@ export function SubmissionModal({
   isOpen,
   programs,
   initialProgramId,
+  initialData,
   onClose,
   onSubmit,
 }: SubmissionModalProps) {
@@ -202,6 +204,8 @@ export function SubmissionModal({
   const [ownedAgents, setOwnedAgents] = useState<SubmissionAgentOption[]>([])
   const [isLoadingOwnedAgents, setIsLoadingOwnedAgents] = useState(false)
 
+  const isEditing = !!initialData
+
   const programSummary = programs.find((program) => program.id === form.programId) ?? programs[0]
   const selectedProgram = programDetail?.id === form.programId ? programDetail : programSummary
   const availableTargets = selectedProgram?.scopeTargets || []
@@ -211,12 +215,45 @@ export function SubmissionModal({
   useEffect(() => {
     if (!isOpen) return
 
-    setForm(createInitialState(programs, initialProgramId))
+    if (initialData) {
+      const selectedProgram = programs.find((p) => p.id === initialData.programId)
+      const graphContext = initialData.structuredData?.graphContext
+
+      setForm({
+        programId: initialData.programId,
+        title: initialData.title,
+        severity: initialData.severity,
+        targetId: selectedProgram?.scopeTargets?.find((t) => t.label === initialData.target)?.id ?? '',
+        summary: initialData.summary,
+        impact: initialData.impact,
+        proof: initialData.proof,
+        reporterAgent: graphContext?.reporterAgent ?? '',
+        vulnerabilityClass: graphContext?.vulnerabilityClass ?? '',
+        affectedAsset: graphContext?.affectedAsset ?? '',
+        affectedComponent: graphContext?.affectedComponent ?? '',
+        attackVector: graphContext?.attackVector ?? '',
+        rootCause: graphContext?.rootCause ?? '',
+        prerequisites: graphContext?.prerequisites ?? '',
+        referenceIds: (graphContext?.referenceIds || []).join(', '),
+        transactionHashes: (graphContext?.transactionHashes || []).join(', '),
+        contractAddresses: (graphContext?.contractAddresses || []).join(', '),
+        repositoryLinks: (graphContext?.repositoryLinks || []).join(', '),
+        filePaths: (graphContext?.filePaths || []).join(', '),
+        tags: (graphContext?.tags || []).join(', '),
+        codeSnippet: initialData.codeSnippet || '',
+        errorLocation: initialData.errorLocation || '',
+        agreedRules: true,
+        stayedInScope: true,
+      })
+    } else {
+      setForm(createInitialState(programs, initialProgramId))
+    }
+
     setErrors([])
     setIsGenerating(false)
     setSimPhase('none')
     setProgramDetail(null)
-  }, [initialProgramId, isOpen, programs])
+  }, [initialProgramId, isOpen, programs, initialData])
 
   useEffect(() => {
     if (!isOpen) return
@@ -438,10 +475,12 @@ export function SubmissionModal({
                   Bounty submission
                 </p>
                 <h2 className="mt-3 font-serif text-4xl leading-none text-[#171717] md:text-5xl">
-                  Submit a report with an agent-first flow
+                  {isEditing ? 'Edit your report' : 'Submit a report with an agent-first flow'}
                 </h2>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-[#5f5a51]">
-                  Choose one of your own registered hunter agents first, then complete the structured report fields. The form stays pre-filled with example data so testing is still quick.
+                  {isEditing
+                    ? 'Updating your finding maintains the same human ID and triage history. Make your corrections then submit to save.'
+                    : 'Choose one of your own registered hunter agents first, then complete the structured report fields. The form stays pre-filled with example data so testing is still quick.'}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -762,8 +801,13 @@ export function SubmissionModal({
                   <Button type="button" variant="outline" size="md" onClick={onClose}>
                     Cancel
                   </Button>
-                  <Button type="submit" variant="primary" size="md">
-                    {user ? 'Submit report' : 'Log in to submit'}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    disabled={!form.reporterAgent.trim() || isGenerating}
+                  >
+                    {isEditing ? 'Save changes' : user ? 'Submit report' : 'Log in to submit'}
                   </Button>
                 </div>
               </div>

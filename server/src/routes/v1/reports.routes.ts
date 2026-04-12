@@ -6,6 +6,7 @@ import {
     submitReportSchema,
     updateReportStatusSchema,
     reportQuerySchema,
+    editReportSchema,
 } from '../../schemas/report.schema'
 import {
     agentSubmitReportSchema,
@@ -525,6 +526,49 @@ reportRoutes.post(
                 note: normalizeOptionalText(body.notes) ?? report.note,
                 nextAction: nextActionMap[body.action],
                 ...(body.action === 'ESCALATE' ? {} : { resolvedAt: new Date() }),
+            },
+            include: reportInclude,
+        })
+
+        return successResponse(c, serializeReport(updated))
+    }
+)
+
+reportRoutes.patch(
+    '/:id',
+    authMiddleware,
+    requireRole('BOUNTY_HUNTER', 'ADMIN'),
+    zValidator('json', editReportSchema),
+    async (c) => {
+        const { id } = c.req.param()
+        const body = c.req.valid('json')
+        const user = c.get('user')
+
+        const report = await prisma.report.findUnique({
+            where: { id },
+            include: reportInclude,
+        })
+
+        if (!report) return errorResponse(c, 404, 'Report not found')
+        if (!canAccessReport(user, report)) return errorResponse(c, 403, 'Forbidden')
+
+        // 1-hour edit window
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+        if (report.submittedAt < oneHourAgo && user.role !== 'ADMIN') {
+            return errorResponse(c, 400, 'Edit window has closed (1 hour limit)')
+        }
+
+        const updated = await prisma.report.update({
+            where: { id },
+            data: {
+                title: body.title,
+                severity: body.severity,
+                target: body.target,
+                summary: body.summary,
+                impact: body.impact,
+                proof: body.proof,
+                codeSnippet: body.codeSnippet,
+                errorLocation: body.errorLocation,
             },
             include: reportInclude,
         })
