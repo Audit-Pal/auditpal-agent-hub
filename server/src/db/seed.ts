@@ -186,6 +186,234 @@ const agents = [
             { programId: 'openledger-treasury-guard', title: 'OG-214 taxonomy mapping', status: 'Completed', summary: 'Proposed new class: agent-draft approval inheritance failure.', timestamp: new Date('2026-03-29T16:30:00Z') },
         ],
     },
+    {
+        id: 'harbor-scout-agent',
+        slug: 'harbor-scout-agent',
+        name: 'Harbor Scout Agent',
+        accentTone: 'blue',
+        logoMark: 'HS',
+        rank: 5,
+        score: 87.6,
+        minerName: 'Harbor Research',
+        validatorScore: 86.4,
+        headline: 'Maps offchain controls and hybrid service drift around live bounty assets.',
+        summary:
+            'Harbor Scout Agent focuses on operational and offchain systems that influence security outcomes across bounty programs.',
+        capabilities: ['Operational drift checks', 'Control-path review', 'Service boundary analysis'],
+        supportedTechnologies: ['TypeScript', 'Go', 'Infra'],
+        guardrails: [
+            'Stays advisory only and never performs mutating actions.',
+            'Escalates when the issue depends on private infrastructure not present in the sanctioned environment.',
+        ],
+        supportedSurfaces: ['WEB', 'APPS', 'BLOCKCHAIN'] as const,
+        metrics: [
+            { label: 'Operational reviews', value: '612', note: 'Across hybrid and offchain scopes' },
+            { label: 'Reviewer agreement', value: '84%', note: 'Matches final analyst classification' },
+        ],
+        tools: [
+            { name: 'Runbook mapper', access: 'Read-only', useCase: 'Correlates services, dashboards, and operational gates relevant to the report.' },
+        ],
+        runtimeFlow: [
+            { order: 0, title: 'Surface mapping', description: 'Maps the services, operators, and control boundaries involved in the report.', outputs: ['Control surface list', 'Service boundary map'], humanGate: undefined },
+            { order: 1, title: 'Operational drift review', description: 'Checks whether offchain controls have drifted away from the intended security model.', outputs: ['Drift hypothesis', 'Reviewer brief'], humanGate: 'Analysts confirm when drift is truly security relevant.' },
+        ],
+        outputSchema: [
+            { name: 'ops_brief', type: 'JSON', description: 'Operational review summary with affected services and control gaps.' },
+        ],
+        recentExecutions: [
+            { programId: 'openledger-treasury-guard', title: 'OG-219 ops review', status: 'Completed', summary: 'Linked the reported approval drift to the treasury execution service.', timestamp: new Date('2026-04-02T10:15:00Z') },
+        ],
+    },
+    {
+        id: 'anchor-grid-agent',
+        slug: 'anchor-grid-agent',
+        name: 'Anchor Grid Agent',
+        accentTone: 'rose',
+        logoMark: 'AG',
+        rank: 6,
+        score: 86.2,
+        minerName: 'Anchor Intelligence',
+        validatorScore: 85.1,
+        headline: 'Keeps bounty queues clean by prioritizing payout-worthy submissions.',
+        summary:
+            'Anchor Grid Agent emphasizes bounty-appropriate evidence quality, duplicate separation, and reward prioritization signals.',
+        capabilities: ['Reward prioritization', 'Queue hygiene', 'Evidence weighting'],
+        supportedTechnologies: ['TypeScript', 'SQL', 'Solidity'],
+        guardrails: [
+            'Cannot close or reject reports on its own.',
+            'Escalates when payout recommendations would materially change researcher outcome.',
+        ],
+        supportedSurfaces: ['SMART_CONTRACT', 'WEB'] as const,
+        metrics: [
+            { label: 'Queue interventions', value: '488', note: 'Duplicate and quality routing suggestions' },
+            { label: 'Payout alignment', value: '82%', note: 'Matches final payout band' },
+        ],
+        tools: [
+            { name: 'Queue scoring engine', access: 'Read-only', useCase: 'Ranks reports by payout relevance and evidence completeness.' },
+        ],
+        runtimeFlow: [
+            { order: 0, title: 'Queue scoring', description: 'Scores incoming reports against reward bands and duplicate likelihood.', outputs: ['Priority score', 'Reward band hint'], humanGate: undefined },
+            { order: 1, title: 'Reviewer packaging', description: 'Packages the signals into a brief that keeps queue handling consistent.', outputs: ['Queue brief', 'Suggested next action'], humanGate: 'Reviewers make the final payout recommendation.' },
+        ],
+        outputSchema: [
+            { name: 'queue_brief', type: 'JSON', description: 'Prioritization summary for bounty reviewers.' },
+        ],
+        recentExecutions: [
+            { programId: 'atlas-bridge-smart-contracts', title: 'AP-1021 queue ranking', status: 'Completed', summary: 'Elevated a bridge accounting report for fast reward review.', timestamp: new Date('2026-04-02T08:40:00Z') },
+        ],
+    },
+    {
+        id: 'orbit-forge-agent',
+        slug: 'orbit-forge-agent',
+        name: 'Orbit Forge Agent',
+        accentTone: 'ink',
+        logoMark: 'OF',
+        rank: 7,
+        score: 84.8,
+        minerName: 'Orbit Forge',
+        validatorScore: 83.9,
+        headline: 'Connects repository history, source provenance, and deployment lineage.',
+        summary:
+            'Orbit Forge Agent helps bounty teams understand where a vulnerable component came from and whether a remediation path already exists.',
+        capabilities: ['Source provenance', 'Repo correlation', 'Deployment lineage'],
+        supportedTechnologies: ['Git', 'Solidity', 'TypeScript'],
+        guardrails: [
+            'Uses read-only provenance sources only.',
+            'Flags uncertain lineage instead of filling gaps with guesses.',
+        ],
+        supportedSurfaces: ['SMART_CONTRACT', 'BLOCKCHAIN', 'WEB'] as const,
+        metrics: [
+            { label: 'Lineage traces', value: '703', note: 'Repo and deployment correlation runs' },
+            { label: 'Provenance confidence', value: '89%', note: 'Reviewer-verified source mapping' },
+        ],
+        tools: [
+            { name: 'Repo history graph', access: 'Read-only', useCase: 'Correlates commits, deployments, and ownership changes.' },
+        ],
+        runtimeFlow: [
+            { order: 0, title: 'Reference capture', description: 'Extracts the repos, contracts, and version hints from the submission.', outputs: ['Reference bundle', 'Lineage candidates'], humanGate: undefined },
+            { order: 1, title: 'Lineage synthesis', description: 'Builds the most likely provenance path for the affected asset.', outputs: ['Lineage brief', 'Remediation anchor'], humanGate: 'Analysts review uncertain lineage jumps.' },
+        ],
+        outputSchema: [
+            { name: 'lineage_brief', type: 'JSON', description: 'Provenance and deployment summary for the affected component.' },
+        ],
+        recentExecutions: [
+            { programId: 'openledger-treasury-guard', title: 'OG-221 lineage trace', status: 'Completed', summary: 'Mapped the treasury governor deployment back to the maintained repo branch.', timestamp: new Date('2026-04-01T17:30:00Z') },
+        ],
+    },
+    {
+        id: 'quarry-signal-agent',
+        slug: 'quarry-signal-agent',
+        name: 'Quarry Signal Agent',
+        accentTone: 'mint',
+        logoMark: 'QS',
+        rank: 8,
+        score: 83.4,
+        minerName: 'Quarry Labs',
+        validatorScore: 82.7,
+        headline: 'Surfaces approval-path weaknesses in payment and treasury workflows.',
+        summary:
+            'Quarry Signal Agent specializes in logic paths where human approvals, policy checks, and automated execution can drift apart.',
+        capabilities: ['Approval-path review', 'Payment flow analysis', 'State drift detection'],
+        supportedTechnologies: ['Solidity', 'TypeScript', 'Workflow engines'],
+        guardrails: [
+            'Never proposes direct fund movement or execution actions.',
+            'Escalates when the finding depends on non-public approval state.',
+        ],
+        supportedSurfaces: ['SMART_CONTRACT', 'APPS', 'BLOCKCHAIN'] as const,
+        metrics: [
+            { label: 'Workflow traces', value: '529', note: 'Approval and execution path reviews' },
+            { label: 'State-drift hits', value: '77%', note: 'Confirmed by human validation' },
+        ],
+        tools: [
+            { name: 'Workflow tracer', access: 'Read-only', useCase: 'Builds approval and execution flow diagrams for reviewer use.' },
+        ],
+        runtimeFlow: [
+            { order: 0, title: 'Flow extraction', description: 'Maps the approval path from draft to execution.', outputs: ['Approval flow', 'Policy checkpoints'], humanGate: undefined },
+            { order: 1, title: 'Drift detection', description: 'Finds where policy intent and execution outcomes can diverge.', outputs: ['Drift brief', 'Impact path'], humanGate: 'Treasury reviewers confirm exploitability before acceptance.' },
+        ],
+        outputSchema: [
+            { name: 'approval_drift_brief', type: 'JSON', description: 'Structured description of the approval-path weakness.' },
+        ],
+        recentExecutions: [
+            { programId: 'openledger-treasury-guard', title: 'OG-223 approval drift review', status: 'Completed', summary: 'Flagged a gap between proposal drafting and signer enforcement.', timestamp: new Date('2026-04-03T07:55:00Z') },
+        ],
+    },
+    {
+        id: 'polaris-note-agent',
+        slug: 'polaris-note-agent',
+        name: 'Polaris Note Agent',
+        accentTone: 'violet',
+        logoMark: 'PN',
+        rank: 9,
+        score: 82.3,
+        minerName: 'Polaris Research',
+        validatorScore: 81.5,
+        headline: 'Turns dense research into reviewer-friendly bounty submissions.',
+        summary:
+            'Polaris Note Agent packages complex findings into structured narratives that bounty owners can move through triage more quickly.',
+        capabilities: ['Narrative synthesis', 'Submission packaging', 'Checklist drafting'],
+        supportedTechnologies: ['Markdown', 'JSON', 'TypeScript'],
+        guardrails: [
+            'Does not invent technical evidence that is not present in the report.',
+            'Preserves researcher ownership over the final wording and claim set.',
+        ],
+        supportedSurfaces: ['WEB', 'APPS', 'SMART_CONTRACT'] as const,
+        metrics: [
+            { label: 'Submission briefs', value: '811', note: 'Structured narrative packages prepared' },
+            { label: 'Reviewer readability', value: '85%', note: 'Analyst approval of draft clarity' },
+        ],
+        tools: [
+            { name: 'Narrative formatter', access: 'Read-only', useCase: 'Turns field-heavy reports into reviewer-ready narratives.' },
+        ],
+        runtimeFlow: [
+            { order: 0, title: 'Signal grouping', description: 'Groups the summary, proof, and impact into a clean report arc.', outputs: ['Narrative outline', 'Checklist map'], humanGate: undefined },
+            { order: 1, title: 'Submission packaging', description: 'Formats the finding into a tight reviewer brief without changing the evidence.', outputs: ['Submission brief', 'Reviewer checklist'], humanGate: 'The researcher signs off on the final package.' },
+        ],
+        outputSchema: [
+            { name: 'submission_brief', type: 'JSON', description: 'Reviewer-facing narrative package for the report.' },
+        ],
+        recentExecutions: [
+            { programId: 'nebula-wallet-web-mobile', title: 'NW-451 submission package', status: 'Completed', summary: 'Condensed a wallet simulation issue into a reviewer-ready brief.', timestamp: new Date('2026-04-01T12:20:00Z') },
+        ],
+    },
+    {
+        id: 'ridge-watch-agent',
+        slug: 'ridge-watch-agent',
+        name: 'Ridge Watch Agent',
+        accentTone: 'orange',
+        logoMark: 'RW',
+        rank: 10,
+        score: 81.1,
+        minerName: 'Ridge Security',
+        validatorScore: 80.6,
+        headline: 'Highlights safe reproduction steps for operational and client-side findings.',
+        summary:
+            'Ridge Watch Agent balances realistic exploit reproduction with the guardrails required by public bounty programs.',
+        capabilities: ['Safe reproduction steps', 'Operational regression review', 'Escalation notes'],
+        supportedTechnologies: ['TypeScript', 'Infra', 'Mobile'],
+        guardrails: [
+            'Reproduction guidance stays within sanctioned environments only.',
+            'Escalates when the finding would require touching live user assets or devices.',
+        ],
+        supportedSurfaces: ['WEB', 'APPS', 'BLOCKCHAIN'] as const,
+        metrics: [
+            { label: 'Replay guides', value: '436', note: 'Safe reproduction paths prepared' },
+            { label: 'Replay success rate', value: '78%', note: 'Validated by analysts in sanctioned environments' },
+        ],
+        tools: [
+            { name: 'Replay guardrails', access: 'Read-only', useCase: 'Checks that reproduction steps stay inside approved testing boundaries.' },
+        ],
+        runtimeFlow: [
+            { order: 0, title: 'Replay framing', description: 'Builds a minimal proof path that stays inside bounty rules.', outputs: ['Replay outline', 'Guardrail checklist'], humanGate: undefined },
+            { order: 1, title: 'Analyst handoff', description: 'Packages the reproduction path with the minimum operational risk needed for validation.', outputs: ['Replay handoff', 'Escalation note'], humanGate: 'Analysts approve any potentially disruptive step before execution.' },
+        ],
+        outputSchema: [
+            { name: 'replay_outline', type: 'JSON', description: 'Safe reproduction path with explicit testing guardrails.' },
+        ],
+        recentExecutions: [
+            { programId: 'nebula-wallet-web-mobile', title: 'NW-456 guarded replay', status: 'Completed', summary: 'Prepared a safe reproduction flow for a mobile signing issue.', timestamp: new Date('2026-04-02T06:05:00Z') },
+        ],
+    },
 ]
 
 const programs = [

@@ -3,7 +3,7 @@ import type { Program, ReportSubmissionInput, Severity } from '../../types/platf
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
 import { getScopeTargetSelectionLabel } from '../../utils/scopeTargets'
-import { formatEnum } from '../../utils/formatters'
+import { formatEnum, formatUsd } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import { api } from '../../lib/api'
 
@@ -42,6 +42,13 @@ interface FormState {
   stayedInScope: boolean
 }
 
+interface SubmissionAgentOption {
+  id: string
+  name: string
+  logoMark: string
+  headline: string
+  capabilities?: readonly string[]
+}
 
 function splitMultiValueField(value: string) {
   return value
@@ -122,12 +129,12 @@ function buildKnowledgeGraph(form: FormState, selectedProgram: Program, targetLa
       },
       ...(agentId
         ? [
-          {
-            id: agentId,
-            type: 'Agent',
-            name: form.reporterAgent.trim(),
-          },
-        ]
+            {
+              id: agentId,
+              type: 'Agent',
+              name: form.reporterAgent.trim(),
+            },
+          ]
         : []),
     ],
     relations: [
@@ -148,13 +155,16 @@ function createInitialState(programs: readonly Program[], programId?: string | n
 
   return {
     programId: selectedProgram?.id ?? '',
-    title: 'Precision-loss in fee distribution during settlement',
+    title: 'Precision loss in fee distribution during settlement',
     severity: 'HIGH',
     targetId: defaultTarget?.id ?? '',
-    summary: 'A mathematical precision error in the settlement logic allows users to bypass fee collection by splitting transactions into smaller chunks below the wei threshold.',
-    impact: 'Loss of protocol revenue and potential drain of settlement treasury over multiple small-scale transactions.',
-    proof: '1. Deploy MockVault.sol\n2. Call distribute(1e9) with 0.1% fee\n3. Observe rounding down to zero\n4. Repeat 1000x to drain total reserves.',
-    reporterAgent: 'Atlas Scout v2',
+    summary:
+      'A mathematical precision error in the settlement logic allows users to bypass fee collection by splitting transactions into smaller chunks below the wei threshold.',
+    impact:
+      'Loss of protocol revenue and potential drain of settlement treasury over multiple small-scale transactions.',
+    proof:
+      '1. Deploy MockVault.sol\n2. Call distribute(1e9) with 0.1% fee\n3. Observe rounding down to zero\n4. Repeat 1000x to drain total reserves.',
+    reporterAgent: '',
     vulnerabilityClass: 'Mathematical precision error',
     affectedAsset: selectedProgram?.name ?? 'Protocol Core',
     affectedComponent: defaultTarget?.label ?? 'SettlementEngine.sol',
@@ -167,7 +177,8 @@ function createInitialState(programs: readonly Program[], programId?: string | n
     repositoryLinks: 'https://github.com/auditpal/core-contracts/blob/main/SettlementEngine.sol#L45-L50',
     filePaths: 'contracts/SettlementEngine.sol',
     tags: 'math, rounding, gas-optimization',
-    codeSnippet: 'function calculateFee(uint256 amount) public pure returns (uint256) {\n  return amount / 1000 * FEE_BPS; // Vulnerable: division before multiplication\n}',
+    codeSnippet:
+      'function calculateFee(uint256 amount) public pure returns (uint256) {\n  return amount / 1000 * FEE_BPS; // Vulnerable: division before multiplication\n}',
     errorLocation: 'SettlementEngine.sol:45',
     agreedRules: true,
     stayedInScope: true,
@@ -186,24 +197,29 @@ export function SubmissionModal({
   const [errors, setErrors] = useState<string[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [simPhase, setSimPhase] = useState<'none' | 'discovery' | 'source' | 'audit'>('none')
+  const [programDetail, setProgramDetail] = useState<Program | null>(null)
+  const [isLoadingProgramDetail, setIsLoadingProgramDetail] = useState(false)
+  const [ownedAgents, setOwnedAgents] = useState<SubmissionAgentOption[]>([])
+  const [isLoadingOwnedAgents, setIsLoadingOwnedAgents] = useState(false)
 
-  const selectedProgram = programs.find((program) => program.id === form.programId) ?? programs[0]
+  const programSummary = programs.find((program) => program.id === form.programId) ?? programs[0]
+  const selectedProgram = programDetail?.id === form.programId ? programDetail : programSummary
+  const availableTargets = selectedProgram?.scopeTargets || []
+  const selectedTarget = availableTargets.find((target) => target.id === form.targetId)
+  const selectedAgent = ownedAgents.find((agent) => agent.name === form.reporterAgent)
 
   useEffect(() => {
-    if (!isOpen) {
-      return
-    }
+    if (!isOpen) return
 
     setForm(createInitialState(programs, initialProgramId))
     setErrors([])
     setIsGenerating(false)
     setSimPhase('none')
+    setProgramDetail(null)
   }, [initialProgramId, isOpen, programs])
 
   useEffect(() => {
-    if (!isOpen) {
-      return
-    }
+    if (!isOpen) return
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -214,12 +230,37 @@ export function SubmissionModal({
   }, [isOpen])
 
   useEffect(() => {
-    if (!selectedProgram) {
-      return
+    if (!isOpen || !form.programId) return
+
+    let cancelled = false
+    setIsLoadingProgramDetail(true)
+
+    api.get<Program>(`/programs/${form.programId}`)
+      .then((res) => {
+        if (cancelled) return
+        setProgramDetail(res.success ? res.data : null)
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error('Failed to fetch submission program detail', error)
+          setProgramDetail(null)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingProgramDetail(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
     }
+  }, [form.programId, isOpen])
+
+  useEffect(() => {
+    if (!selectedProgram) return
 
     const scopeIds = (selectedProgram.scopeTargets || []).map((target) => target.id)
-
     if (!scopeIds.includes(form.targetId)) {
       setForm((current) => ({
         ...current,
@@ -230,12 +271,54 @@ export function SubmissionModal({
     }
   }, [form.targetId, selectedProgram])
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    if (!user) {
+      setOwnedAgents([])
+      setIsLoadingOwnedAgents(false)
+      return
+    }
+
+    let cancelled = false
+    setIsLoadingOwnedAgents(true)
+
+    api.get<SubmissionAgentOption[]>('/agents/mine')
+      .then((res) => {
+        if (cancelled) return
+        setOwnedAgents(res.success ? res.data : [])
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error('Failed to fetch hunter agents for submission', error)
+          setOwnedAgents([])
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingOwnedAgents(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, user?.id])
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (ownedAgents.length === 0) return
+    if (ownedAgents.some((agent) => agent.name === form.reporterAgent)) return
+
+    setForm((current) => ({
+      ...current,
+      reporterAgent: ownedAgents[0].name,
+    }))
+  }, [form.reporterAgent, isOpen, ownedAgents])
+
   if (!isOpen || !selectedProgram) {
     return null
   }
-
-  const availableTargets = selectedProgram.scopeTargets || []
-  const selectedTarget = availableTargets.find((target) => target.id === form.targetId)
 
   const updateForm = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [key]: value }))
@@ -250,11 +333,10 @@ export function SubmissionModal({
     setIsGenerating(true)
     setErrors([])
 
-    // Simulate multi-agent flow
     setSimPhase('discovery')
-    await new Promise(r => setTimeout(r, 800))
+    await new Promise((resolve) => setTimeout(resolve, 800))
     setSimPhase('source')
-    await new Promise(r => setTimeout(r, 800))
+    await new Promise((resolve) => setTimeout(resolve, 800))
     setSimPhase('audit')
 
     try {
@@ -277,7 +359,7 @@ export function SubmissionModal({
           rootCause: data.graphContext?.rootCause || current.rootCause,
         }))
       }
-    } catch (error) {
+    } catch {
       setErrors(['Failed to generate AI audit. Please check your connection or try again later.'])
     } finally {
       setIsGenerating(false)
@@ -289,6 +371,7 @@ export function SubmissionModal({
     event.preventDefault()
 
     const nextErrors = [
+      !form.reporterAgent.trim() && 'Choose one of your registered hunter agents before submitting.',
       form.title.trim().length < 5 && 'Add a report title.',
       !form.targetId.trim() && 'Choose the affected target.',
       form.summary.trim().length < 10 && 'Describe the issue.',
@@ -352,41 +435,35 @@ export function SubmissionModal({
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#ebe4d8] pb-6">
               <div className="max-w-2xl">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
-                  Submission API
+                  Bounty submission
                 </p>
                 <h2 className="mt-3 font-serif text-4xl leading-none text-[#171717] md:text-5xl">
-                  Quick Submit Report
+                  Submit a report with an agent-first flow
                 </h2>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-[#5f5a51]">
-                  Simplified form for rapid reporting. All fields are pre-filled with mock data for testing.
+                  Choose one of your own registered hunter agents first, then complete the structured report fields. The form stays pre-filled with example data so testing is still quick.
                 </p>
               </div>
               <div className="flex items-center gap-4">
                 {isGenerating && (
-                  <div className="hidden md:flex items-center gap-6 pr-4 border-r border-[#ebe4d8]">
-                    <div className={`flex flex-col items-center gap-1 transition-opacity ${simPhase === 'discovery' ? 'opacity-100 scale-110' : 'opacity-40'}`}>
-                      <div className="h-8 w-8 rounded-full bg-[#1f5a3f] flex items-center justify-center text-[10px] font-bold text-white shadow-sm">AT</div>
+                  <div className="hidden border-r border-[#ebe4d8] pr-4 md:flex md:items-center md:gap-6">
+                    <div className={`flex flex-col items-center gap-1 transition-opacity ${simPhase === 'discovery' ? 'scale-110 opacity-100' : 'opacity-40'}`}>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1f5a3f] text-[10px] font-bold text-white shadow-sm">AT</div>
                       <span className="text-[9px] font-bold uppercase tracking-wider text-[#7b7468]">Discovery</span>
                     </div>
-                    <div className={`flex flex-col items-center gap-1 transition-opacity ${simPhase === 'source' ? 'opacity-100 scale-110' : 'opacity-40'}`}>
-                      <div className="h-8 w-8 rounded-full bg-[#8b5cf6] flex items-center justify-center text-[10px] font-bold text-white shadow-sm">MS</div>
+                    <div className={`flex flex-col items-center gap-1 transition-opacity ${simPhase === 'source' ? 'scale-110 opacity-100' : 'opacity-40'}`}>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8b5cf6] text-[10px] font-bold text-white shadow-sm">MS</div>
                       <span className="text-[9px] font-bold uppercase tracking-wider text-[#7b7468]">Provenance</span>
                     </div>
-                    <div className={`flex flex-col items-center gap-1 transition-opacity ${simPhase === 'audit' ? 'opacity-100 scale-110' : 'opacity-40'}`}>
-                      <div className="h-8 w-8 rounded-full bg-[#f97316] flex items-center justify-center text-[10px] font-bold text-white shadow-sm">OD</div>
+                    <div className={`flex flex-col items-center gap-1 transition-opacity ${simPhase === 'audit' ? 'scale-110 opacity-100' : 'opacity-40'}`}>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f97316] text-[10px] font-bold text-white shadow-sm">OD</div>
                       <span className="text-[9px] font-bold uppercase tracking-wider text-[#7b7468]">AI Audit</span>
                     </div>
                   </div>
                 )}
                 <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleMagicScan}
-                    disabled={isGenerating}
-                  >
-                    {isGenerating ? 'Agents working...' : '✨ Magic AI Scan'}
+                  <Button type="button" variant="outline" size="sm" onClick={handleMagicScan} disabled={isGenerating}>
+                    {isGenerating ? 'Agents working...' : 'Magic AI Scan'}
                   </Button>
                   <Button type="button" variant="ghost" size="sm" onClick={onClose}>
                     Close
@@ -400,7 +477,7 @@ export function SubmissionModal({
                 <p className="text-sm font-semibold text-[#7c2d12]">Please fix the following:</p>
                 <ul className="mt-2 space-y-1 text-xs text-[#8d4a36]">
                   {errors.map((error) => (
-                    <li key={error}>• {error}</li>
+                    <li key={error}>- {error}</li>
                   ))}
                 </ul>
               </div>
@@ -426,6 +503,7 @@ export function SubmissionModal({
                           ...current,
                           programId: event.target.value,
                           targetId: nextProgram?.scopeTargets?.[0]?.id ?? '',
+                          reporterAgent: '',
                           affectedAsset: nextProgram?.name ?? '',
                           affectedComponent: nextProgram?.scopeTargets?.[0]?.label ?? '',
                         }))
@@ -444,7 +522,7 @@ export function SubmissionModal({
                 <label className="space-y-2">
                   <div className="flex flex-col gap-1">
                     <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Target component</span>
-                    <span className="text-[10px] text-[#9a9488]">Select the specific smart contract or module that is vulnerable.</span>
+                    <span className="text-[10px] text-[#9a9488]">Select the specific contract, repo, or module that is affected.</span>
                   </div>
                   <select
                     value={form.targetId}
@@ -453,7 +531,6 @@ export function SubmissionModal({
                       updateForm('targetId', event.target.value)
                       if (nextTarget) {
                         updateForm('affectedComponent', nextTarget.label)
-                        // Auto-fill snippet if it's currently empty and target has source code
                         if (!form.codeSnippet && nextTarget.sourceCode) {
                           updateForm('codeSnippet', nextTarget.sourceCode)
                         }
@@ -475,9 +552,77 @@ export function SubmissionModal({
                 </label>
               </div>
 
+              <section className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-6">
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Step 1</p>
+                    <h3 className="mt-2 text-2xl font-semibold text-[#171717]">Choose one of your registered hunter agents</h3>
+                  </div>
+                  {isLoadingOwnedAgents && (
+                    <div className="rounded-full border border-[#d9d1c4] bg-white px-3 py-1 text-xs text-[#7b7468]">
+                      Loading your agents...
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-5 rounded-[24px] border border-[#d9d1c4] bg-white p-4 text-sm leading-7 text-[#4b463f]">
+                  Report submission requires one of your own registered agents. The bounty-linked agents shown on the bounty page are context for the campaign, not the agent selector used here.
+                </div>
+
+                {ownedAgents.length > 0 ? (
+                  <div className="mt-5 rounded-[24px] border border-[#d9d1c4] bg-white p-2">
+                    {ownedAgents.map((agent, index) => {
+                      const isSelected = form.reporterAgent === agent.name
+
+                      return (
+                        <button
+                          key={agent.id}
+                          type="button"
+                          onClick={() => updateForm('reporterAgent', agent.name)}
+                          className={`flex w-full items-start gap-4 rounded-[20px] px-4 py-4 text-left transition ${isSelected ? 'bg-[#171717] text-white' : 'text-[#171717] hover:bg-[#f6f2ea]'}`}
+                        >
+                          <span
+                            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold ${isSelected ? 'border-white/20 bg-white/10 text-white' : 'border-[#d9d1c4] bg-white text-[#171717]'}`}
+                          >
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <div
+                                className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-semibold ${isSelected ? 'border-white/20 bg-white/10 text-white' : 'border-[#d9d1c4] bg-[#f6f2ea] text-[#171717]'}`}
+                              >
+                                {agent.logoMark}
+                              </div>
+                              <div>
+                                <h4 className="text-lg font-semibold">{agent.name}</h4>
+                                <p className={`text-sm ${isSelected ? 'text-white/75' : 'text-[#6f695f]'}`}>{agent.headline}</p>
+                              </div>
+                            </div>
+                            {agent.capabilities && agent.capabilities.length > 0 && (
+                              <ul className={`mt-3 list-disc space-y-1 pl-5 text-sm ${isSelected ? 'text-white/80' : 'text-[#4b463f]'}`}>
+                                {agent.capabilities.slice(0, 3).map((capability) => (
+                                  <li key={capability}>{capability}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                          <Badge tone={isSelected ? 'new' : 'soft'}>{isSelected ? 'Selected' : 'Available'}</Badge>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="mt-5 rounded-[24px] border border-[#d9d1c4] bg-white p-4 text-sm leading-7 text-[#4b463f]">
+                    {user
+                      ? 'You do not have any registered agents yet. Create one from the profile menu before submitting this report.'
+                      : 'Log in to load your registered agents before submitting.'}
+                  </div>
+                )}
+              </section>
+
               <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_220px]">
                 <label className="space-y-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Report Title</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Report title</span>
                   <input
                     type="text"
                     value={form.title}
@@ -534,15 +679,15 @@ export function SubmissionModal({
                 </label>
               </div>
 
-              <div className="space-y-6 rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-6 shadow-[inset_0_2px_12px_rgba(23,23,23,0.03)] selection:bg-mint/40">
+              <div className="space-y-6 rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-6 shadow-[inset_0_2px_12px_rgba(23,23,23,0.03)]">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Vulnerable Code & URLs</p>
-                  <Badge tone="success">Priority Section</Badge>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Vulnerable code and URLs</p>
+                  <Badge tone="success">Priority section</Badge>
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2">
                   <label className="space-y-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Github / Repository Link</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Github / repository link</span>
                     <input
                       type="text"
                       value={form.repositoryLinks}
@@ -553,7 +698,7 @@ export function SubmissionModal({
                   </label>
 
                   <label className="space-y-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Contract / Testnet URL</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Contract / testnet URL</span>
                     <input
                       type="text"
                       value={form.contractAddresses}
@@ -566,7 +711,7 @@ export function SubmissionModal({
 
                 <div className="grid gap-5 md:grid-cols-[200px_minmax(0,1fr)]">
                   <label className="space-y-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Error Location</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Error location</span>
                     <input
                       type="text"
                       value={form.errorLocation}
@@ -578,14 +723,14 @@ export function SubmissionModal({
 
                   <label className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Vulnerable Solidity Snippet</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Vulnerable snippet</span>
                       {selectedTarget?.sourceCode && (
                         <button
                           type="button"
                           onClick={() => updateForm('codeSnippet', selectedTarget.sourceCode!)}
-                          className="text-[10px] font-bold text-mint uppercase tracking-widest hover:underline"
+                          className="text-[10px] font-bold uppercase tracking-widest text-[#315e50] hover:underline"
                         >
-                          Reset to Target Code
+                          Reset to target code
                         </button>
                       )}
                     </div>
@@ -593,7 +738,7 @@ export function SubmissionModal({
                       rows={10}
                       value={form.codeSnippet}
                       onChange={(event) => updateForm('codeSnippet', event.target.value)}
-                      placeholder="// Paste your .sol code here..."
+                      placeholder="// Paste the vulnerable code snippet here"
                       className="w-full rounded-[24px] border border-[#d9d1c4] bg-[#fafafa] p-5 font-mono text-[13px] leading-relaxed text-[#171717] outline-none transition focus:border-[#171717] focus:bg-white focus:shadow-[0_8px_32px_rgba(23,23,23,0.06)]"
                     />
                   </label>
@@ -609,7 +754,7 @@ export function SubmissionModal({
                     onChange={(event) => updateForm('agreedRules', event.target.checked)}
                     className="h-4 w-4 accent-[#171717]"
                   />
-                  <label htmlFor="agreed" className="text-sm text-[#4b463f] cursor-pointer">
+                  <label htmlFor="agreed" className="cursor-pointer text-sm text-[#4b463f]">
                     I confirm this report was discovered fairly and stays within scope.
                   </label>
                 </div>
@@ -618,7 +763,7 @@ export function SubmissionModal({
                     Cancel
                   </Button>
                   <Button type="submit" variant="primary" size="md">
-                    {user ? 'Submit Mock Report' : 'Log in to submit'}
+                    {user ? 'Submit report' : 'Log in to submit'}
                   </Button>
                 </div>
               </div>
@@ -628,7 +773,7 @@ export function SubmissionModal({
           <aside className="space-y-5">
             <section className="rounded-[28px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
-                Bounty Context
+                Bounty context
               </p>
               <h3 className="mt-3 font-serif text-2xl text-[#171717]">{selectedProgram.name}</h3>
               <p className="mt-2 text-sm text-[#5f5a51]">{selectedProgram.tagline}</p>
@@ -639,20 +784,57 @@ export function SubmissionModal({
                   </Badge>
                 ))}
               </div>
+              <div className="mt-5 grid gap-3 text-sm md:grid-cols-2">
+                <div className="rounded-[22px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Max bounty</p>
+                  <p className="mt-2 text-lg font-semibold text-[#171717]">{formatUsd(selectedProgram.maxBountyUsd)}</p>
+                </div>
+                <div className="rounded-[22px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Payout window</p>
+                  <p className="mt-2 text-[#171717]">{selectedProgram.payoutWindow}</p>
+                </div>
+              </div>
             </section>
 
             <section className="rounded-[28px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
-                Submission Status
+                Selected agent
+              </p>
+              {selectedAgent ? (
+                <div className="mt-4 rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d9d1c4] bg-white text-sm font-semibold text-[#171717]">
+                      {selectedAgent.logoMark}
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-[#171717]">{selectedAgent.name}</h4>
+                      <p className="mt-2 text-sm leading-7 text-[#4b463f]">{selectedAgent.headline}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-sm leading-7 text-[#4b463f]">
+                  Choose one of your registered hunter agents before you submit the report.
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-[28px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
+                Submission status
               </p>
               <div className="mt-4 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-mint" />
+                  <div className="h-2 w-2 rounded-full bg-[#315e50]" />
                   <p className="text-sm text-[#4b463f]">Triage SLA: {selectedProgram.responseSla}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-mint" />
-                  <p className="text-sm text-[#4b463f]">Payout: {selectedProgram.payoutWindow}</p>
+                  <div className="h-2 w-2 rounded-full bg-[#315e50]" />
+                  <p className="text-sm text-[#4b463f]">Registered agents: {ownedAgents.length}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-[#315e50]" />
+                  <p className="text-sm text-[#4b463f]">Program detail: {isLoadingProgramDetail ? 'Loading' : 'Ready'}</p>
                 </div>
               </div>
             </section>

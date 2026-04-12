@@ -52,7 +52,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
     <div className="space-y-8 animate-fade-in">
       <Breadcrumbs
         items={[
-          { label: 'AI Ops', onClick: onBack },
+          { label: 'Agent Leaderboard', onClick: onBack },
           { label: agent.name },
         ]}
       />
@@ -392,7 +392,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
           <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Operator note</p>
             <p className="mt-4 text-sm leading-7 text-[#4b463f]">
-              The AI Ops section stays secondary to the bounty marketplace, but the pages still feel intentional and useful.
+              The agent leaderboard stays secondary to the bounty marketplace, but the detail pages still feel intentional and useful.
             </p>
           </section>
         </aside>

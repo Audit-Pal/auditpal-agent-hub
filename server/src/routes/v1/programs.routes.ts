@@ -20,7 +20,7 @@ const programDetail = {
     policySections: { orderBy: { order: 'asc' as const } },
     evidenceFields: true,
     reportQueue: { take: 10, orderBy: { submittedAt: 'desc' as const } },
-    linkedAgents: { include: { agent: { select: { id: true, name: true, logoMark: true, accentTone: true } } } },
+    linkedAgents: { include: { agent: { select: { id: true, name: true, logoMark: true, accentTone: true, headline: true, recentExecutions: { orderBy: { timestamp: 'desc' as const }, take: 5 } } } } },
 } satisfies Prisma.ProgramInclude
 
 // ── GET /programs ─────────────────────────────────────────────────────────────

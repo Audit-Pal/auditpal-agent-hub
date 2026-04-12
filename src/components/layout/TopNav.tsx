@@ -21,8 +21,8 @@ const navItems: { label: string; path: string; active: (pathname: string) => boo
     active: (path) => path === '/reports',
   },
   {
-    label: 'AI Ops',
-    path: '/agents',
+    label: 'Agent Leaderboard',
+    path: '/agents/leaderboard',
     active: (path) => path.startsWith('/agent'),
   },
 ]
@@ -64,6 +64,8 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
   const [activeProfileTab, setActiveProfileTab] = useState<'profile' | 'api-key' | 'agents'>('profile')
   const profileRef = useRef<HTMLDivElement | null>(null)
   const [isRegisteringAgent, setIsRegisteringAgent] = useState(false)
+  const [agentError, setAgentError] = useState<string | null>(null)
+  const [agentSuccess, setAgentSuccess] = useState<string | null>(null)
   const [myAgents, setMyAgents] = useState<any[]>([])
   const [agentForm, setAgentForm] = useState({
     name: '',
@@ -91,20 +93,50 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
 
   const handleRegisterAgent = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!agentForm.name || !agentForm.headline) return
+    setAgentError(null)
+    setAgentSuccess(null)
+
+    if (!agentForm.name || !agentForm.headline || !agentForm.summary) {
+      setAgentError('Please fill in all required fields.')
+      return
+    }
+
+    if (agentForm.name.length < 2) {
+      setAgentError('Agent name must be at least 2 characters.')
+      return
+    }
+    if (agentForm.headline.length < 5) {
+      setAgentError('Headline must be at least 5 characters.')
+      return
+    }
+    if (agentForm.summary.length < 10) {
+      setAgentError('Summary must be at least 10 characters for better indexing.')
+      return
+    }
 
     setIsRegisteringAgent(true)
     try {
+      const capabilitiesArr = agentForm.capabilities.split(',').map((s) => s.trim()).filter(Boolean)
+      if (capabilitiesArr.length === 0) {
+        setAgentError('Please add at least one capability.')
+        setIsRegisteringAgent(false)
+        return
+      }
+
       const res = await api.post('/agents', {
         ...agentForm,
-        capabilities: agentForm.capabilities.split(',').map(s => s.trim()).filter(Boolean),
+        capabilities: capabilitiesArr,
       })
       if (res.success) {
         setAgentForm({ name: '', headline: '', summary: '', capabilities: '' })
+        setAgentSuccess('Agent registered successfully!')
         fetchMyAgents()
+      } else {
+        setAgentError(res.error || 'Failed to register agent.')
       }
     } catch (error) {
       console.error('Failed to register agent', error)
+      setAgentError('An unexpected error occurred.')
     } finally {
       setIsRegisteringAgent(false)
     }
@@ -359,20 +391,38 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                             </form>
                           </div>
 
-                          {myAgents.length > 0 && (
-                            <div className="space-y-2">
-                              <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">My agents</p>
-                              {myAgents.map((agent) => (
-                                <div key={agent.id} className="flex items-center gap-3 rounded-2xl border border-[#ebe4d8] bg-white p-3">
-                                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-mint text-[10px] font-bold text-white uppercase">
-                                    {agent.logoMark}
+                          {myAgents.length > 0 ? (
+                            <div className="space-y-3">
+                              <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Active Agents</p>
+                              <div className="space-y-2">
+                                {myAgents.map((agent) => (
+                                  <div key={agent.id} className="flex items-center gap-3 rounded-2xl border border-[#ebe4d8] bg-white p-3 shadow-sm transition hover:border-[#171717]">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#315e50] text-[10px] font-bold text-white uppercase">
+                                      {agent.logoMark}
+                                    </div>
+                                    <div className="flex-1 overflow-hidden">
+                                      <p className="truncate text-xs font-semibold text-[#171717]">{agent.name}</p>
+                                      <p className="truncate text-[10px] text-[#7b7468]">{agent.headline}</p>
+                                    </div>
                                   </div>
-                                  <div className="flex-1 overflow-hidden">
-                                    <p className="truncate text-xs font-semibold text-[#171717]">{agent.name}</p>
-                                    <p className="truncate text-[10px] text-[#7b7468]">{agent.headline}</p>
-                                  </div>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="rounded-[24px] border border-dashed border-[#d9d1c4] p-6 text-center">
+                              <p className="text-sm text-[#7b7468]">No active agents yet.</p>
+                              <p className="mt-1 text-xs text-[#a39c91]">Register your first agent above.</p>
+                            </div>
+                          )}
+
+                          {agentError && (
+                            <div className="mx-1 rounded-xl bg-red-50 p-3 text-xs text-red-600 border border-red-100">
+                              {agentError}
+                            </div>
+                          )}
+                          {agentSuccess && (
+                            <div className="mx-1 rounded-xl bg-green-50 p-3 text-xs text-green-600 border border-green-100">
+                              {agentSuccess}
                             </div>
                           )}
                         </div>
