@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import type {
   ProgramKind,
   ResearcherReport,
@@ -280,6 +280,7 @@ function Reports({
   user,
   navigate,
   handleValidateReport,
+  handleValidateVulnerability,
   handleEditReport,
 }: {
   sortedReports: ResearcherReport[]
@@ -289,16 +290,23 @@ function Reports({
   handleValidateVulnerability: (vulnId: string, action: ValidationAction, notes?: string, rewardAmount?: number) => Promise<boolean>
   handleEditReport: (report: ResearcherReport) => void
 }) {
+  const [searchParams] = useSearchParams()
+  const filterProgramId = searchParams.get('programId')
+
+  const filteredReports = filterProgramId 
+    ? sortedReports.filter(r => r.programId === filterProgramId)
+    : sortedReports
+
   if (user?.role === 'GATEKEEPER') {
-    return <GatekeeperDashboard reports={sortedReports} onEscalate={(v) => handleValidateVulnerability(v.id, 'ESCALATE', '')} onReject={(v) => handleValidateVulnerability(v.id, 'REJECT', '')} />
+    return <GatekeeperDashboard reports={filteredReports} onEscalate={(v) => handleValidateVulnerability(v.id, 'ESCALATE', '')} onReject={(v) => handleValidateVulnerability(v.id, 'REJECT', '')} />
   }
 
   if (user?.role === 'VALIDATOR') {
-    return <ValidatorDashboard reports={sortedReports} onValidate={(v, a, n, r) => handleValidateVulnerability(v.id, a, n, r)} />
+    return <ValidatorDashboard reports={filteredReports} onValidate={(v, a, n, r) => handleValidateVulnerability(v.id, a, n, r)} />
   }
   return (
     <ReportCenter
-      reports={sortedReports}
+      reports={filteredReports}
       viewerRole={user?.role ?? null}
       viewerName={user?.name ?? null}
       viewerId={user?.id ?? null}

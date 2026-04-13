@@ -149,7 +149,7 @@ export function OrgDashboard() {
                                             </Button>
                                         </div>
                                     )}
-                                    <Link to="/reports">
+                                    <Link to={`/reports?programId=${program.id}`}>
                                         <Button variant="outline" size="md">
                                             Manage Applications
                                         </Button>
