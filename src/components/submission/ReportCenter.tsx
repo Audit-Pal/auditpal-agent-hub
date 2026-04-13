@@ -11,7 +11,7 @@ interface ReportCenterProps {
   viewerId?: string | null
   onBrowsePrograms: () => void
   onOpenProgram: (programId: string) => void
-  onValidate?: (reportId: string, action: ValidationAction, notes?: string) => Promise<boolean>
+  onValidate?: (reportId: string, action: ValidationAction, notes?: string, severity?: string) => Promise<boolean>
   onEditReport?: (report: ResearcherReport) => void
 }
 
@@ -89,6 +89,7 @@ export function ReportCenter({
   onEditReport,
 }: ReportCenterProps) {
   const [validationNotes, setValidationNotes] = useState<Record<string, string>>({})
+  const [validationSeverity, setValidationSeverity] = useState<Record<string, string>>({})
   const [activeValidationId, setActiveValidationId] = useState<string | null>(null)
 
   const renderReportCard = (report: ResearcherReport) => {
@@ -97,6 +98,7 @@ export function ReportCenter({
     const awaitingValidation = canValidate && ['AI_TRIAGED', 'TRIAGED', 'ESCALATED'].includes(report.status)
 
     const primaryVuln = report.vulnerabilities?.[0]
+    const currentSeverity = validationSeverity[report.id] || primaryVuln?.severity || 'LOW'
 
     return (
       <article
@@ -108,7 +110,7 @@ export function ReportCenter({
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="soft">{report.humanId}</Badge>
               {primaryVuln && (
-                <Badge tone={getSeverityTone(primaryVuln.severity)}>{formatEnum(primaryVuln.severity)}</Badge>
+                <Badge tone={getSeverityTone(primaryVuln.severity)}>Severity: {formatEnum(primaryVuln.severity)}</Badge>
               )}
               <Badge tone={getStatusTone(report.status)}>{formatEnum(report.status)}</Badge>
               <Badge tone="soft">{formatEnum(report.source)}</Badge>
@@ -247,18 +249,39 @@ export function ReportCenter({
         {awaitingValidation && onValidate && (
           <div className="mt-5 rounded-[26px] border border-[#d9d1c4] bg-[#fff7e8] p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Human validator action</p>
+            
+            <div className="mt-4 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#7b7468]">Select Final Criticality</p>
+                <div className="flex flex-wrap gap-2">
+                    {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(sev => (
+                        <button
+                            key={sev}
+                            type="button"
+                            onClick={() => setValidationSeverity(curr => ({...curr, [report.id]: sev}))}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition border ${
+                                currentSeverity === sev 
+                                    ? 'bg-[#171717] text-white border-[#171717]' 
+                                    : 'bg-white text-[#7b7468] border-[#d9d1c4] hover:border-[#171717]'
+                            }`}
+                        >
+                            {sev}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             <textarea
               rows={3}
               value={validationNotes[report.id] || ''}
               onChange={(event) => setValidationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
               placeholder="Optional validator note for the accept, reject, or escalate decision."
-              className="mt-3 w-full rounded-[22px] border border-[#d9d1c4] bg-white px-4 py-3 text-sm leading-7 text-[#171717] outline-none transition focus:border-[#171717]"
+              className="mt-4 w-full rounded-[22px] border border-[#d9d1c4] bg-white px-4 py-3 text-sm leading-7 text-[#171717] outline-none transition focus:border-[#171717]"
             />
             <div className="mt-4 flex flex-wrap gap-3">
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => handleValidation(report.id, 'ACCEPT')}
+                onClick={() => handleValidation(report.id, 'ACCEPT', currentSeverity)}
                 disabled={activeValidationId !== null}
               >
                 {activeValidationId === `${report.id}:ACCEPT` ? 'Accepting...' : 'Accept'}
@@ -295,14 +318,14 @@ export function ReportCenter({
   const uniquePrograms = new Set(reports.map((report) => report.programId)).size
   const latestReport = reports[0]
 
-  const handleValidation = async (reportId: string, action: ValidationAction) => {
+  const handleValidation = async (reportId: string, action: ValidationAction, severity?: string) => {
     if (!onValidate) return
 
     const requestId = `${reportId}:${action}`
     setActiveValidationId(requestId)
 
     try {
-      const success = await onValidate(reportId, action, validationNotes[reportId]?.trim() || undefined)
+      const success = await onValidate(reportId, action, validationNotes[reportId]?.trim() || undefined, severity)
       if (success) {
         setValidationNotes((current) => ({ ...current, [reportId]: '' }))
       }

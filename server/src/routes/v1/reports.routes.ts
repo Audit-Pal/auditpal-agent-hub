@@ -585,6 +585,24 @@ reportRoutes.post(
                 decisionOwner,
                 note: normalizeOptionalText(body.notes) ?? report.note,
                 ...(body.action === 'ESCALATE' ? { route: 'Escalated to expert validator' } : { resolvedAt: new Date() }),
+                ...(body.severity ? {
+                    vulnerabilities: {
+                        updateMany: {
+                            where: { reportId: id },
+                            data: { severity: body.severity }
+                        }
+                    },
+                    // Also sync the structuredData narrative if it exists
+                    ...(report.structuredData ? {
+                        structuredData: {
+                            ...(report.structuredData as any),
+                            narrative: {
+                                ...(report.structuredData as any).narrative,
+                                severity: body.severity
+                            }
+                        } as any
+                    } : {})
+                } : {})
             },
             include: reportInclude,
         })

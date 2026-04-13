@@ -591,7 +591,7 @@ export default function App() {
     }
   }
 
-  const handleValidateReport = async (reportId: string, action: ValidationAction, notes?: string) => {
+  const handleValidateReport = async (reportId: string, action: ValidationAction, notes?: string, severity?: string) => {
     if (!user) {
       setIsLoginOpen(true)
       return false
@@ -601,6 +601,7 @@ export default function App() {
       const res = await api.post<ResearcherReport>(`/reports/${reportId}/validate`, {
         action,
         notes,
+        severity,
       })
 
       if (res.success) {

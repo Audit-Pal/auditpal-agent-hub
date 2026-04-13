@@ -71,6 +71,7 @@ export const validateReportSchema = z.object({
     action: z.enum(['ACCEPT', 'REJECT', 'ESCALATE']),
     notes: z.string().trim().max(2000).optional(),
     rewardAmount: z.number().nonnegative().optional(),
+    severity: severityEnum.optional(),
 })
 
 export type AgentSubmitReportInput = z.infer<typeof agentSubmitReportSchema>
