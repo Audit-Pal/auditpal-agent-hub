@@ -12,7 +12,9 @@ import {
 import { errorResponse, successResponse } from '../../lib/response'
 import { authMiddleware, requireRole } from '../../middleware/auth'
 
-export const authRoutes = new Hono()
+import type { HonoEnv } from '../../types/hono'
+
+export const authRoutes = new Hono<HonoEnv>()
 
 const userProfileSelect = {
     id: true,

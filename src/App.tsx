@@ -20,10 +20,14 @@ import { AgentLeaderboard } from './components/directory/AgentLeaderboard'
 import { FilterBar } from './components/directory/FilterBar'
 import { HiddenGems } from './components/directory/HiddenGems'
 import { ProgramCard } from './components/directory/ProgramCard'
+import { BountyRegistration } from './components/organization/BountyRegistration'
+import { OrgDashboard } from './components/organization/OrgDashboard'
+import { ReportCenter } from './components/submission/ReportCenter'
 import { Shell } from './components/layout/Shell'
 import { TopNav } from './components/layout/TopNav'
-import { ReportCenter } from './components/submission/ReportCenter'
 import { SubmissionModal } from './components/submission/SubmissionModal'
+import { GatekeeperDashboard } from './components/submission/GatekeeperDashboard'
+import { ValidatorDashboard } from './components/submission/ValidatorDashboard'
 import { api } from './lib/api'
 import { useAuth } from './contexts/AuthContext'
 import { LoginModal } from './components/auth/LoginModal'
@@ -282,8 +286,16 @@ function Reports({
   user: any
   navigate: (path: string) => void
   handleValidateReport: (reportId: string, action: ValidationAction, notes?: string) => Promise<boolean>
+  handleValidateVulnerability: (vulnId: string, action: ValidationAction, notes?: string, rewardAmount?: number) => Promise<boolean>
   handleEditReport: (report: ResearcherReport) => void
 }) {
+  if (user?.role === 'GATEKEEPER') {
+    return <GatekeeperDashboard reports={sortedReports} onEscalate={(v) => handleValidateVulnerability(v.id, 'ESCALATE', '')} onReject={(v) => handleValidateVulnerability(v.id, 'REJECT', '')} />
+  }
+
+  if (user?.role === 'VALIDATOR') {
+    return <ValidatorDashboard reports={sortedReports} onValidate={(v, a, n, r) => handleValidateVulnerability(v.id, a, n, r)} />
+  }
   return (
     <ReportCenter
       reports={sortedReports}
@@ -597,6 +609,33 @@ export default function App() {
     return false
   }
 
+  const handleValidateVulnerability = async (vulnId: string, action: ValidationAction, notes?: string, rewardAmount?: number) => {
+    if (!user) {
+      setIsLoginOpen(true)
+      return false
+    }
+
+    try {
+      const res = await api.post<ResearcherReport>(`/reports/vulnerabilities/${vulnId}/validate`, {
+        action,
+        notes,
+        rewardAmount,
+      })
+
+      if (res.success) {
+        setReports((current) => current.map((report) => (report.id === res.data.id ? res.data : report)))
+        return true
+      }
+
+      alert(res.error || 'Validation failed')
+    } catch (error) {
+      console.error('Vulnerability validation failed', error)
+      alert('An unexpected error occurred during validation.')
+    }
+
+    return false
+  }
+
   const featuredPrograms = programs.filter((p) => p.isNew)
   const kindOptions = [...new Set(programs.map((program) => program.kind))]
   const categoryOptions = [...new Set(programs.flatMap((program) => program.categories || []))]
@@ -735,6 +774,7 @@ export default function App() {
               user={user}
               navigate={navigate}
               handleValidateReport={handleValidateReport}
+              handleValidateVulnerability={handleValidateVulnerability}
               handleEditReport={handleEditReport}
             />
           }
@@ -806,6 +846,18 @@ export default function App() {
         <Route
           path="/agent/:id"
           element={<AgentDetailPage agentBackTarget={agentBackTarget} navigate={navigate} />}
+        />
+        <Route
+          path="/org/dashboard"
+          element={<OrgDashboard />}
+        />
+        <Route
+          path="/org/register-bounty"
+          element={<BountyRegistration />}
+        />
+        <Route
+          path="/org/edit-bounty/:id"
+          element={<BountyRegistration />}
         />
       </Routes>
 

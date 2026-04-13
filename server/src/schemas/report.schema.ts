@@ -14,7 +14,20 @@ export const reportStatusEnum = z.enum([
     'AI_TRIAGED',
     'ESCALATED',
     'ACCEPTED',
+    'CLOSED',
 ])
+
+export const validateReportSchema = z.object({
+    action: z.enum(['ACCEPT', 'REJECT', 'ESCALATE']),
+    notes: z.string().trim().max(2000).optional(),
+    rewardAmount: z.number().nonnegative().optional(),
+})
+
+export const finalizeReportSchema = z.object({
+    severity: severityEnum,
+    rewardAmountUsd: z.number().int().min(0),
+    notes: z.string().optional(),
+})
 
 export const submitReportSchema = agentSubmitReportSchema
 
@@ -28,13 +41,6 @@ export const updateReportStatusSchema = z.object({
 
 export const editReportSchema = z.object({
     title: z.string().min(5),
-    severity: severityEnum,
-    target: z.string().min(1),
-    summary: z.string().min(10),
-    impact: z.string().min(5),
-    proof: z.string().min(5),
-    codeSnippet: z.string().optional(),
-    errorLocation: z.string().optional(),
 })
 
 export const reportQuerySchema = z.object({

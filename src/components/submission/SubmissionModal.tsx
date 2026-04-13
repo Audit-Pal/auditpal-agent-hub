@@ -16,29 +16,35 @@ interface SubmissionModalProps {
   onSubmit: (submission: ReportSubmissionInput) => void
 }
 
-interface FormState {
-  programId: string
+interface FormVulnerability {
+  id: string
   title: string
   severity: Severity
   targetId: string
   summary: string
   impact: string
   proof: string
-  reporterAgent: string
   vulnerabilityClass: string
   affectedAsset: string
   affectedComponent: string
   attackVector: string
   rootCause: string
   prerequisites: string
+  codeSnippet: string
+  errorLocation: string
+}
+
+interface FormState {
+  programId: string
+  title: string
+  reporterAgent: string
+  vulnerabilities: FormVulnerability[]
   referenceIds: string
   transactionHashes: string
   contractAddresses: string
   repositoryLinks: string
   filePaths: string
   tags: string
-  codeSnippet: string
-  errorLocation: string
   agreedRules: boolean
   stayedInScope: boolean
 }
@@ -62,125 +68,104 @@ function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item'
 }
 
-function buildKnowledgeGraph(form: FormState, selectedProgram: Program, targetLabel: string, reporterName: string) {
-  const findingId = `finding:${slugify(form.title)}`
+function buildKnowledgeGraph(form: FormState, selectedProgram: Program, reporterName: string) {
   const programId = `program:${selectedProgram.id}`
-  const targetId = `target:${slugify(targetLabel)}`
-  const vulnerabilityId = `vulnerability:${slugify(form.vulnerabilityClass)}`
-  const componentId = `component:${slugify(form.affectedComponent)}`
-  const assetId = `asset:${slugify(form.affectedAsset)}`
   const reporterId = `reporter:${slugify(reporterName)}`
   const agentId = form.reporterAgent.trim() ? `agent:${slugify(form.reporterAgent)}` : null
 
-  return {
-    entities: [
+  const entities: any[] = [
+    {
+      id: programId,
+      type: 'Program',
+      name: selectedProgram.name,
+      properties: { code: selectedProgram.code },
+    },
+    {
+      id: reporterId,
+      type: 'Reporter',
+      name: reporterName,
+    },
+    ...(agentId ? [{ id: agentId, type: 'Agent', name: form.reporterAgent.trim() }] : []),
+  ]
+
+  const relations: any[] = []
+
+  form.vulnerabilities.forEach((vuln) => {
+    const findingId = `finding:${slugify(vuln.title)}`
+    const targetLabel = selectedProgram.scopeTargets?.find(t => t.id === vuln.targetId)?.label || vuln.targetId
+    const targetId = `target:${slugify(targetLabel)}`
+    const vulnerabilityId = `vulnerability:${slugify(vuln.vulnerabilityClass)}`
+    const componentId = `component:${slugify(vuln.affectedComponent)}`
+    const assetId = `asset:${slugify(vuln.affectedAsset)}`
+
+    entities.push(
       {
         id: findingId,
         type: 'Finding',
-        name: form.title.trim(),
-        properties: {
-          severity: form.severity,
-          summary: form.summary.trim(),
-          impact: form.impact.trim(),
-          proof: form.proof.trim(),
-        },
+        name: vuln.title.trim(),
+        properties: { severity: vuln.severity, summary: vuln.summary.trim(), impact: vuln.impact.trim(), proof: vuln.proof.trim() },
       },
-      {
-        id: programId,
-        type: 'Program',
-        name: selectedProgram.name,
-        properties: {
-          code: selectedProgram.code,
-        },
-      },
-      {
-        id: targetId,
-        type: 'Target',
-        name: targetLabel,
-      },
-      {
-        id: vulnerabilityId,
-        type: 'Vulnerability',
-        name: form.vulnerabilityClass.trim() || 'Unclassified',
-        properties: {
-          attackVector: form.attackVector.trim(),
-          rootCause: form.rootCause.trim(),
-        },
-      },
-      {
-        id: componentId,
-        type: 'Component',
-        name: form.affectedComponent.trim(),
-        properties: {
-          errorLocation: form.errorLocation.trim() || undefined,
-        },
-      },
-      {
-        id: assetId,
-        type: 'Asset',
-        name: form.affectedAsset.trim(),
-        properties: {
-          tags: splitMultiValueField(form.tags),
-        },
-      },
-      {
-        id: reporterId,
-        type: 'Reporter',
-        name: reporterName,
-      },
-      ...(agentId
-        ? [
-          {
-            id: agentId,
-            type: 'Agent',
-            name: form.reporterAgent.trim(),
-          },
-        ]
-        : []),
-    ],
-    relations: [
+      { id: targetId, type: 'Target', name: targetLabel },
+      { id: vulnerabilityId, type: 'Vulnerability', name: vuln.vulnerabilityClass.trim() || 'Unclassified', properties: { attackVector: vuln.attackVector.trim(), rootCause: vuln.rootCause.trim() } },
+      { id: componentId, type: 'Component', name: vuln.affectedComponent.trim(), properties: { errorLocation: vuln.errorLocation.trim() || undefined } },
+      { id: assetId, type: 'Asset', name: vuln.affectedAsset.trim(), properties: { tags: splitMultiValueField(form.tags) } }
+    )
+
+    relations.push(
       { sourceId: findingId, targetId: programId, type: 'BELONGS_TO_PROGRAM' },
       { sourceId: findingId, targetId, type: 'TARGETS' },
       { sourceId: findingId, targetId: vulnerabilityId, type: 'HAS_VULNERABILITY_CLASS' },
       { sourceId: findingId, targetId: componentId, type: 'AFFECTS_COMPONENT' },
       { sourceId: findingId, targetId: assetId, type: 'AFFECTS_ASSET' },
       { sourceId: findingId, targetId: reporterId, type: 'REPORTED_BY' },
-      ...(agentId ? [{ sourceId: findingId, targetId: agentId, type: 'DETECTED_WITH_AGENT' }] : []),
-    ],
-  }
+    )
+    if (agentId) {
+      relations.push({ sourceId: findingId, targetId: agentId, type: 'DETECTED_WITH_AGENT' })
+    }
+  })
+
+  // Deduplicate entities and relations
+  const uniqueEntities = Array.from(new Map(entities.map(e => [e.id, e])).values())
+  const uniqueRelations = Array.from(new Map(relations.map(r => [`${r.sourceId}-${r.targetId}-${r.type}`, r])).values())
+
+  return { entities: uniqueEntities, relations: uniqueRelations }
 }
 
-function createInitialState(programs: readonly Program[], programId?: string | null): FormState {
-  const selectedProgram = programs.find((program) => program.id === programId) ?? programs[0]
+function createDefaultVulnerability(selectedProgram: Program | null): FormVulnerability {
   const defaultTarget = selectedProgram?.scopeTargets?.[0]
-
   return {
-    programId: selectedProgram?.id ?? '',
+    id: Math.random().toString(36).substr(2, 9),
     title: 'Precision loss in fee distribution during settlement',
     severity: 'HIGH',
     targetId: defaultTarget?.id ?? '',
-    summary:
-      'A mathematical precision error in the settlement logic allows users to bypass fee collection by splitting transactions into smaller chunks below the wei threshold.',
-    impact:
-      'Loss of protocol revenue and potential drain of settlement treasury over multiple small-scale transactions.',
-    proof:
-      '1. Deploy MockVault.sol\n2. Call distribute(1e9) with 0.1% fee\n3. Observe rounding down to zero\n4. Repeat 1000x to drain total reserves.',
-    reporterAgent: '',
+    summary: 'A mathematical precision error in the settlement logic allows users to bypass fee collection by splitting transactions into smaller chunks below the wei threshold.',
+    impact: 'Loss of protocol revenue and potential drain of settlement treasury over multiple small-scale transactions.',
+    proof: '1. Deploy MockVault.sol\n2. Call distribute(1e9) with 0.1% fee\n3. Observe rounding down to zero\n4. Repeat 1000x to drain total reserves.',
     vulnerabilityClass: 'Mathematical precision error',
     affectedAsset: selectedProgram?.name ?? 'Protocol Core',
     affectedComponent: defaultTarget?.label ?? 'SettlementEngine.sol',
     attackVector: 'Rounding error in fixed-point arithmetic',
     rootCause: 'Using division before multiplication in the fee calculation block.',
     prerequisites: 'Minimal liquidity threshold in the settlement pool.',
+    codeSnippet: 'function calculateFee(uint256 amount) public pure returns (uint256) {\n  return amount / 1000 * FEE_BPS; // Vulnerable: division before multiplication\n}',
+    errorLocation: 'SettlementEngine.sol:45',
+  }
+}
+
+function createInitialState(programs: readonly Program[], programId?: string | null): FormState {
+  const selectedProgram = programs.find((program) => program.id === programId) ?? programs[0]
+
+  return {
+    programId: selectedProgram?.id ?? '',
+    title: 'Comprehensive security analysis and aggregated findings',
+    reporterAgent: '',
+    vulnerabilities: [createDefaultVulnerability(selectedProgram)],
     referenceIds: 'REF-882, SEC-101',
     transactionHashes: '0xabc123...',
     contractAddresses: '0x123...abc (Testnet)',
-    repositoryLinks: 'https://github.com/auditpal/core-contracts/blob/main/SettlementEngine.sol#L45-L50',
+    repositoryLinks: 'https://github.com/auditpal/core-contracts',
     filePaths: 'contracts/SettlementEngine.sol',
     tags: 'math, rounding, gas-optimization',
-    codeSnippet:
-      'function calculateFee(uint256 amount) public pure returns (uint256) {\n  return amount / 1000 * FEE_BPS; // Vulnerable: division before multiplication\n}',
-    errorLocation: 'SettlementEngine.sol:45',
     agreedRules: true,
     stayedInScope: true,
   }
@@ -209,7 +194,6 @@ export function SubmissionModal({
   const programSummary = programs.find((program) => program.id === form.programId) ?? programs[0]
   const selectedProgram = programDetail?.id === form.programId ? programDetail : programSummary
   const availableTargets = selectedProgram?.scopeTargets || []
-  const selectedTarget = availableTargets.find((target) => target.id === form.targetId)
   const selectedAgent = ownedAgents.find((agent) => agent.name === form.reporterAgent)
 
   useEffect(() => {
@@ -222,26 +206,30 @@ export function SubmissionModal({
       setForm({
         programId: initialData.programId,
         title: initialData.title,
-        severity: initialData.severity,
-        targetId: selectedProgram?.scopeTargets?.find((t) => t.label === initialData.target)?.id ?? '',
-        summary: initialData.summary,
-        impact: initialData.impact,
-        proof: initialData.proof,
         reporterAgent: graphContext?.reporterAgent ?? '',
-        vulnerabilityClass: graphContext?.vulnerabilityClass ?? '',
-        affectedAsset: graphContext?.affectedAsset ?? '',
-        affectedComponent: graphContext?.affectedComponent ?? '',
-        attackVector: graphContext?.attackVector ?? '',
-        rootCause: graphContext?.rootCause ?? '',
-        prerequisites: graphContext?.prerequisites ?? '',
+        vulnerabilities: initialData.vulnerabilities?.length > 0 ? initialData.vulnerabilities.map(v => ({
+            id: v.id,
+            title: v.title,
+            severity: v.severity,
+            targetId: selectedProgram?.scopeTargets?.find((t) => t.label === v.target)?.id ?? '',
+            summary: v.summary,
+            impact: v.impact,
+            proof: v.proof,
+            codeSnippet: v.codeSnippet || '',
+            errorLocation: v.errorLocation || '',
+            vulnerabilityClass: 'Unknown',
+            affectedAsset: 'Unknown',
+            affectedComponent: 'Unknown',
+            attackVector: 'Unknown',
+            rootCause: 'Unknown',
+            prerequisites: 'Unknown'
+        })) : [createDefaultVulnerability(selectedProgram!)],
         referenceIds: (graphContext?.referenceIds || []).join(', '),
         transactionHashes: (graphContext?.transactionHashes || []).join(', '),
         contractAddresses: (graphContext?.contractAddresses || []).join(', '),
         repositoryLinks: (graphContext?.repositoryLinks || []).join(', '),
         filePaths: (graphContext?.filePaths || []).join(', '),
         tags: (graphContext?.tags || []).join(', '),
-        codeSnippet: initialData.codeSnippet || '',
-        errorLocation: initialData.errorLocation || '',
         agreedRules: true,
         stayedInScope: true,
       })
@@ -257,10 +245,8 @@ export function SubmissionModal({
 
   useEffect(() => {
     if (!isOpen) return
-
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-
     return () => {
       document.body.style.overflow = previousOverflow
     }
@@ -293,20 +279,6 @@ export function SubmissionModal({
       cancelled = true
     }
   }, [form.programId, isOpen])
-
-  useEffect(() => {
-    if (!selectedProgram) return
-
-    const scopeIds = (selectedProgram.scopeTargets || []).map((target) => target.id)
-    if (!scopeIds.includes(form.targetId)) {
-      setForm((current) => ({
-        ...current,
-        targetId: scopeIds[0] ?? '',
-        affectedAsset: selectedProgram.name,
-        affectedComponent: selectedProgram.scopeTargets?.[0]?.label || '',
-      }))
-    }
-  }, [form.targetId, selectedProgram])
 
   useEffect(() => {
     if (!isOpen) return
@@ -361,9 +333,30 @@ export function SubmissionModal({
     setForm((current) => ({ ...current, [key]: value }))
   }
 
+  const updateVulnerability = (id: string, key: keyof FormVulnerability, value: any) => {
+    setForm(current => ({
+        ...current,
+        vulnerabilities: current.vulnerabilities.map(v => v.id === id ? { ...v, [key]: value } : v)
+    }))
+  }
+
+  const addVulnerability = () => {
+    setForm(current => ({
+        ...current,
+        vulnerabilities: [...current.vulnerabilities, createDefaultVulnerability(selectedProgram)]
+    }))
+  }
+
+  const removeVulnerability = (id: string) => {
+    setForm(current => ({
+        ...current,
+        vulnerabilities: current.vulnerabilities.filter(v => v.id !== id)
+    }))
+  }
+
   const handleMagicScan = async () => {
-    if (!form.codeSnippet.trim() && !form.summary.trim()) {
-      setErrors(['Please provide a code snippet or a brief description for the AI to analyze.'])
+    if (!form.vulnerabilities[0]?.codeSnippet.trim() && !form.vulnerabilities[0]?.summary.trim()) {
+      setErrors(['Please provide a code snippet or a brief description for the AI to analyze in the first finding.'])
       return
     }
 
@@ -378,23 +371,17 @@ export function SubmissionModal({
 
     try {
       const res = await api.post<any>('/audit/generate', {
-        code: form.codeSnippet,
-        description: form.summary,
+        code: form.vulnerabilities[0].codeSnippet,
+        description: form.vulnerabilities[0].summary,
       })
 
       if (res.success && res.data) {
         const data = res.data
-        setForm((current) => ({
-          ...current,
-          title: data.title || current.title,
-          severity: data.severity || current.severity,
-          summary: data.summary || current.summary,
-          impact: data.impact || current.impact,
-          proof: data.proof || current.proof,
-          vulnerabilityClass: data.graphContext?.vulnerabilityClass || current.vulnerabilityClass,
-          attackVector: data.graphContext?.attackVector || current.attackVector,
-          rootCause: data.graphContext?.rootCause || current.rootCause,
-        }))
+        updateVulnerability(form.vulnerabilities[0].id, 'title', data.title || form.vulnerabilities[0].title)
+        updateVulnerability(form.vulnerabilities[0].id, 'severity', data.severity || form.vulnerabilities[0].severity)
+        updateVulnerability(form.vulnerabilities[0].id, 'summary', data.summary || form.vulnerabilities[0].summary)
+        updateVulnerability(form.vulnerabilities[0].id, 'impact', data.impact || form.vulnerabilities[0].impact)
+        updateVulnerability(form.vulnerabilities[0].id, 'proof', data.proof || form.vulnerabilities[0].proof)
       }
     } catch {
       setErrors(['Failed to generate AI audit. Please check your connection or try again later.'])
@@ -407,15 +394,21 @@ export function SubmissionModal({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const nextErrors = [
+    const basicErrors = [
       !form.reporterAgent.trim() && 'Choose one of your registered hunter agents before submitting.',
-      form.title.trim().length < 5 && 'Add a report title.',
-      !form.targetId.trim() && 'Choose the affected target.',
-      form.summary.trim().length < 10 && 'Describe the issue.',
-      form.impact.trim().length < 5 && 'Explain the impact.',
-      form.proof.trim().length < 5 && 'Include proof.',
+      form.title.trim().length < 5 && 'Add an overall submission title.',
       !form.agreedRules && 'Confirm compliance.',
     ].filter(Boolean) as string[]
+
+    const vulnErrors = form.vulnerabilities.flatMap((v, idx) => [
+        !v.targetId.trim() && `Finding #${idx + 1}: Choose the affected target.`,
+        v.title.trim().length < 5 && `Finding #${idx + 1}: Add a finding title.`,
+        v.summary.trim().length < 10 && `Finding #${idx + 1}: Describe the issue.`,
+        v.impact.trim().length < 5 && `Finding #${idx + 1}: Explain the impact.`,
+        v.proof.trim().length < 5 && `Finding #${idx + 1}: Include proof.`,
+    ]).filter(Boolean) as string[]
+
+    const nextErrors = [...basicErrors, ...vulnErrors]
 
     if (nextErrors.length > 0) {
       setErrors(nextErrors)
@@ -424,29 +417,28 @@ export function SubmissionModal({
 
     setErrors([])
 
-    const targetLabel = selectedTarget ? getScopeTargetSelectionLabel(selectedTarget) : form.targetId.trim()
-    const knowledgeGraph = buildKnowledgeGraph(form, selectedProgram, targetLabel, user?.name || 'Anonymous')
+    const knowledgeGraph = buildKnowledgeGraph(form, selectedProgram, user?.name || 'Anonymous')
 
     onSubmit({
       programId: form.programId,
       reporterName: user?.name || 'Anonymous',
       title: form.title.trim(),
-      severity: form.severity,
-      target: targetLabel,
-      summary: form.summary.trim(),
-      impact: form.impact.trim(),
-      proof: form.proof.trim(),
       source: 'CROWD_REPORT',
-      codeSnippet: form.codeSnippet.trim() || undefined,
-      errorLocation: form.errorLocation.trim() || undefined,
+      vulnerabilities: form.vulnerabilities.map(v => {
+         const targetLabel = selectedProgram.scopeTargets?.find(t => t.id === v.targetId)?.label || v.targetId
+         return {
+            title: v.title.trim(),
+            severity: v.severity,
+            target: targetLabel,
+            summary: v.summary.trim(),
+            impact: v.impact.trim(),
+            proof: v.proof.trim(),
+            codeSnippet: v.codeSnippet.trim() || undefined,
+            errorLocation: v.errorLocation.trim() || undefined,
+         }
+      }),
       graphContext: {
         reporterAgent: form.reporterAgent.trim() || undefined,
-        vulnerabilityClass: form.vulnerabilityClass.trim() || 'General finding',
-        affectedAsset: form.affectedAsset.trim() || selectedProgram.name,
-        affectedComponent: form.affectedComponent.trim() || targetLabel,
-        attackVector: form.attackVector.trim() || 'Undefined',
-        rootCause: form.rootCause.trim() || 'Undefined',
-        prerequisites: form.prerequisites.trim() || undefined,
         referenceIds: splitMultiValueField(form.referenceIds),
         transactionHashes: splitMultiValueField(form.transactionHashes),
         contractAddresses: splitMultiValueField(form.contractAddresses),
@@ -475,12 +467,12 @@ export function SubmissionModal({
                   Bounty submission
                 </p>
                 <h2 className="mt-3 font-serif text-4xl leading-none text-[#171717] md:text-5xl">
-                  {isEditing ? 'Edit your report' : 'Submit a report with an agent-first flow'}
+                  {isEditing ? 'Edit your report' : 'Submit a multi-finding report'}
                 </h2>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-[#5f5a51]">
                   {isEditing
-                    ? 'Updating your finding maintains the same human ID and triage history. Make your corrections then submit to save.'
-                    : 'Choose one of your own registered hunter agents first, then complete the structured report fields. The form stays pre-filled with example data so testing is still quick.'}
+                    ? 'Update your findings and save changes.'
+                    : 'A single submission can contain multiple vulnerabilities. Complete the structured fields for each finding.'}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -502,7 +494,7 @@ export function SubmissionModal({
                 )}
                 <div className="flex gap-3">
                   <Button type="button" variant="outline" size="sm" onClick={handleMagicScan} disabled={isGenerating}>
-                    {isGenerating ? 'Agents working...' : 'Magic AI Scan'}
+                    {isGenerating ? 'Agents working...' : 'Magic AI Scan First Finding'}
                   </Button>
                   <Button type="button" variant="ghost" size="sm" onClick={onClose}>
                     Close
@@ -515,87 +507,64 @@ export function SubmissionModal({
               <div className="mt-6 rounded-3xl border border-[#e7c7bf] bg-[#fdf1ee] p-5">
                 <p className="text-sm font-semibold text-[#7c2d12]">Please fix the following:</p>
                 <ul className="mt-2 space-y-1 text-xs text-[#8d4a36]">
-                  {errors.map((error) => (
-                    <li key={error}>- {error}</li>
+                  {errors.map((error, i) => (
+                    <li key={i}>- {error}</li>
                   ))}
                 </ul>
               </div>
             )}
 
-            <div className="mt-6 space-y-8">
-              <div className="grid gap-5 md:grid-cols-2">
-                <label className="space-y-2">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Bounty program</span>
-                    <span className="text-[10px] text-[#9a9488]">The program you are reporting to.</span>
+            <div className="mt-6 space-y-10">
+              <section className="space-y-6">
+                  <label className="block space-y-2">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Overall Submission Title</span>
+                      <input
+                        type="text"
+                        value={form.title}
+                        onChange={(event) => updateForm('title', event.target.value)}
+                        placeholder="E.g., Multiple Critical Flaws in Settlement Engine"
+                        className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                      />
+                  </label>
+                  
+                  {/* Keep program selection and agents here for the overall submission */}
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <label className="space-y-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Bounty program</span>
+                      </div>
+                      {initialProgramId ? (
+                        <div className="w-full rounded-2xl border border-[#d9d1c4] bg-[#f6f2ea] px-4 py-3 text-sm font-semibold text-[#171717]">
+                          {selectedProgram.name}
+                        </div>
+                      ) : (
+                        <select
+                          value={form.programId}
+                          onChange={(event) => {
+                            const nextProgram = programs.find((program) => program.id === event.target.value)
+                            setForm((current) => ({
+                              ...current,
+                              programId: event.target.value,
+                              reporterAgent: '',
+                            }))
+                          }}
+                          className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                        >
+                          {programs.map((program) => (
+                            <option key={program.id} value={program.id}>
+                              {program.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </label>
                   </div>
-                  {initialProgramId ? (
-                    <div className="w-full rounded-2xl border border-[#d9d1c4] bg-[#f6f2ea] px-4 py-3 text-sm font-semibold text-[#171717]">
-                      {selectedProgram.name}
-                    </div>
-                  ) : (
-                    <select
-                      value={form.programId}
-                      onChange={(event) => {
-                        const nextProgram = programs.find((program) => program.id === event.target.value)
-                        setForm((current) => ({
-                          ...current,
-                          programId: event.target.value,
-                          targetId: nextProgram?.scopeTargets?.[0]?.id ?? '',
-                          reporterAgent: '',
-                          affectedAsset: nextProgram?.name ?? '',
-                          affectedComponent: nextProgram?.scopeTargets?.[0]?.label ?? '',
-                        }))
-                      }}
-                      className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
-                    >
-                      {programs.map((program) => (
-                        <option key={program.id} value={program.id}>
-                          {program.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </label>
-
-                <label className="space-y-2">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Target component</span>
-                    <span className="text-[10px] text-[#9a9488]">Select the specific contract, repo, or module that is affected.</span>
-                  </div>
-                  <select
-                    value={form.targetId}
-                    onChange={(event) => {
-                      const nextTarget = availableTargets.find((target) => target.id === event.target.value)
-                      updateForm('targetId', event.target.value)
-                      if (nextTarget) {
-                        updateForm('affectedComponent', nextTarget.label)
-                        if (!form.codeSnippet && nextTarget.sourceCode) {
-                          updateForm('codeSnippet', nextTarget.sourceCode)
-                        }
-                      }
-                    }}
-                    disabled={availableTargets.length === 0}
-                    className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
-                  >
-                    {availableTargets.length === 0 ? (
-                      <option value="">No scoped targets available for this program</option>
-                    ) : (
-                      availableTargets.map((target) => (
-                        <option key={target.id} value={target.id}>
-                          {getScopeTargetSelectionLabel(target)}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </label>
-              </div>
+              </section>
 
               <section className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-6">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Step 1</p>
-                    <h3 className="mt-2 text-2xl font-semibold text-[#171717]">Choose one of your registered hunter agents</h3>
+                    <h3 className="text-2xl font-semibold text-[#171717]">Choose one of your registered hunter agents</h3>
                   </div>
                   {isLoadingOwnedAgents && (
                     <div className="rounded-full border border-[#d9d1c4] bg-white px-3 py-1 text-xs text-[#7b7468]">
@@ -604,15 +573,10 @@ export function SubmissionModal({
                   )}
                 </div>
 
-                <div className="mt-5 rounded-[24px] border border-[#d9d1c4] bg-white p-4 text-sm leading-7 text-[#4b463f]">
-                  Report submission requires one of your own registered agents. The bounty-linked agents shown on the bounty page are context for the campaign, not the agent selector used here.
-                </div>
-
                 {ownedAgents.length > 0 ? (
                   <div className="mt-5 rounded-[24px] border border-[#d9d1c4] bg-white p-2">
                     {ownedAgents.map((agent, index) => {
                       const isSelected = form.reporterAgent === agent.name
-
                       return (
                         <button
                           key={agent.id}
@@ -620,30 +584,12 @@ export function SubmissionModal({
                           onClick={() => updateForm('reporterAgent', agent.name)}
                           className={`flex w-full items-start gap-4 rounded-[20px] px-4 py-4 text-left transition ${isSelected ? 'bg-[#171717] text-white' : 'text-[#171717] hover:bg-[#f6f2ea]'}`}
                         >
-                          <span
-                            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold ${isSelected ? 'border-white/20 bg-white/10 text-white' : 'border-[#d9d1c4] bg-white text-[#171717]'}`}
-                          >
+                          <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold ${isSelected ? 'border-white/20 bg-white/10 text-white' : 'border-[#d9d1c4] bg-white text-[#171717]'}`}>
                             {String(index + 1).padStart(2, '0')}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <div
-                                className={`flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-semibold ${isSelected ? 'border-white/20 bg-white/10 text-white' : 'border-[#d9d1c4] bg-[#f6f2ea] text-[#171717]'}`}
-                              >
-                                {agent.logoMark}
-                              </div>
-                              <div>
-                                <h4 className="text-lg font-semibold">{agent.name}</h4>
-                                <p className={`text-sm ${isSelected ? 'text-white/75' : 'text-[#6f695f]'}`}>{agent.headline}</p>
-                              </div>
-                            </div>
-                            {agent.capabilities && agent.capabilities.length > 0 && (
-                              <ul className={`mt-3 list-disc space-y-1 pl-5 text-sm ${isSelected ? 'text-white/80' : 'text-[#4b463f]'}`}>
-                                {agent.capabilities.slice(0, 3).map((capability) => (
-                                  <li key={capability}>{capability}</li>
-                                ))}
-                              </ul>
-                            )}
+                            <h4 className="text-lg font-semibold">{agent.name}</h4>
+                            <p className={`text-sm ${isSelected ? 'text-white/75' : 'text-[#6f695f]'}`}>{agent.headline}</p>
                           </div>
                           <Badge tone={isSelected ? 'new' : 'soft'}>{isSelected ? 'Selected' : 'Available'}</Badge>
                         </button>
@@ -652,139 +598,138 @@ export function SubmissionModal({
                   </div>
                 ) : (
                   <div className="mt-5 rounded-[24px] border border-[#d9d1c4] bg-white p-4 text-sm leading-7 text-[#4b463f]">
-                    {user
-                      ? 'You do not have any registered agents yet. Create one from the profile menu before submitting this report.'
-                      : 'Log in to load your registered agents before submitting.'}
+                    {user ? 'You do not have any registered agents yet.' : 'Log in to load your registered agents.'}
                   </div>
                 )}
               </section>
 
-              <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_220px]">
-                <label className="space-y-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Report title</span>
-                  <input
-                    type="text"
-                    value={form.title}
-                    onChange={(event) => updateForm('title', event.target.value)}
-                    placeholder="Brief description of the finding"
-                    className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
-                  />
-                </label>
-
-                <label className="space-y-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Severity</span>
-                  <select
-                    value={form.severity}
-                    onChange={(event) => updateForm('severity', event.target.value as Severity)}
-                    className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
-                  >
-                    <option value="CRITICAL">Critical</option>
-                    <option value="HIGH">High</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="LOW">Low</option>
-                  </select>
-                </label>
-              </div>
-
-              <div className="space-y-6 rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-6 text-[#171717]">
-                <label className="block space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Summary</p>
-                  <textarea
-                    rows={3}
-                    value={form.summary}
-                    onChange={(event) => updateForm('summary', event.target.value)}
-                    className="w-full rounded-[20px] border border-[#d9d1c4] bg-white px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[#171717]"
-                  />
-                </label>
-
-                <label className="block space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Impact</p>
-                  <textarea
-                    rows={3}
-                    value={form.impact}
-                    onChange={(event) => updateForm('impact', event.target.value)}
-                    className="w-full rounded-[20px] border border-[#d9d1c4] bg-white px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[#171717]"
-                  />
-                </label>
-
-                <label className="block space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Proof of concept</p>
-                  <textarea
-                    rows={4}
-                    value={form.proof}
-                    onChange={(event) => updateForm('proof', event.target.value)}
-                    className="w-full rounded-[20px] border border-[#d9d1c4] bg-white px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[#171717]"
-                  />
-                </label>
-              </div>
-
-              <div className="space-y-6 rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-6 shadow-[inset_0_2px_12px_rgba(23,23,23,0.03)]">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Vulnerable code and URLs</p>
-                  <Badge tone="success">Priority section</Badge>
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <label className="space-y-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Github / repository link</span>
-                    <input
-                      type="text"
-                      value={form.repositoryLinks}
-                      onChange={(event) => updateForm('repositoryLinks', event.target.value)}
-                      placeholder="https://github.com/..."
-                      className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
-                    />
-                  </label>
-
-                  <label className="space-y-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Contract / testnet URL</span>
-                    <input
-                      type="text"
-                      value={form.contractAddresses}
-                      onChange={(event) => updateForm('contractAddresses', event.target.value)}
-                      placeholder="0x... or scanner link"
-                      className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
-                    />
-                  </label>
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-[200px_minmax(0,1fr)]">
-                  <label className="space-y-2">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Error location</span>
-                    <input
-                      type="text"
-                      value={form.errorLocation}
-                      onChange={(event) => updateForm('errorLocation', event.target.value)}
-                      placeholder="File.sol:123"
-                      className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
-                    />
-                  </label>
-
-                  <label className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Vulnerable snippet</span>
-                      {selectedTarget?.sourceCode && (
-                        <button
-                          type="button"
-                          onClick={() => updateForm('codeSnippet', selectedTarget.sourceCode!)}
-                          className="text-[10px] font-bold uppercase tracking-widest text-[#315e50] hover:underline"
-                        >
-                          Reset to target code
-                        </button>
-                      )}
+              
+              {form.vulnerabilities.map((vuln, index) => (
+                  <section key={vuln.id} className="space-y-6 rounded-[28px] border border-[#d9d1c4] bg-white p-6 shadow-sm relative">
+                    <div className="flex items-center justify-between pb-4 border-b border-[#ebe4d8]">
+                        <h3 className="font-serif text-2xl text-[#171717]">Finding #{index + 1}</h3>
+                        {form.vulnerabilities.length > 1 && (
+                            <button type="button" onClick={() => removeVulnerability(vuln.id)} className="text-sm font-semibold text-[#dc2626] hover:underline">
+                                Remove finding
+                            </button>
+                        )}
                     </div>
-                    <textarea
-                      rows={10}
-                      value={form.codeSnippet}
-                      onChange={(event) => updateForm('codeSnippet', event.target.value)}
-                      placeholder="// Paste the vulnerable code snippet here"
-                      className="w-full rounded-[24px] border border-[#d9d1c4] bg-[#fafafa] p-5 font-mono text-[13px] leading-relaxed text-[#171717] outline-none transition focus:border-[#171717] focus:bg-white focus:shadow-[0_8px_32px_rgba(23,23,23,0.06)]"
-                    />
-                  </label>
-                </div>
+
+                    <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_220px]">
+                        <label className="space-y-2">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Finding title</span>
+                            <input
+                                type="text"
+                                value={vuln.title}
+                                onChange={(e) => updateVulnerability(vuln.id, 'title', e.target.value)}
+                                placeholder="Brief description of the finding"
+                                className="w-full rounded-2xl border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                            />
+                        </label>
+
+                        <label className="space-y-2">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Severity</span>
+                            <select
+                                value={vuln.severity}
+                                onChange={(e) => updateVulnerability(vuln.id, 'severity', e.target.value as Severity)}
+                                className="w-full rounded-2xl border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                            >
+                                <option value="CRITICAL">Critical</option>
+                                <option value="HIGH">High</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="LOW">Low</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <label className="block space-y-2">
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Target component</span>
+                        </div>
+                        <select
+                            value={vuln.targetId}
+                            onChange={(event) => updateVulnerability(vuln.id, 'targetId', event.target.value)}
+                            disabled={availableTargets.length === 0}
+                            className="w-full rounded-2xl border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                        >
+                            {availableTargets.length === 0 ? (
+                                <option value="">No scoped targets available</option>
+                            ) : (
+                                availableTargets.map((target) => (
+                                    <option key={target.id} value={target.id}>
+                                        {getScopeTargetSelectionLabel(target)}
+                                    </option>
+                                ))
+                            )}
+                        </select>
+                    </label>
+
+                    <div className="space-y-6">
+                        <label className="block space-y-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Summary</p>
+                        <textarea
+                            rows={3}
+                            value={vuln.summary}
+                            onChange={(e) => updateVulnerability(vuln.id, 'summary', e.target.value)}
+                            className="w-full rounded-[20px] border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[#171717]"
+                        />
+                        </label>
+
+                        <label className="block space-y-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Impact</p>
+                        <textarea
+                            rows={3}
+                            value={vuln.impact}
+                            onChange={(e) => updateVulnerability(vuln.id, 'impact', e.target.value)}
+                            className="w-full rounded-[20px] border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[#171717]"
+                        />
+                        </label>
+
+                        <label className="block space-y-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Proof of concept</p>
+                        <textarea
+                            rows={4}
+                            value={vuln.proof}
+                            onChange={(e) => updateVulnerability(vuln.id, 'proof', e.target.value)}
+                            className="w-full rounded-[20px] border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[#171717]"
+                        />
+                        </label>
+                    </div>
+
+                    <div className="grid gap-5 md:grid-cols-[200px_minmax(0,1fr)]">
+                        <label className="space-y-2">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Error location</span>
+                            <input
+                                type="text"
+                                value={vuln.errorLocation}
+                                onChange={(e) => updateVulnerability(vuln.id, 'errorLocation', e.target.value)}
+                                placeholder="File.sol:123"
+                                className="w-full rounded-2xl border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                            />
+                        </label>
+                        <label className="space-y-2">
+                            <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Vulnerable snippet</span>
+                            </div>
+                            <textarea
+                                rows={6}
+                                value={vuln.codeSnippet}
+                                onChange={(e) => updateVulnerability(vuln.id, 'codeSnippet', e.target.value)}
+                                placeholder="// Paste the vulnerable code snippet here"
+                                className="w-full rounded-[24px] border border-[#d9d1c4] bg-[#fafafa] p-5 font-mono text-[13px] leading-relaxed text-[#171717] outline-none focus:border-[#171717]"
+                            />
+                        </label>
+                    </div>
+                  </section>
+              ))}
+
+              <div className="flex justify-center pt-2 pb-6 border-b border-[#ebe4d8]">
+                  <Button type="button" variant="outline" size="lg" onClick={addVulnerability}>
+                      + Add another finding to this submission
+                  </Button>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#ebe4d8] pt-6">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
@@ -794,7 +739,7 @@ export function SubmissionModal({
                     className="h-4 w-4 accent-[#171717]"
                   />
                   <label htmlFor="agreed" className="cursor-pointer text-sm text-[#4b463f]">
-                    I confirm this report was discovered fairly and stays within scope.
+                    I confirm these findings were discovered fairly and stay within scope.
                   </label>
                 </div>
                 <div className="flex gap-3">
@@ -807,7 +752,7 @@ export function SubmissionModal({
                     size="md"
                     disabled={!form.reporterAgent.trim() || isGenerating}
                   >
-                    {isEditing ? 'Save changes' : user ? 'Submit report' : 'Log in to submit'}
+                    {isEditing ? 'Save changes' : user ? 'Submit multiple findings' : 'Log in to submit'}
                   </Button>
                 </div>
               </div>
@@ -861,26 +806,6 @@ export function SubmissionModal({
                   Choose one of your registered hunter agents before you submit the report.
                 </div>
               )}
-            </section>
-
-            <section className="rounded-[28px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
-                Submission status
-              </p>
-              <div className="mt-4 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-[#315e50]" />
-                  <p className="text-sm text-[#4b463f]">Triage SLA: {selectedProgram.responseSla}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-[#315e50]" />
-                  <p className="text-sm text-[#4b463f]">Registered agents: {ownedAgents.length}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-[#315e50]" />
-                  <p className="text-sm text-[#4b463f]">Program detail: {isLoadingProgramDetail ? 'Loading' : 'Ready'}</p>
-                </div>
-              </div>
             </section>
           </aside>
         </div>

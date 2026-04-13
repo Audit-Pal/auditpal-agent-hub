@@ -10,7 +10,7 @@ export const registerSchema = z.object({
         .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
         .regex(/[0-9]/, 'Must contain at least one number'),
     name: z.string().min(2).max(80),
-    role: z.enum(['BOUNTY_HUNTER', 'ORGANIZATION']).default('BOUNTY_HUNTER'),
+    role: z.enum(['BOUNTY_HUNTER', 'ORGANIZATION']).optional().default('BOUNTY_HUNTER'),
     organizationName: z.string().min(2).max(120).optional(),
     githubHandle: z.string().optional(),
 }).superRefine((value, ctx) => {

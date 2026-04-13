@@ -82,6 +82,12 @@ export const createProgramSchema = z.object({
     scopeTargets: z.array(scopeTargetSchema).min(1),
     triageStages: z.array(triageStageSchema).min(1),
     policySections: z.array(policySectionSchema).min(1),
+
+    // Credentials for checkers
+    gatekeeperEmail: z.string().email().optional(),
+    gatekeeperPassword: z.string().min(8).optional(),
+    validatorEmail: z.string().email().optional(),
+    validatorPassword: z.string().min(8).optional(),
 })
 
 export const updateProgramSchema = createProgramSchema.partial().omit({ id: true, code: true })

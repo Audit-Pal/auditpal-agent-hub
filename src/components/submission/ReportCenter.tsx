@@ -96,6 +96,8 @@ export function ReportCenter({
     const graphContext = report.structuredData?.graphContext
     const awaitingValidation = canValidate && ['AI_TRIAGED', 'TRIAGED', 'ESCALATED'].includes(report.status)
 
+    const primaryVuln = report.vulnerabilities?.[0]
+
     return (
       <article
         key={report.id}
@@ -105,9 +107,14 @@ export function ReportCenter({
           <div className="max-w-3xl">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="soft">{report.humanId}</Badge>
-              <Badge tone={getSeverityTone(report.severity)}>{formatEnum(report.severity)}</Badge>
+              {primaryVuln && (
+                <Badge tone={getSeverityTone(primaryVuln.severity)}>{formatEnum(primaryVuln.severity)}</Badge>
+              )}
               <Badge tone={getStatusTone(report.status)}>{formatEnum(report.status)}</Badge>
               <Badge tone="soft">{formatEnum(report.source)}</Badge>
+              {report.vulnerabilities?.length > 1 && (
+                <Badge tone="accent">+{report.vulnerabilities.length - 1} findings</Badge>
+              )}
             </div>
             <h2 className="mt-4 font-serif text-3xl leading-tight text-[#171717]">{report.title}</h2>
             <button
@@ -119,7 +126,7 @@ export function ReportCenter({
             <p className="mt-2 text-sm text-[#6f695f]">
               Submitted by {report.reporterName}{report.decisionOwner ? ` · Validator: ${report.decisionOwner}` : ''}
             </p>
-            <p className="mt-4 text-sm leading-7 text-[#4b463f]">{report.summary}</p>
+            {primaryVuln && <p className="mt-4 text-sm leading-7 text-[#4b463f]">{primaryVuln.summary}</p>}
 
             {onEditReport && isEditable(report, viewerRole, viewerId) && (
               <div className="mt-4">
@@ -142,8 +149,8 @@ export function ReportCenter({
 
         <div className="mt-5 grid gap-3 md:grid-cols-5">
           <div className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Target</p>
-            <p className="mt-2 text-sm text-[#171717]">{report.target}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Primary Target</p>
+            <p className="mt-2 text-sm text-[#171717]">{primaryVuln?.target || 'Unknown'}</p>
           </div>
           <div className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Route</p>
@@ -163,7 +170,7 @@ export function ReportCenter({
           </div>
         </div>
 
-        {(report.aiSummary || report.validationDecision || report.validationNotes || report.note) && (
+        {(report.aiSummary || report.note) && (
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             {report.aiSummary && (
               <div className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
@@ -171,27 +178,28 @@ export function ReportCenter({
                 <p className="mt-3 text-sm leading-7 text-[#4b463f]">{report.aiSummary}</p>
               </div>
             )}
-            {(report.validationDecision || report.validationNotes || report.note) && (
+            {report.note && (
               <div className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Human decision</p>
                 <p className="mt-3 text-sm leading-7 text-[#4b463f]">
-                  {report.validationDecision ? `Decision: ${formatEnum(report.validationDecision)}. ` : ''}
-                  {report.validationNotes || report.note || 'No validator note attached yet.'}
+                  {report.note || 'No validator note attached yet.'}
                 </p>
               </div>
             )}
           </div>
         )}
 
-        <div className="mt-5 rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Impact and proof notes</p>
-          <p className="mt-3 text-sm leading-7 text-[#4b463f]">
-            <span className="font-medium text-[#171717]">Impact:</span> {report.impact}
-          </p>
-          <p className="mt-2 text-sm leading-7 text-[#4b463f]">
-            <span className="font-medium text-[#171717]">Proof:</span> {report.proof}
-          </p>
-        </div>
+        {primaryVuln && (
+          <div className="mt-5 rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Primary finding details</p>
+            <p className="mt-3 text-sm leading-7 text-[#4b463f]">
+              <span className="font-medium text-[#171717]">Impact:</span> {primaryVuln.impact}
+            </p>
+            <p className="mt-2 text-sm leading-7 text-[#4b463f]">
+              <span className="font-medium text-[#171717]">Proof:</span> {primaryVuln.proof}
+            </p>
+          </div>
+        )}
 
         {(graphChips.length > 0 || graphContext) && (
           <div className="mt-5 rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
@@ -222,15 +230,15 @@ export function ReportCenter({
           </div>
         )}
 
-        {(report.errorLocation || report.codeSnippet) && (
+        {primaryVuln && (primaryVuln.errorLocation || primaryVuln.codeSnippet) && (
           <div className="mt-5 rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Code context</p>
-              {report.errorLocation && <Badge tone="soft">{report.errorLocation}</Badge>}
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Primary code context</p>
+              {primaryVuln.errorLocation && <Badge tone="soft">{primaryVuln.errorLocation}</Badge>}
             </div>
-            {report.codeSnippet && (
+            {primaryVuln.codeSnippet && (
               <pre className="mt-3 overflow-x-auto rounded-2xl border border-[#e6dfd3] bg-white p-4 text-sm leading-6 text-[#171717]">
-                <code>{report.codeSnippet}</code>
+                <code>{primaryVuln.codeSnippet}</code>
               </pre>
             )}
           </div>

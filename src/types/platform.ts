@@ -21,6 +21,8 @@ export type SubmissionStatus =
   | 'AI_TRIAGED'
   | 'ESCALATED'
   | 'ACCEPTED'
+
+export type VulnerabilityStatus = 'PENDING' | 'ESCALATED' | 'ACCEPTED' | 'REJECTED' | 'DUPLICATE'
 export type ScopeReferenceKind =
   | 'SOURCE_FILE'
   | 'GITHUB_REPO'
@@ -82,23 +84,46 @@ export interface ReportStructuredData {
   relations: readonly KnowledgeGraphRelation[]
 }
 
-export interface ReportSubmissionInput {
-  programId: string
-  reporterName: string
+export interface VulnerabilityInput {
   title: string
   severity: Severity
   target: string
   summary: string
   impact: string
   proof: string
-  source?: ReportSource
   codeSnippet?: string
   errorLocation?: string
+}
+
+export interface ReportSubmissionInput {
+  programId: string
+  reporterName: string
+  title: string
+  source?: ReportSource
+  vulnerabilities: VulnerabilityInput[]
   graphContext?: Partial<ReportGraphContext>
   knowledgeGraph?: {
     entities: readonly KnowledgeGraphEntity[]
     relations: readonly KnowledgeGraphRelation[]
   }
+}
+
+export interface Vulnerability {
+  id: string
+  reportId: string
+  title: string
+  severity: Severity
+  target: string
+  summary: string
+  impact: string
+  proof: string
+  status: VulnerabilityStatus
+  codeSnippet?: string | null
+  errorLocation?: string | null
+  validationDecision?: ValidationAction | null
+  validationNotes?: string | null
+  rewardPaidUsd?: number | null
+  rewardTxHash?: string | null
 }
 
 export interface DirectoryMetric {
@@ -297,11 +322,6 @@ export interface ResearcherReport {
   reporterId?: string | null
   reporterName: string
   title: string
-  severity: Severity
-  target: string
-  summary: string
-  impact: string
-  proof: string
   status: SubmissionStatus
   source: ReportSource
   route: string
@@ -313,11 +333,8 @@ export interface ResearcherReport {
   decisionOwner?: string | null
   rewardEstimateUsd?: number | null
   note?: string | null
-  codeSnippet?: string | null
-  errorLocation?: string | null
   structuredData?: ReportStructuredData | null
   aiScore?: number | null
   aiSummary?: string | null
-  validationDecision?: ValidationAction | null
-  validationNotes?: string | null
+  vulnerabilities: readonly Vulnerability[]
 }

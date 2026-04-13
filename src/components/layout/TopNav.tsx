@@ -25,6 +25,11 @@ const navItems: { label: string; path: string; active: (pathname: string) => boo
     path: '/agents/leaderboard',
     active: (path) => path.startsWith('/agent'),
   },
+  {
+    label: 'Org Workspace',
+    path: '/org/dashboard',
+    active: (path) => path.startsWith('/org/'),
+  },
 ]
 
 interface TopNavProps {
@@ -208,19 +213,30 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
           </Link>
 
           <nav className="flex flex-1 flex-wrap items-center justify-center gap-2">
-            {navItems.map((item) => {
-              const isActive = item.active(pathname)
+            {navItems
+              .filter(item => {
+                if (item.label === 'Bounties' && user?.role === 'ORGANIZATION') return false
+                if (item.label === 'Agent Leaderboard' && user?.role === 'ORGANIZATION') return false
+                if (item.label === 'Org Workspace') return user?.role === 'ORGANIZATION'
+                return true
+              })
+              .map((item) => {
+                const isActive = item.active(pathname)
+                const isOrg = item.label === 'Org Workspace'
 
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`rounded-full px-4 py-2.5 text-sm transition ${isActive
-                    ? 'bg-[#171717] !text-white'
-                    : 'text-[#5f5a51] hover:bg-[#f6f2ea] hover:text-[#171717]'
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`rounded-full px-4 py-2.5 text-sm transition font-semibold ${
+                      isActive
+                        ? 'bg-[#171717] !text-white'
+                        : isOrg
+                        ? 'border border-[#315e50] text-[#315e50] hover:bg-[#315e50] hover:text-white'
+                        : 'text-[#5f5a51] hover:bg-[#f6f2ea] hover:text-[#171717]'
                     }`}
-                >
-                  {item.label}
+                  >
+                    {item.label}
                   {item.path === '/reports' && reportCount > 0 && (
                     <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${isActive ? 'bg-white/15 !text-white' : 'bg-[#ebe4d8] !text-[#171717]'}`}>
                       {reportCount}
@@ -257,18 +273,22 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                       >
                         Profile
                       </button>
-                      <button
-                        onClick={() => setActiveProfileTab('api-key')}
-                        className={`flex-1 rounded-full px-4 py-1.5 text-xs font-semibold transition ${activeProfileTab === 'api-key' ? 'bg-[#171717] text-white' : 'text-[#7b7468] hover:bg-[#ebe4d8]'}`}
-                      >
-                        API Key
-                      </button>
-                      <button
-                        onClick={() => setActiveProfileTab('agents')}
-                        className={`flex-1 rounded-full px-4 py-1.5 text-xs font-semibold transition ${activeProfileTab === 'agents' ? 'bg-[#171717] text-white' : 'text-[#7b7468] hover:bg-[#ebe4d8]'}`}
-                      >
-                        Agents
-                      </button>
+                      {user?.role !== 'ORGANIZATION' && (
+                        <>
+                          <button
+                            onClick={() => setActiveProfileTab('api-key')}
+                            className={`flex-1 rounded-full px-4 py-1.5 text-xs font-semibold transition ${activeProfileTab === 'api-key' ? 'bg-[#171717] text-white' : 'text-[#7b7468] hover:bg-[#ebe4d8]'}`}
+                          >
+                            API Key
+                          </button>
+                          <button
+                            onClick={() => setActiveProfileTab('agents')}
+                            className={`flex-1 rounded-full px-4 py-1.5 text-xs font-semibold transition ${activeProfileTab === 'agents' ? 'bg-[#171717] text-white' : 'text-[#7b7468] hover:bg-[#ebe4d8]'}`}
+                          >
+                            Agents
+                          </button>
+                        </>
+                      )}
                     </div>
 
                     <div className="max-h-[60vh] overflow-y-auto pr-1">

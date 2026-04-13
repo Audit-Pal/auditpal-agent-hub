@@ -38,20 +38,15 @@ export const graphContextSchema = z.object({
     tags: z.array(z.string().trim().min(1)).default([]),
 })
 
-export const agentSubmitReportSchema = z.object({
-    programId: z.string().min(1),
+export const vulnerabilityItemSchema = z.object({
     title: z.string().min(5).max(200),
     severity: severityEnum,
     target: z.string().min(1),
     summary: z.string().min(20),
     impact: z.string().min(10),
     proof: z.string().min(10),
-    reporterName: z.string().min(2).max(100),
-    source: reportSourceEnum.default('CROWD_REPORT'),
-    codeSnippet: z.string().trim().min(10).optional(),
-    errorLocation: z.string().trim().min(3).optional(),
-    graphContext: graphContextSchema.optional(),
-    knowledgeGraph: knowledgeGraphSchema.optional(),
+    codeSnippet: z.string().trim().optional(),
+    errorLocation: z.string().trim().optional(),
 }).superRefine((value, ctx) => {
     if (value.codeSnippet && !value.errorLocation) {
         ctx.addIssue({
@@ -62,9 +57,20 @@ export const agentSubmitReportSchema = z.object({
     }
 })
 
+export const agentSubmitReportSchema = z.object({
+    programId: z.string().min(1),
+    title: z.string().min(5).max(200),
+    reporterName: z.string().min(2).max(100),
+    source: reportSourceEnum.default('CROWD_REPORT'),
+    vulnerabilities: z.array(vulnerabilityItemSchema).min(1),
+    graphContext: graphContextSchema.optional(),
+    knowledgeGraph: knowledgeGraphSchema.optional(),
+})
+
 export const validateReportSchema = z.object({
     action: z.enum(['ACCEPT', 'REJECT', 'ESCALATE']),
     notes: z.string().trim().max(2000).optional(),
+    rewardAmount: z.number().nonnegative().optional(),
 })
 
 export type AgentSubmitReportInput = z.infer<typeof agentSubmitReportSchema>

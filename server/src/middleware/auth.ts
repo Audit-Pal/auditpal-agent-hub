@@ -60,7 +60,7 @@ async function resolveApiKeyUser(apiKey: string): Promise<TokenPayload | null> {
 
 export const authMiddleware: MiddlewareHandler = async (c: Context, next: Next) => {
     const resolved = await resolveBearerUser(c.req.header('Authorization'))
-    if ('error' in resolved) return unauthorized(c, resolved.error)
+    if ('error' in resolved) return unauthorized(c, resolved.error as string)
 
     c.set('user', resolved.user)
     await next()

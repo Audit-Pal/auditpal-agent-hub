@@ -29,6 +29,8 @@ const reportInclude = {
             responseSla: true,
             payoutCurrency: true,
             ownerId: true,
+            gatekeeperId: true,
+            validatorId: true,
         },
     },
     reporter: {
@@ -38,6 +40,7 @@ const reportInclude = {
             email: true,
         },
     },
+    vulnerabilities: true,
 } satisfies Prisma.ReportInclude
 
 type ReportWithRelations = Prisma.ReportGetPayload<{ include: typeof reportInclude }>
@@ -77,7 +80,13 @@ function serializeReport(report: ReportWithRelations) {
 function canAccessReport(user: HonoEnv['Variables']['user'], report: ReportWithRelations) {
     if (user.role === 'ADMIN') return true
     if (user.role === 'BOUNTY_HUNTER') return report.reporterId === user.sub
-    return true
+    
+    // Organization-level isolation
+    if (user.role === 'ORGANIZATION') return report.program.ownerId === user.sub
+    if (user.role === 'GATEKEEPER') return report.program.gatekeeperId === user.sub
+    if (user.role === 'VALIDATOR') return report.program.validatorId === user.sub
+    
+    return false
 }
 
 function buildStructuredData(
@@ -114,15 +123,16 @@ function buildStructuredData(
         tags: normalizeList(body.graphContext?.tags),
     }
 
-    const findingId = 'finding:' + slugify(body.title)
+    const primaryVuln = body.vulnerabilities[0]
+    const findingId = 'finding:' + slugify(primaryVuln.title)
     const programEntityId = 'program:' + program.id
-    const targetEntityId = 'target:' + slugify(body.target)
+    const targetEntityId = 'target:' + slugify(primaryVuln.target)
     const componentName =
-        normalizeOptionalText(body.graphContext?.affectedComponent) ?? normalizeOptionalText(body.errorLocation) ?? body.target
+        normalizeOptionalText(body.graphContext?.affectedComponent) ?? normalizeOptionalText(primaryVuln.errorLocation) ?? primaryVuln.target
     const componentEntityId = 'component:' + slugify(componentName)
-    const assetName = normalizeOptionalText(body.graphContext?.affectedAsset) ?? body.target
+    const assetName = normalizeOptionalText(body.graphContext?.affectedAsset) ?? primaryVuln.target
     const assetEntityId = 'asset:' + slugify(assetName)
-    const vulnerabilityName = normalizeOptionalText(body.graphContext?.vulnerabilityClass) ?? body.title
+    const vulnerabilityName = normalizeOptionalText(body.graphContext?.vulnerabilityClass) ?? primaryVuln.title
     const vulnerabilityEntityId = 'vulnerability:' + slugify(vulnerabilityName)
     const reporterEntityId = 'reporter:' + slugify(body.reporterName)
     const agentName = normalizeOptionalText(body.graphContext?.reporterAgent)
@@ -132,12 +142,12 @@ function buildStructuredData(
         {
             id: findingId,
             type: 'Finding',
-            name: body.title,
+            name: primaryVuln.title,
             properties: {
-                severity: body.severity,
-                summary: body.summary,
-                impact: body.impact,
-                proof: body.proof,
+                severity: primaryVuln.severity,
+                summary: primaryVuln.summary,
+                impact: primaryVuln.impact,
+                proof: primaryVuln.proof,
                 source: body.source,
             },
         },
@@ -153,9 +163,9 @@ function buildStructuredData(
         {
             id: targetEntityId,
             type: 'Target',
-            name: body.target,
+            name: primaryVuln.target,
             properties: {
-                target: body.target,
+                target: primaryVuln.target,
             },
         },
         {
@@ -163,7 +173,7 @@ function buildStructuredData(
             type: 'Component',
             name: componentName,
             properties: {
-                ...(normalizeOptionalText(body.errorLocation) ? { errorLocation: normalizeOptionalText(body.errorLocation) } : {}),
+                ...(normalizeOptionalText(primaryVuln.errorLocation) ? { errorLocation: normalizeOptionalText(primaryVuln.errorLocation) } : {}),
             },
         },
         {
@@ -250,16 +260,16 @@ function buildStructuredData(
         version: 'report-kg-seed/v1',
         narrative: {
             title: body.title,
-            summary: body.summary,
-            impact: body.impact,
-            proof: body.proof,
-            severity: body.severity,
+            summary: primaryVuln.summary,
+            impact: primaryVuln.impact,
+            proof: primaryVuln.proof,
+            severity: primaryVuln.severity,
             source: body.source,
         },
         graphContext,
         artifacts: {
-            ...(normalizeOptionalText(body.codeSnippet) ? { codeSnippet: normalizeOptionalText(body.codeSnippet) } : {}),
-            ...(normalizeOptionalText(body.errorLocation) ? { errorLocation: normalizeOptionalText(body.errorLocation) } : {}),
+            ...(normalizeOptionalText(primaryVuln.codeSnippet) ? { codeSnippet: normalizeOptionalText(primaryVuln.codeSnippet) } : {}),
+            ...(normalizeOptionalText(primaryVuln.errorLocation) ? { errorLocation: normalizeOptionalText(primaryVuln.errorLocation) } : {}),
         },
         entities: dedupeByKey([...submittedEntities, ...derivedEntities], (entity) => entity.id),
         relations: dedupeByKey(
@@ -296,14 +306,15 @@ async function createReportFromSubmission(body: AgentSubmitReportInput, reporter
 
     const humanId = await generateHumanId(program.code)
     const structuredData = buildStructuredData(body, program)
+    const primaryVuln = body.vulnerabilities[0]
     const effort = assessReportEffort({
-        title: body.title,
-        summary: body.summary,
-        impact: body.impact,
-        proof: body.proof,
-        severity: body.severity,
-        codeSnippet: body.codeSnippet,
-        errorLocation: body.errorLocation,
+        title: primaryVuln.title,
+        summary: primaryVuln.summary,
+        impact: primaryVuln.impact,
+        proof: primaryVuln.proof,
+        severity: primaryVuln.severity,
+        codeSnippet: primaryVuln.codeSnippet,
+        errorLocation: primaryVuln.errorLocation,
         graphContext: structuredData.graphContext,
     })
 
@@ -313,16 +324,21 @@ async function createReportFromSubmission(body: AgentSubmitReportInput, reporter
         reporterId,
         reporterName: body.reporterName,
         title: body.title,
-        severity: body.severity,
-        target: body.target,
-        summary: body.summary,
-        impact: body.impact,
-        proof: body.proof,
         source: body.source,
         responseSla: program.responseSla,
-        codeSnippet: normalizeOptionalText(body.codeSnippet),
-        errorLocation: normalizeOptionalText(body.errorLocation),
         structuredData: structuredData as Prisma.InputJsonValue,
+        vulnerabilities: {
+            create: body.vulnerabilities.map(v => ({
+                title: v.title,
+                severity: v.severity,
+                target: v.target,
+                summary: v.summary,
+                impact: v.impact,
+                proof: v.proof,
+                codeSnippet: normalizeOptionalText(v.codeSnippet),
+                errorLocation: normalizeOptionalText(v.errorLocation),
+            }))
+        }
     }
 
     if (effort.isLowEffort) {
@@ -341,13 +357,13 @@ async function createReportFromSubmission(body: AgentSubmitReportInput, reporter
     }
 
     const aiResult = await runAiTriage({
-        title: body.title,
-        summary: body.summary,
-        impact: body.impact,
-        proof: body.proof,
-        severity: body.severity,
-        codeSnippet: body.codeSnippet,
-        errorLocation: body.errorLocation,
+        title: primaryVuln.title,
+        summary: primaryVuln.summary,
+        impact: primaryVuln.impact,
+        proof: primaryVuln.proof,
+        severity: primaryVuln.severity,
+        codeSnippet: primaryVuln.codeSnippet,
+        errorLocation: primaryVuln.errorLocation,
         graphContext: structuredData.graphContext,
     })
 
@@ -372,9 +388,11 @@ reportRoutes.get('/', authMiddleware, zValidator('query', reportQuerySchema), as
 
     const where: Prisma.ReportWhereInput = {
         ...(user.role === 'BOUNTY_HUNTER' ? { reporterId: user.sub } : {}),
+        ...(user.role === 'ORGANIZATION' ? { program: { ownerId: user.sub } } : {}),
+        ...(user.role === 'GATEKEEPER' ? { program: { gatekeeperId: user.sub } } : {}),
+        ...(user.role === 'VALIDATOR' ? { program: { validatorId: user.sub } } : {}),
         ...(q.programId ? { programId: q.programId } : {}),
         ...(q.status ? { status: q.status } : {}),
-        ...(q.severity ? { severity: q.severity } : {}),
     }
 
     const skip = (q.page - 1) * q.limit
@@ -477,6 +495,55 @@ reportRoutes.post(
     }
 )
 
+// ── GET /reports/escalated ─────────────────────────────────────────────────────
+reportRoutes.get('/escalated', authMiddleware, requireRole('VALIDATOR', 'ADMIN'), async (c) => {
+    const reports = await prisma.report.findMany({
+        where: { status: 'ESCALATED' },
+        include: reportInclude,
+        orderBy: { updatedAt: 'desc' },
+    })
+    return successResponse(c, reports.map(serializeReport))
+})
+
+// ── POST /vulnerabilities/:id/validate ──────────────────────────────────────
+reportRoutes.post('/vulnerabilities/:id/validate', authMiddleware, requireRole('GATEKEEPER', 'VALIDATOR', 'ADMIN'), zValidator('json', validateReportSchema), async (c) => {
+    const { id } = c.req.param()
+    const { action, notes, rewardAmount } = c.req.valid('json')
+    const user = c.get('user')
+
+    const vulnerability = await prisma.vulnerability.findUnique({
+        where: { id },
+    })
+
+    if (!vulnerability) return errorResponse(c, 404, 'Vulnerability not found')
+
+    const statusMap = {
+        ACCEPT: 'ACCEPTED',
+        REJECT: 'REJECTED',
+        ESCALATE: 'ESCALATED',
+    } as const
+
+    const isAccepted = action === 'ACCEPT'
+    const mockTxHash = isAccepted && rewardAmount ? '0x' + Math.random().toString(16).substring(2, 42) : null
+
+    const updated = await prisma.vulnerability.update({
+        where: { id },
+        data: {
+            status: statusMap[action] || 'PENDING',
+            validationDecision: action,
+            validationNotes: notes || null,
+            ...(isAccepted ? { rewardPaidUsd: rewardAmount || 0, rewardTxHash: mockTxHash } : {}),
+        },
+    })
+
+    const report = await prisma.report.findUnique({
+        where: { id: updated.reportId },
+        include: reportInclude,
+    })
+
+    return successResponse(c, serializeReport(report as any))
+})
+
 reportRoutes.post(
     '/:id/validate',
     authMiddleware,
@@ -499,21 +566,16 @@ reportRoutes.post(
             return errorResponse(c, 400, 'Only triaged reports can be validated')
         }
 
-        const validator = await prisma.user.findUnique({
+        const validatorUser = await prisma.user.findUnique({
             where: { id: user.sub },
             select: { name: true, organizationName: true },
         })
 
-        const decisionOwner = validator?.organizationName ?? validator?.name ?? user.email
+        const decisionOwner = validatorUser?.organizationName ?? validatorUser?.name ?? user.email
         const statusMap = {
             ACCEPT: 'ACCEPTED',
             REJECT: 'REJECTED',
             ESCALATE: 'ESCALATED',
-        } as const
-        const nextActionMap = {
-            ACCEPT: 'Accepted by the organization validator and kept for downstream bounty processing.',
-            REJECT: 'Rejected by the organization validator and closed in the queue.',
-            ESCALATE: 'Escalated by the organization validator for lead security review.',
         } as const
 
         const updated = await prisma.report.update({
@@ -521,11 +583,51 @@ reportRoutes.post(
             data: {
                 status: statusMap[body.action],
                 decisionOwner,
-                validationDecision: body.action,
-                validationNotes: normalizeOptionalText(body.notes),
                 note: normalizeOptionalText(body.notes) ?? report.note,
-                nextAction: nextActionMap[body.action],
-                ...(body.action === 'ESCALATE' ? {} : { resolvedAt: new Date() }),
+                ...(body.action === 'ESCALATE' ? { route: 'Escalated to expert validator' } : { resolvedAt: new Date() }),
+            },
+            include: reportInclude,
+        })
+
+        return successResponse(c, serializeReport(updated))
+    }
+)
+
+// ── POST /reports/:id/finalize ────────────────────────────────────────────────
+reportRoutes.post(
+    '/:id/finalize',
+    authMiddleware,
+    requireRole('VALIDATOR', 'ADMIN'),
+    async (c) => {
+        // We'll validate manually since async import in zValidator is tricky
+        const body = await c.req.json()
+        const { finalizeReportSchema } = await import('../../schemas/report.schema')
+        const result = finalizeReportSchema.safeParse(body)
+        if (!result.success) return errorResponse(c, 400, 'Invalid request body')
+        const validBody = result.data
+        const user = c.get('user')
+
+        const { id } = c.req.param()
+        const report = await prisma.report.findUnique({
+            where: { id },
+            include: reportInclude,
+        })
+
+        if (!report) return errorResponse(c, 404, 'Report not found')
+
+        if (!['ESCALATED', 'ACCEPTED'].includes(report.status)) {
+            return errorResponse(c, 400, 'Report must be escalated or accepted to be finalized')
+        }
+
+        const mockTxHash = '0x' + Math.random().toString(16).substring(2, 42)
+
+        const updated = await prisma.report.update({
+            where: { id: report.id },
+            data: {
+                status: 'RESOLVED',
+                note: body.notes ?? report.note,
+                resolvedAt: new Date(),
+                decisionOwner: 'Platform Validator',
             },
             include: reportInclude,
         })
@@ -562,13 +664,6 @@ reportRoutes.patch(
             where: { id },
             data: {
                 title: body.title,
-                severity: body.severity,
-                target: body.target,
-                summary: body.summary,
-                impact: body.impact,
-                proof: body.proof,
-                codeSnippet: body.codeSnippet,
-                errorLocation: body.errorLocation,
             },
             include: reportInclude,
         })

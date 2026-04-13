@@ -787,29 +787,116 @@ async function main() {
         },
     })
 
-    const organizationUser = await prisma.user.upsert({
-        where: { email: 'org@auditpal.io' },
+    console.log('   → Seeding demo organizations...')
+
+    const atlasOrg = await prisma.user.upsert({
+        where: { email: 'org@atlas.io' },
         update: {
             passwordHash: await Bun.password.hash('Org1234!'),
-            name: 'Atlas Validator',
+            name: 'Atlas Administrator',
             role: 'ORGANIZATION',
             organizationName: 'Atlas Labs',
-            reputation: 1200,
+            reputation: 1500,
         },
         create: {
-            email: 'org@auditpal.io',
+            email: 'org@atlas.io',
             passwordHash: await Bun.password.hash('Org1234!'),
-            name: 'Atlas Validator',
+            name: 'Atlas Administrator',
             role: 'ORGANIZATION',
             organizationName: 'Atlas Labs',
-            reputation: 1200,
+            reputation: 1500,
         },
     })
 
-    await prisma.program.updateMany({
-        where: { ownerId: null },
-        data: { ownerId: organizationUser.id },
+    const nebulaOrg = await prisma.user.upsert({
+        where: { email: 'org@nebula.io' },
+        update: {
+            passwordHash: await Bun.password.hash('Org1234!'),
+            name: 'Nebula Security Lead',
+            role: 'ORGANIZATION',
+            organizationName: 'Nebula Security',
+            reputation: 1100,
+        },
+        create: {
+            email: 'org@nebula.io',
+            passwordHash: await Bun.password.hash('Org1234!'),
+            name: 'Nebula Security Lead',
+            role: 'ORGANIZATION',
+            organizationName: 'Nebula Security',
+            reputation: 1100,
+        },
     })
+
+    const openledgerOrg = await prisma.user.upsert({
+        where: { email: 'org@openledger.io' },
+        update: {
+            passwordHash: await Bun.password.hash('Org1234!'),
+            name: 'OpenLedger Governor',
+            role: 'ORGANIZATION',
+            organizationName: 'OpenLedger',
+            reputation: 1300,
+        },
+        create: {
+            email: 'org@openledger.io',
+            passwordHash: await Bun.password.hash('Org1234!'),
+            name: 'OpenLedger Governor',
+            role: 'ORGANIZATION',
+            organizationName: 'OpenLedger',
+            reputation: 1300,
+        },
+    })
+
+    // Assign programs to their respective owners
+    await prisma.program.update({
+        where: { id: 'atlas-bridge-smart-contracts' },
+        data: { ownerId: atlasOrg.id }
+    })
+    await prisma.program.update({
+        where: { id: 'nebula-wallet-web-mobile' },
+        data: { ownerId: nebulaOrg.id }
+    })
+    await prisma.program.update({
+        where: { id: 'openledger-treasury-guard' },
+        data: { ownerId: openledgerOrg.id }
+    })
+
+    // Seed some reports for testing isolation
+    console.log('   → Seeding test reports...')
+    const hunter = await prisma.user.findUnique({ where: { email: 'hunter@auditpal.io' } })
+    
+    if (hunter) {
+        // Report for Atlas
+        await prisma.report.upsert({
+            where: { humanId: 'AP-1021-R001' },
+            update: {},
+            create: {
+                humanId: 'AP-1021-R001',
+                programId: 'atlas-bridge-smart-contracts',
+                reporterId: hunter.id,
+                reporterName: hunter.name,
+                title: 'Critical reentrancy in FinalityInbox',
+                status: 'AI_TRIAGED',
+                aiScore: 9.8,
+                aiSummary: 'Potential for direct fund theft via cross-chain message reentrancy.',
+            }
+        })
+
+        // Report for OpenLedger
+        await prisma.report.upsert({
+            where: { humanId: 'OG-3310-R001' },
+            update: {},
+            create: {
+                humanId: 'OG-3310-R001',
+                programId: 'openledger-treasury-guard',
+                reporterId: hunter.id,
+                reporterName: hunter.name,
+                title: 'Approval path weakness in governor',
+                status: 'ACCEPTED',
+                aiScore: 8.5,
+                aiSummary: 'Drafted proposals can skip certain human policy gates under specific conditions.',
+            }
+        })
+    }
 
     console.log('✅ Seed complete.')
 }
