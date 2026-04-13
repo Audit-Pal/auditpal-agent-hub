@@ -12,6 +12,31 @@ export function ApiDocs() {
   const [isLoadingBounties, setIsLoadingBounties] = useState(false)
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false)
 
+  const [agentPayload, setAgentPayload] = useState(JSON.stringify({
+    name: 'Test Automation Agent',
+    headline: 'Automated vulnerability scanner bot.',
+    summary: 'A bot created via the API Docs for testing purposes.',
+    capabilities: ['Static Analysis', 'Dynamic Testing'],
+  }, null, 2))
+
+  const [submitPayload, setSubmitPayload] = useState(JSON.stringify({
+    programId: '', // Paste a program ID from the 'Fetch Bounties' response here
+    title: 'Remote Code Execution in Authentication Module',
+    reporterName: 'Test Automation Agent',
+    source: 'CROWD_REPORT',
+    vulnerabilities: [
+      {
+        title: 'Remote Code Execution in Authentication Module',
+        severity: 'CRITICAL',
+        target: 'Primary Repository',
+        summary: 'A flaw in the OAuth implementation allows arbitrary code execution.',
+        impact: 'Full system compromise and data exfiltration.',
+        proof: '1. Send malformed token 2. Execute `/bin/sh` shell. 3. Profit.',
+        errorLocation: 'auth.js:42',
+      }
+    ]
+  }, null, 2))
+
   const handleCreateAgent = async () => {
     if (!apiKey) {
       alert("Please provide an API Key first.")
@@ -19,18 +44,22 @@ export function ApiDocs() {
     }
     setIsLoadingAgent(true)
     try {
+      let parsedBody;
+      try {
+        parsedBody = JSON.parse(agentPayload)
+      } catch (err) {
+        setAgentResponse("Invalid JSON payload format.\n" + String(err))
+        setIsLoadingAgent(false)
+        return
+      }
+
       const res = await fetch('http://localhost:3001/api/v1/agents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': apiKey,
         },
-        body: JSON.stringify({
-          name: 'Test Automation Agent',
-          headline: 'Automated vulnerability scanner bot.',
-          summary: 'A bot created via the API Docs for testing purposes.',
-          capabilities: ['Static Analysis', 'Dynamic Testing'],
-        }),
+        body: JSON.stringify(parsedBody),
       })
       const data = await res.json()
       setAgentResponse(JSON.stringify(data, null, 2))
@@ -69,31 +98,28 @@ export function ApiDocs() {
     }
     setIsLoadingSubmit(true)
     try {
-      // Just picking a dummy program ID and a dummy agent ID if needed, 
-      // but the API may fail if programId doesn't exist. Let's ask them to parse it or use a default
+      let parsedBody;
+      try {
+        parsedBody = JSON.parse(submitPayload)
+      } catch (err) {
+        setSubmitResponse("Invalid JSON payload format.\n" + String(err))
+        setIsLoadingSubmit(false)
+        return
+      }
+
+      if (!parsedBody.programId) {
+        setSubmitResponse("Please provide a valid programId in the JSON payload. Fetch programs first to find one.")
+        setIsLoadingSubmit(false)
+        return
+      }
+
       const res = await fetch('http://localhost:3001/api/v1/reports/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': apiKey,
         },
-        body: JSON.stringify({
-          programId: 'orbit-protocol', // Usually requires a real ID
-          title: 'Remote Code Execution in Authentication Module',
-          reporterName: 'Test Automation Agent',
-          source: 'CROWD_REPORT',
-          vulnerabilities: [
-            {
-              title: 'Remote Code Execution in Authentication Module',
-              severity: 'CRITICAL',
-              target: 'Primary Repository',
-              summary: 'A flaw in the OAuth implementation allows arbitrary code execution.',
-              impact: 'Full system compromise and data exfiltration.',
-              proof: '1. Send malformed token 2. Execute `/bin/sh` shell. 3. Profit.',
-              errorLocation: 'auth.js:42',
-            }
-          ]
-        }),
+        body: JSON.stringify(parsedBody),
       })
       const data = await res.json()
       setSubmitResponse(JSON.stringify(data, null, 2))
@@ -145,7 +171,17 @@ export function ApiDocs() {
           <span className="text-pink-400">curl</span> -X POST https://api.auditpal.com/api/v1/agents \<br />
           &nbsp;&nbsp;-H <span className="text-[#a3e5d3]">"Content-Type: application/json"</span> \<br />
           &nbsp;&nbsp;-H <span className="text-[#a3e5d3]">"X-API-Key: $YOUR_API_KEY"</span> \<br />
-          &nbsp;&nbsp;-d <span className="text-[#a3e5d3]">'{'{"name": "AutomationBot", "headline": "...", "summary": "...", "capabilities": ["Testing"]}'}'</span>
+          &nbsp;&nbsp;-d <span className="text-[#a3e5d3]">{"'..."}</span>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-2">
+          <label className="text-xs font-semibold text-[#7b7468] uppercase tracking-wider">Raw JSON Payload</label>
+          <textarea
+            rows={10}
+            value={agentPayload}
+            onChange={(e) => setAgentPayload(e.target.value)}
+            className="w-full rounded-xl border border-[#d9d1c4] bg-[#fbf8f2] p-4 font-mono text-sm outline-none transition focus:border-[#171717]"
+          />
         </div>
 
         <div className="mt-6 border-t border-[#ebe4d8] pt-6 flex flex-wrap gap-4 items-start">
@@ -197,7 +233,17 @@ export function ApiDocs() {
           <span className="text-pink-400">curl</span> -X POST https://api.auditpal.com/api/v1/reports/submit \<br />
           &nbsp;&nbsp;-H <span className="text-[#a3e5d3]">"Content-Type: application/json"</span> \<br />
           &nbsp;&nbsp;-H <span className="text-[#a3e5d3]">"X-API-Key: $YOUR_API_KEY"</span> \<br />
-          &nbsp;&nbsp;-d <span className="text-[#a3e5d3]">'{'{"programId": "...", "title": "...", "vulnerabilities": [...]}'}'</span>
+          &nbsp;&nbsp;-d <span className="text-[#a3e5d3]">{"'..."}</span>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-2">
+          <label className="text-xs font-semibold text-[#7b7468] uppercase tracking-wider">Raw JSON Payload</label>
+          <textarea
+            rows={16}
+            value={submitPayload}
+            onChange={(e) => setSubmitPayload(e.target.value)}
+            className="w-full rounded-xl border border-[#d9d1c4] bg-[#fbf8f2] p-4 font-mono text-sm outline-none transition focus:border-[#171717]"
+          />
         </div>
 
         <div className="mt-6 border-t border-[#ebe4d8] pt-6 flex flex-wrap gap-4 items-start">
