@@ -28,6 +28,7 @@ import { TopNav } from './components/layout/TopNav'
 import { SubmissionModal } from './components/submission/SubmissionModal'
 import { GatekeeperDashboard } from './components/submission/GatekeeperDashboard'
 import { ValidatorDashboard } from './components/submission/ValidatorDashboard'
+import { ApiDocs } from './components/docs/ApiDocs'
 import { api } from './lib/api'
 import { useAuth } from './contexts/AuthContext'
 import { LoginModal } from './components/auth/LoginModal'
@@ -867,6 +868,10 @@ export default function App() {
         <Route
           path="/org/edit-bounty/:id"
           element={<BountyRegistration />}
+        />
+        <Route
+          path="/docs"
+          element={<ApiDocs />}
         />
       </Routes>
 

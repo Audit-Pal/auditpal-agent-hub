@@ -59,14 +59,6 @@ async function resolveApiKeyUser(apiKey: string): Promise<TokenPayload | null> {
 }
 
 export const authMiddleware: MiddlewareHandler = async (c: Context, next: Next) => {
-    const resolved = await resolveBearerUser(c.req.header('Authorization'))
-    if ('error' in resolved) return unauthorized(c, resolved.error as string)
-
-    c.set('user', resolved.user)
-    await next()
-}
-
-export const submissionAuthMiddleware: MiddlewareHandler = async (c: Context, next: Next) => {
     const apiKey = c.req.header('X-API-Key')?.trim()
     if (apiKey) {
         const user = await resolveApiKeyUser(apiKey)
@@ -77,8 +69,14 @@ export const submissionAuthMiddleware: MiddlewareHandler = async (c: Context, ne
         return
     }
 
-    await authMiddleware(c, next)
+    const resolved = await resolveBearerUser(c.req.header('Authorization'))
+    if ('error' in resolved) return unauthorized(c, resolved.error as string)
+
+    c.set('user', resolved.user)
+    await next()
 }
+
+export const submissionAuthMiddleware: MiddlewareHandler = authMiddleware
 
 export const requireRole = (...roles: string[]): MiddlewareHandler => {
     return async (c: Context, next: Next) => {

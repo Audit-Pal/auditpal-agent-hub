@@ -26,6 +26,11 @@ const navItems: { label: string; path: string; active: (pathname: string) => boo
     active: (path) => path.startsWith('/agent'),
   },
   {
+    label: 'API Docs',
+    path: '/docs',
+    active: (path) => path.startsWith('/docs'),
+  },
+  {
     label: 'Org Workspace',
     path: '/org/dashboard',
     active: (path) => path.startsWith('/org/'),
@@ -217,6 +222,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
               .filter(item => {
                 if (item.label === 'Bounties' && user?.role === 'ORGANIZATION') return false
                 if (item.label === 'Agent Leaderboard' && user?.role === 'ORGANIZATION') return false
+                if (item.label === 'API Docs' && user?.role === 'ORGANIZATION') return false
                 if (item.label === 'Org Workspace') return user?.role === 'ORGANIZATION'
                 return true
               })
