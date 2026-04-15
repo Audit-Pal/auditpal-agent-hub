@@ -366,20 +366,20 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+      <section className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Agent intake</p>
-            <h2 className="mt-4 font-serif text-4xl text-[#171717] md:text-5xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Agent intake</p>
+            <h2 className="mt-4 font-serif text-4xl text-[var(--text)] md:text-5xl">
               Send a GitHub target into {agent.name}.
             </h2>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-[#4b463f]">
+            <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-soft)]">
               Paste a GitHub profile or repository link, then click the categories you care about. The workbench will parse the link, infer likely surfaces, and prepare a vulnerability-oriented brief.
             </p>
 
             <div className="mt-6 grid gap-5">
               <label className="space-y-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">GitHub link</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">GitHub link</span>
                 <input
                   type="text"
                   value={githubLink}
@@ -388,13 +388,13 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
                     setAnalysisStarted(false)
                   }}
                   placeholder="https://github.com/org/repo/tree/main/contracts"
-                  className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition placeholder:text-[#989286] focus:border-[#171717]"
+                  className="w-full rounded-2xl border border-[var(--border)] bg-[rgba(9,18,27,0.88)] px-4 py-3 text-sm text-[var(--text)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[rgba(56,217,178,0.32)]"
                 />
-                {error && <p className="text-sm text-[#9f3d28]">{error}</p>}
+                {error && <p className="text-sm text-[var(--critical-text)]">{error}</p>}
               </label>
 
               <label className="space-y-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Research note</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">Research note</span>
                 <textarea
                   rows={4}
                   value={repoNotes}
@@ -403,14 +403,14 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
                     setAnalysisStarted(false)
                   }}
                   placeholder="Optional context: known attack surface, suspected component, or why this repo matters."
-                  className="w-full rounded-[24px] border border-[#d9d1c4] bg-white px-4 py-3 text-sm leading-7 text-[#171717] outline-none transition placeholder:text-[#989286] focus:border-[#171717]"
+                  className="w-full rounded-[24px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] px-4 py-3 text-sm leading-7 text-[var(--text)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[rgba(56,217,178,0.32)]"
                 />
               </label>
             </div>
 
             <div className="mt-6 space-y-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Suggested categories</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">Suggested categories</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {suggestedCategories.map((categoryId) => {
                     const category = categoryCatalog.find((item) => item.id === categoryId)
@@ -426,8 +426,8 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
                         key={category.id}
                         onClick={() => toggleCategory(category.id)}
                         className={`rounded-full border px-4 py-2 text-sm transition ${isSelected
-                          ? 'border-[#171717] bg-[#171717] text-white'
-                          : 'border-[#d9d1c4] bg-white text-[#171717] hover:border-[#171717]'
+                          ? 'border-[rgba(56,217,178,0.28)] bg-[linear-gradient(135deg,rgba(30,186,152,1),rgba(7,79,70,0.94))] text-[#021614]'
+                          : 'border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-[var(--text)] hover:border-[rgba(56,217,178,0.24)]'
                           }`}
                       >
                         {category.label}
@@ -438,7 +438,7 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
               </div>
 
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">More categories if needed</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">More categories if needed</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {categoryCatalog.map((category) => {
                     const isSelected = activeCategories.includes(category.id)
@@ -448,8 +448,8 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
                         key={category.id}
                         onClick={() => toggleCategory(category.id)}
                         className={`rounded-full border px-4 py-2 text-sm transition ${isSelected
-                          ? 'border-[#315e50] bg-[#eef5f2] text-[#315e50]'
-                          : 'border-[#d9d1c4] bg-[#fbf8f2] text-[#5f5a51] hover:border-[#171717] hover:text-[#171717]'
+                          ? 'border-[rgba(56,217,178,0.28)] bg-[rgba(30,186,152,0.14)] text-[var(--accent-strong)]'
+                          : 'border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-soft)] hover:border-[rgba(56,217,178,0.24)] hover:text-[var(--text)]'
                           }`}
                       >
                         {category.label}
@@ -485,8 +485,8 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
           </div>
 
           <aside className="space-y-4">
-            <section className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Agent fit</p>
+            <section className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">Agent fit</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {(agent.supportedSurfaces || []).map((surface) => (
                   <Badge key={surface} tone="soft">
@@ -503,25 +503,25 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Parsed GitHub target</p>
+            <section className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">Parsed GitHub target</p>
               {parsed ? (
-                <div className="mt-4 space-y-3 text-sm text-[#4b463f]">
-                  <div className="rounded-[20px] border border-[#e6dfd3] bg-white p-4">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Owner</p>
-                    <p className="mt-2 text-[#171717]">{parsed.owner}</p>
+                <div className="mt-4 space-y-3 text-sm text-[var(--text-soft)]">
+                  <div className="rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Owner</p>
+                    <p className="mt-2 text-[var(--text)]">{parsed.owner}</p>
                   </div>
-                  <div className="rounded-[20px] border border-[#e6dfd3] bg-white p-4">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Scope</p>
-                    <p className="mt-2 text-[#171717]">
+                  <div className="rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Scope</p>
+                    <p className="mt-2 text-[var(--text)]">
                       {parsed.kind === 'repo' ? `${parsed.owner}/${parsed.repo}` : `${parsed.owner} profile`}
                     </p>
-                    {parsed.branch && <p className="mt-2 text-[#5f5a51]">Branch: {parsed.branch}</p>}
-                    {parsed.path && <p className="mt-1 text-[#5f5a51]">Path: {parsed.path}</p>}
+                    {parsed.branch && <p className="mt-2 text-[var(--text-soft)]">Branch: {parsed.branch}</p>}
+                    {parsed.path && <p className="mt-1 text-[var(--text-soft)]">Path: {parsed.path}</p>}
                   </div>
                 </div>
               ) : (
-                <p className="mt-4 text-sm leading-7 text-[#5f5a51]">
+                <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">
                   Paste a GitHub link and the workbench will break the target into owner, repository, branch, and path context before analysis starts.
                 </p>
               )}
@@ -533,44 +533,44 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
       {analysisStarted && (
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
-            <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Active investigation categories</p>
+            <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Active investigation categories</p>
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 {activeCategoryDetails.map((category) => (
-                  <div key={category.id} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                    <p className="text-lg font-semibold text-[#171717]">{category.label}</p>
-                    <p className="mt-3 text-sm leading-7 text-[#4b463f]">{category.description}</p>
+                  <div key={category.id} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <p className="text-lg font-semibold text-[var(--text)]">{category.label}</p>
+                    <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{category.description}</p>
                   </div>
                 ))}
               </div>
             </article>
 
-            <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Vulnerability leads</p>
+            <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Vulnerability leads</p>
               <div className="mt-5 grid gap-4 md:grid-cols-2">
                 {vulnerabilityLeads.map((lead) => (
-                  <div key={lead} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                    <p className="text-sm leading-7 text-[#4b463f]">{lead}</p>
+                  <div key={lead} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <p className="text-sm leading-7 text-[var(--text-soft)]">{lead}</p>
                   </div>
                 ))}
               </div>
             </article>
 
-            <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Best matching bounties</p>
+            <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Best matching bounties</p>
               <div className="mt-5 space-y-4">
                 {recommendedPrograms.map(({ program, link, score }) => (
-                  <div key={program.id} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
+                  <div key={program.id} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
-                        <h3 className="text-xl font-semibold text-[#171717]">{program.name}</h3>
-                        <p className="mt-1 text-sm text-[#6f695f]">{program.company} · {formatEnum(program.kind)}</p>
+                        <h3 className="text-xl font-semibold text-[var(--text)]">{program.name}</h3>
+                        <p className="mt-1 text-sm text-[var(--text-soft)]">{program.company} · {formatEnum(program.kind)}</p>
                       </div>
                       <Badge tone={score > 0 ? 'accent' : 'soft'}>
                         {score > 0 ? `Match ${score}` : 'Context link'}
                       </Badge>
                     </div>
-                    <p className="mt-4 text-sm leading-7 text-[#4b463f]">{link.purpose}</p>
+                    <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">{link.purpose}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {(program.categories || []).map((category) => (
                         <Badge key={category} tone="soft">
@@ -585,11 +585,11 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
           </div>
 
           <aside className="space-y-4 xl:sticky xl:top-28 xl:self-start">
-            <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Analysis brief</p>
-              <div className="mt-4 space-y-4 text-sm leading-7 text-[#4b463f]">
+            <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Analysis brief</p>
+              <div className="mt-4 space-y-4 text-sm leading-7 text-[var(--text-soft)]">
                 <p>
-                  <span className="font-medium text-[#171717]">Target:</span>{' '}
+                  <span className="font-medium text-[var(--text)]">Target:</span>{' '}
                   {parsed
                     ? parsed.kind === 'repo'
                       ? `${parsed.owner}/${parsed.repo}${parsed.path ? ` · ${parsed.path}` : ''}`
@@ -597,36 +597,36 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
                     : 'No parsed target'}
                 </p>
                 <p>
-                  <span className="font-medium text-[#171717]">Agent role:</span> {agent.summary}
+                  <span className="font-medium text-[var(--text)]">Agent role:</span> {agent.summary}
                 </p>
                 {repoNotes.trim() && (
                   <p>
-                    <span className="font-medium text-[#171717]">Research note:</span> {repoNotes.trim()}
+                    <span className="font-medium text-[var(--text)]">Research note:</span> {repoNotes.trim()}
                   </p>
                 )}
               </div>
             </section>
 
             {activeCategories.includes('smart-contracts') && (
-              <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Smart contract lens</p>
-                <p className="mt-4 text-sm leading-7 text-[#4b463f]">
+              <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Smart contract lens</p>
+                <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">
                   This repo looks suitable for a contract-heavy pass. Atlas-style coverage should focus on access control, bridge settlement, and replay resistance first.
                 </p>
               </section>
             )}
 
             {(agent.outputSchema || []).length > 0 && (
-              <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Expected output</p>
+              <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Expected output</p>
                 <div className="mt-4 space-y-3">
                   {(agent.outputSchema || []).map((field) => (
-                    <div key={field.name} className="rounded-[22px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">
+                    <div key={field.name} className="rounded-[22px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">
                         {field.name.replace(/_/g, ' ')}
                       </p>
-                      <p className="mt-2 text-sm text-[#171717]">{field.type}</p>
-                      <p className="mt-2 text-sm leading-7 text-[#4b463f]">{field.description}</p>
+                      <p className="mt-2 text-sm text-[var(--text)]">{field.type}</p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{field.description}</p>
                     </div>
                   ))}
                 </div>

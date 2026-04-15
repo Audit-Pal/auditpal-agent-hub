@@ -47,12 +47,12 @@ interface ProgramParticipant {
 }
 
 const accentColorMap: Record<string, string> = {
-  mint: '#3f7d5b',
-  violet: '#6f6a93',
-  orange: '#9d5a17',
-  ink: '#403b35',
-  blue: '#3d6b8c',
-  rose: '#965c64',
+  mint: '#1eba98',
+  violet: '#7d7bf2',
+  orange: '#ff9f43',
+  ink: '#84b8ff',
+  blue: '#4ea8ff',
+  rose: '#ff7f96',
 }
 
 const tabMeta: { id: ProgramTab; label: string }[] = [
@@ -210,7 +210,7 @@ export function ProgramDetail({
   const [ownedAgents, setOwnedAgents] = useState<Agent[]>([])
   const [isLoadingOwnedAgents, setIsLoadingOwnedAgents] = useState(false)
 
-  const accentColor = accentColorMap[program.accentTone?.toLowerCase()] || '#171717'
+  const accentColor = accentColorMap[program.accentTone?.toLowerCase()] || '#1eba98'
   const focusArea = (program.policySections || []).find((section) => section.title === 'Focus Area')
   const policySections = (program.policySections || []).filter((section) => section.title !== 'Focus Area')
   const primaryTarget = (program.scopeTargets || [])[0]
@@ -375,17 +375,23 @@ export function ProgramDetail({
 
   const handleTabChange = (tab: ProgramTab) => {
     setActiveTab(tab)
-
-    if (!detailPath) return
-
-    if (tab === 'submission') {
-      navigate(detailPath + '/submission')
-      return
+    
+    // Smooth scroll to content area with proper offset
+    // Offset accounts for: main navbar + tab navigation + secondary nav (Overview, The Task, etc.)
+    // Adjusted to 280px to show secondary navigation and content start
+    setTimeout(() => {
+      window.scrollTo({ 
+        top: 280, 
+        behavior: 'smooth' 
+      })
+    }, 50)
+    
+    // Update URL without page reload - only change the path, don't navigate
+    if (detailPath && window.history) {
+      const newPath = tab === 'submission' ? `${detailPath}/submission` : detailPath
+      window.history.replaceState(null, '', newPath)
     }
 
-    if (initialTab === 'submission') {
-      navigate(detailPath)
-    }
   }
 
   const handlePrimaryAction = () => {
@@ -410,7 +416,7 @@ export function ProgramDetail({
   const renderSubmissionCards = (reports: readonly ReportSnapshot[]) => {
     if (reports.length === 0) {
       return (
-        <div className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5 text-sm leading-7 text-[#4b463f]">
+        <div className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-muted)] p-5 text-sm leading-7 text-[var(--text-soft)]">
           No public submission snapshots are available for this bounty yet.
         </div>
       )
@@ -419,7 +425,7 @@ export function ProgramDetail({
     return (
       <div className="space-y-3">
         {reports.map((report) => (
-          <article key={report.id} className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
+          <article key={report.id} className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
@@ -427,15 +433,15 @@ export function ProgramDetail({
                   <Badge tone={getSeverityTone(report.severity)}>{formatEnum(report.severity)}</Badge>
                   <Badge tone={getReportStatusTone(report.status)}>{formatEnum(report.status)}</Badge>
                 </div>
-                <h4 className="mt-4 text-xl font-semibold text-[#171717]">{report.title}</h4>
-                <p className="mt-3 text-sm leading-7 text-[#4b463f]">{report.note || report.route}</p>
+                <h4 className="mt-4 text-xl font-semibold text-[var(--text)]">{report.title}</h4>
+                <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{report.note || report.route}</p>
               </div>
 
-              <div className="min-w-[220px] rounded-[22px] border border-[#e6dfd3] bg-white p-4 text-sm">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Submitted</p>
-                <p className="mt-2 text-[#171717]">{formatDateTime(report.submittedAt)}</p>
-                <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Route</p>
-                <p className="mt-2 text-[#171717]">{report.route}</p>
+              <div className="min-w-[220px] rounded-[22px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4 text-sm">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Submitted</p>
+                <p className="mt-2 text-[var(--text)]">{formatDateTime(report.submittedAt)}</p>
+                <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Route</p>
+                <p className="mt-2 text-[var(--text)]">{report.route}</p>
               </div>
             </div>
           </article>
@@ -453,11 +459,11 @@ export function ProgramDetail({
         ]}
       />
 
-      <section className="overflow-hidden rounded-[38px] border border-[#d9d1c4] bg-[#fffdf8] shadow-[0_24px_80px_rgba(30,24,16,0.08)]">
+      <section className="overflow-hidden rounded-[38px] border border-[var(--border)] bg-[var(--surface-strong)] shadow-[var(--shadow-lg)]">
         <div
-          className="border-b border-[#ebe4d8] px-6 py-8 md:px-8 md:py-10"
+          className="border-b border-[var(--border)] px-6 py-8 md:px-8 md:py-10"
           style={{
-            background: `linear-gradient(135deg, ${accentColor}12, rgba(255,253,248,0.94) 46%, rgba(255,253,248,1) 100%)`,
+            background: `linear-gradient(135deg, ${accentColor}22, rgba(9,18,27,0.96) 46%, rgba(7,14,20,1) 100%)`,
           }}
         >
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.25fr)_320px]">
@@ -471,23 +477,23 @@ export function ProgramDetail({
 
               <div className="flex items-start gap-5">
                 <div
-                  className="flex h-20 w-20 items-center justify-center rounded-[26px] border text-2xl font-semibold text-[#171717]"
+                  className="flex h-20 w-20 items-center justify-center rounded-[26px] border text-2xl font-semibold text-[var(--text)]"
                   style={{ borderColor: `${accentColor}55`, backgroundColor: `${accentColor}14` }}
                 >
                   {program.logoMark}
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">
                     {program.company}
                   </p>
-                  <h1 className="mt-3 font-serif text-5xl leading-none text-[#171717] md:text-6xl">
+                  <h1 className="mt-3 font-serif text-5xl leading-none text-[var(--text)] md:text-6xl">
                     {program.name}
                   </h1>
-                  <p className="mt-4 max-w-3xl text-lg leading-8 text-[#4b463f]">{program.tagline}</p>
+                  <p className="mt-4 max-w-3xl text-lg leading-8 text-[var(--text-soft)]">{program.tagline}</p>
                 </div>
               </div>
 
-              <p className="max-w-4xl text-base leading-8 text-[#5f5a51]">{program.description}</p>
+              <p className="max-w-4xl text-base leading-8 text-[var(--text-soft)]">{program.description}</p>
 
               <div className="flex flex-wrap gap-2">
                 {(program.platforms || []).map((platform) => (
@@ -503,32 +509,32 @@ export function ProgramDetail({
               </div>
             </div>
 
-            <aside className="rounded-[30px] border border-[#d9d1c4] bg-white/85 p-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Bounty brief</p>
+            <aside className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.82)] p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Bounty brief</p>
               <div className="mt-5 space-y-4">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Maximum bounty</p>
-                  <p className="mt-2 text-4xl font-semibold text-[#171717]">{formatUsd(program.maxBountyUsd)}</p>
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Maximum bounty</p>
+                  <p className="mt-2 text-4xl font-semibold text-[var(--text)]">{formatUsd(program.maxBountyUsd)}</p>
                 </div>
 
-                <div className="space-y-3 rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-sm text-[#4b463f]">
+                <div className="space-y-3 rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm text-[var(--text-soft)]">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-[#7b7468]">First response target</span>
-                    <span className="text-right text-[#171717]">{program.responseSla}</span>
+                    <span className="text-[var(--text-muted)]">First response target</span>
+                    <span className="text-right text-[var(--text)]">{program.responseSla}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-[#7b7468]">Payout window</span>
-                    <span className="text-right text-[#171717]">{program.payoutWindow}</span>
+                    <span className="text-[var(--text-muted)]">Payout window</span>
+                    <span className="text-right text-[var(--text)]">{program.payoutWindow}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-[#7b7468]">
+                    <span className="text-[var(--text-muted)]">
                       {isOrganization ? 'Program applications' : 'Your submissions'}
                     </span>
-                    <span className="text-[#171717]">{submissionCount}</span>
+                    <span className="text-[var(--text)]">{submissionCount}</span>
                   </div>
                 </div>
 
-                <p className="text-sm leading-7 text-[#5f5a51]">{program.duplicatePolicy}</p>
+                <p className="text-sm leading-7 text-[var(--text-soft)]">{program.duplicatePolicy}</p>
 
                 <div className="grid gap-3">
                   <Button variant={primaryActionTone} size="lg" className="w-full" onClick={handlePrimaryAction}>
@@ -543,7 +549,7 @@ export function ProgramDetail({
           </div>
         </div>
 
-        <div className="grid gap-4 border-t border-[#ebe4d8] px-6 py-6 md:px-8 xl:grid-cols-4">
+        <div className="grid gap-4 border-t border-[var(--border)] px-6 py-6 md:px-8 xl:grid-cols-4">
           <MetricCard label="Maximum bounty" value={formatUsd(program.maxBountyUsd)} note={program.payoutCurrency} accent={accentColor} />
           <MetricCard label="Paid out" value={formatUsd(program.paidUsd)} note="Accepted and verified" accent={accentColor} />
           <MetricCard label="Scope assets" value={(program.scopeTargets || []).length} note="Contracts, services, and controls" accent={accentColor} />
@@ -551,7 +557,7 @@ export function ProgramDetail({
         </div>
       </section>
 
-      <nav className="sticky top-24 z-20 rounded-[28px] border border-[#d9d1c4] bg-[rgba(255,253,248,0.94)] p-3 shadow-[0_18px_48px_rgba(30,24,16,0.05)] backdrop-blur-xl">
+      <nav className="sticky top-24 z-20 rounded-[28px] border border-[var(--border)] bg-[rgba(7,14,20,0.9)] p-3 shadow-[var(--shadow-md)] backdrop-blur-xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-1 flex-wrap gap-2">
             {tabMeta.map((tab) => {
@@ -561,7 +567,7 @@ export function ProgramDetail({
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`rounded-[22px] px-6 py-2.5 text-center transition ${isActive ? 'bg-[#171717] text-white' : 'text-[#5f5a51] hover:bg-[#f6f2ea] hover:text-[#171717]'}`}
+                  className={`rounded-[22px] border px-6 py-2.5 text-center transition ${isActive ? 'border-[rgba(56,217,178,0.28)] bg-[linear-gradient(135deg,rgba(30,186,152,1),rgba(7,79,70,0.94))] text-[#021614]' : 'border-transparent text-[var(--text-soft)] hover:bg-[rgba(13,26,37,0.94)] hover:text-[var(--text)]'}`}
                 >
                   <span className="block text-sm font-semibold uppercase tracking-[0.18em]">{tab.label}</span>
                 </button>
@@ -573,8 +579,8 @@ export function ProgramDetail({
 
       <div className="grid gap-8 xl:grid-cols-[220px_minmax(0,1fr)_300px]">
         <aside className="hidden xl:block xl:sticky xl:top-32 xl:self-start">
-          <div className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-5 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
+          <div className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-5 shadow-[var(--shadow-md)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">
               {tabMeta.find((tab) => tab.id === activeTab)?.label}
             </p>
             <div className="mt-4 space-y-2">
@@ -585,16 +591,16 @@ export function ProgramDetail({
                   <button
                     key={section.id}
                     onClick={() => jumpToSection(section.id)}
-                    className={`flex w-full items-start gap-3 rounded-[20px] border px-3 py-3 text-left transition ${isActive ? 'border-[#171717] bg-[#171717] text-white' : 'border-[#ebe4d8] bg-[#fbf8f2] text-[#4b463f] hover:border-[#171717]'}`}
+                    className={`flex w-full items-start gap-3 rounded-[20px] border px-3 py-3 text-left transition ${isActive ? 'border-[rgba(56,217,178,0.28)] bg-[rgba(30,186,152,0.16)] text-[var(--text)]' : 'border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-soft)] hover:border-[rgba(56,217,178,0.22)]'}`}
                   >
                     <span
-                      className={`mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ${isActive ? 'bg-white/15 text-white' : 'bg-white text-[#171717]'}`}
+                      className={`mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ${isActive ? 'bg-black/10 text-[var(--accent-ink)]' : 'bg-[rgba(9,18,27,0.88)] text-[var(--text)]'}`}
                     >
                       {String(index + 1).padStart(2, '0')}
                     </span>
                     <span>
                       <span className="block text-sm font-semibold">{section.label}</span>
-                      <span className={`mt-1 block text-xs ${isActive ? 'text-white/70' : 'text-[#7b7468]'}`}>{section.hint}</span>
+                      <span className={`mt-1 block text-xs ${isActive ? 'text-[var(--text-soft)]' : 'text-[var(--text-muted)]'}`}>{section.hint}</span>
                     </span>
                   </button>
                 )
@@ -609,7 +615,7 @@ export function ProgramDetail({
               <button
                 key={section.id}
                 onClick={() => jumpToSection(section.id)}
-                className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm transition ${activeSection === section.id ? 'border-[#171717] bg-[#171717] text-white' : 'border-[#d9d1c4] bg-[#fffdf8] text-[#5f5a51]'}`}
+                className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm transition ${activeSection === section.id ? 'border-[rgba(56,217,178,0.28)] bg-[rgba(30,186,152,0.16)] text-[var(--text)]' : 'border-[var(--border)] bg-[var(--surface-strong)] text-[var(--text-soft)]'}`}
               >
                 {section.label}
               </button>
@@ -618,113 +624,113 @@ export function ProgramDetail({
 
           {activeTab === 'overview' && (
             <div className="space-y-8">
-              <section id="overview-summary" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Overview</p>
-                <h2 className="mt-4 font-serif text-4xl text-[#171717] md:text-5xl">A bounty page with the full brief up front.</h2>
-                <p className="mt-5 text-base leading-8 text-[#4b463f]">{program.description}</p>
+              <section id="overview-summary" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Overview</p>
+                <h2 className="mt-4 font-serif text-4xl text-[var(--text)] md:text-5xl">A bounty page with the full brief up front.</h2>
+                <p className="mt-5 text-base leading-8 text-[var(--text-soft)]">{program.description}</p>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {(program.summaryHighlights || []).map((highlight) => (
-                    <div key={highlight} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                      <p className="text-sm leading-7 text-[#4b463f]">{highlight}</p>
+                    <div key={highlight} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+                      <p className="text-sm leading-7 text-[var(--text-soft)]">{highlight}</p>
                     </div>
                   ))}
                 </div>
               </section>
 
               <section id="overview-task" className="space-y-6">
-                <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">The task</p>
-                  <h3 className="mt-4 font-serif text-4xl text-[#171717]">What bounty reviewers care about most.</h3>
+                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">The task</p>
+                  <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">What bounty reviewers care about most.</h3>
                   <div className="mt-6 space-y-4">
                     {(focusArea?.items || []).map((item) => (
-                      <div key={item} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                        <p className="text-sm leading-7 text-[#4b463f]">{item}</p>
+                      <div key={item} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+                        <p className="text-sm leading-7 text-[var(--text-soft)]">{item}</p>
                       </div>
                     ))}
                   </div>
                 </article>
 
-                <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Submission checklist</p>
+                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Submission checklist</p>
                   <div className="mt-6 space-y-4">
                     {(program.submissionChecklist || []).map((item, index) => (
-                      <div key={item} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Step {index + 1}</p>
-                        <p className="mt-2 text-sm leading-7 text-[#4b463f]">{item}</p>
+                      <div key={item} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Step {index + 1}</p>
+                        <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{item}</p>
                       </div>
                     ))}
                   </div>
                 </article>
               </section>
 
-              <section id="overview-tracks" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+              <section id="overview-tracks" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Tracks</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[#171717]">Surfaces, chains, and environments in play.</h3>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Tracks</p>
+                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Surfaces, chains, and environments in play.</h3>
                   </div>
-                  <p className="max-w-xl text-sm leading-7 text-[#5f5a51]">{program.liveMessage}</p>
+                  <p className="max-w-xl text-sm leading-7 text-[var(--text-soft)]">{program.liveMessage}</p>
                 </div>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Categories</p>
+                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Categories</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {(program.categories || []).map((category) => (
                         <Badge key={category} tone="soft">{formatEnum(category)}</Badge>
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Platforms</p>
+                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Platforms</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {(program.platforms || []).map((platform) => (
                         <Badge key={platform} tone="soft">{formatEnum(platform)}</Badge>
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Languages</p>
+                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Languages</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {(program.languages || []).map((language) => (
                         <Badge key={language} tone="soft">{language}</Badge>
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Primary target</p>
-                    <p className="mt-3 text-sm leading-7 text-[#4b463f]">
+                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Primary target</p>
+                    <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">
                       {primaryTarget ? getScopeTargetReference(primaryTarget) : 'Targets are listed in the resources tab.'}
                     </p>
                   </div>
                 </div>
               </section>
 
-              <section id="overview-evaluation" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Evaluation modes</p>
-                <h3 className="mt-4 font-serif text-4xl text-[#171717]">How this bounty evaluates a finding.</h3>
+              <section id="overview-evaluation" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Evaluation modes</p>
+                <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">How this bounty evaluates a finding.</h3>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {(program.triageStages || []).map((stage, index) => (
-                    <div key={stage.title} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
+                    <div key={stage.title} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Mode {index + 1}</p>
-                          <h4 className="mt-2 text-xl font-semibold text-[#171717]">{stage.title}</h4>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Mode {index + 1}</p>
+                          <h4 className="mt-2 text-xl font-semibold text-[var(--text)]">{stage.title}</h4>
                         </div>
                         <Badge tone={stage.automation === 'HUMAN' ? 'soft' : 'accent'}>{formatEnum(stage.automation)}</Badge>
                       </div>
-                      <p className="mt-3 text-sm text-[#6f695f]">{stage.owner}</p>
-                      <p className="mt-3 text-sm leading-7 text-[#4b463f]">{stage.humanGate}</p>
+                      <p className="mt-3 text-sm text-[var(--text-soft)]">{stage.owner}</p>
+                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{stage.humanGate}</p>
                     </div>
                   ))}
                 </div>
               </section>
 
               <section id="overview-timeline" className="space-y-6">
-                <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                   <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">How to participate</p>
-                      <h3 className="mt-4 font-serif text-4xl text-[#171717]">A clearer path from discovery to response.</h3>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">How to participate</p>
+                      <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">A clearer path from discovery to response.</h3>
                     </div>
                     <Button variant="outline" size="md" onClick={openSubmissionGuide}>
                       Open submission guide
@@ -732,32 +738,32 @@ export function ProgramDetail({
                   </div>
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
                     {participationSteps.map((step, index) => (
-                      <div key={step} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Step {index + 1}</p>
-                        <p className="mt-3 text-sm leading-7 text-[#4b463f]">{step}</p>
+                      <div key={step} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Step {index + 1}</p>
+                        <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{step}</p>
                       </div>
                     ))}
                   </div>
                 </article>
 
-                <article className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Timeline</p>
+                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Timeline</p>
                   <div className="mt-5 space-y-4 text-sm">
-                    <div className="flex items-center justify-between gap-4 border-b border-[#ebe4d8] pb-3">
-                      <span className="text-[#7b7468]">Bounty opened</span>
-                      <span className="text-[#171717]">{formatDate(program.startedAt)}</span>
+                    <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+                      <span className="text-[var(--text-muted)]">Bounty opened</span>
+                      <span className="text-[var(--text)]">{formatDate(program.startedAt)}</span>
                     </div>
-                    <div className="flex items-center justify-between gap-4 border-b border-[#ebe4d8] pb-3">
-                      <span className="text-[#7b7468]">First response target</span>
-                      <span className="text-right text-[#171717]">{program.responseSla}</span>
+                    <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+                      <span className="text-[var(--text-muted)]">First response target</span>
+                      <span className="text-right text-[var(--text)]">{program.responseSla}</span>
                     </div>
-                    <div className="flex items-center justify-between gap-4 border-b border-[#ebe4d8] pb-3">
-                      <span className="text-[#7b7468]">Payout window</span>
-                      <span className="text-right text-[#171717]">{program.payoutWindow}</span>
+                    <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+                      <span className="text-[var(--text-muted)]">Payout window</span>
+                      <span className="text-right text-[var(--text)]">{program.payoutWindow}</span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-[#7b7468]">Proof of concept</span>
-                      <span className="text-[#171717]">{program.pocRequired ? 'Required' : 'Optional'}</span>
+                      <span className="text-[var(--text-muted)]">Proof of concept</span>
+                      <span className="text-[var(--text)]">{program.pocRequired ? 'Required' : 'Optional'}</span>
                     </div>
                   </div>
                 </article>
@@ -767,43 +773,43 @@ export function ProgramDetail({
 
           {activeTab === 'scope' && (
             <div className="space-y-8">
-              <section id="scope-targets" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+              <section id="scope-targets" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">In scope</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[#171717]">Targets and environments hunters can test.</h3>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">In scope</p>
+                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Targets and environments hunters can test.</h3>
                   </div>
-                  <p className="max-w-xl text-sm leading-7 text-[#5f5a51]">
+                  <p className="max-w-xl text-sm leading-7 text-[var(--text-soft)]">
                     Every row includes the exact asset label, location, and severity cap so the bounty brief stays readable.
                   </p>
                 </div>
                 <ScopeTable targets={program.scopeTargets} />
               </section>
 
-              <section id="scope-notes" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Target notes</p>
+              <section id="scope-notes" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Target notes</p>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {(program.scopeTargets || []).map((target) => (
-                    <article key={target.id} className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
+                    <article key={target.id} className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h4 className="text-xl font-semibold text-[#171717]">{target.label}</h4>
+                          <h4 className="text-xl font-semibold text-[var(--text)]">{target.label}</h4>
                           {target.referenceUrl ? (
                             <a
                               href={target.referenceUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="mt-1 inline-flex text-sm text-[#315e50] transition hover:text-[#171717]"
+                              className="mt-1 inline-flex text-sm text-[var(--accent-strong)] transition hover:text-[var(--text)]"
                             >
                               {getScopeTargetReference(target)}
                             </a>
                           ) : (
-                            <p className="mt-1 text-sm text-[#6f695f]">{getScopeTargetReference(target)}</p>
+                            <p className="mt-1 text-sm text-[var(--text-soft)]">{getScopeTargetReference(target)}</p>
                           )}
                         </div>
                         <Badge tone={getSeverityTone(target.severity)}>{formatEnum(target.severity)}</Badge>
                       </div>
-                      <p className="mt-4 text-sm leading-7 text-[#4b463f]">{target.note}</p>
+                      <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">{target.note}</p>
                       <div className="mt-4 flex flex-wrap gap-2">
                         {getScopeTargetContextChips(target).map((chip) => (
                           <Badge key={`${target.id}-${chip}`} tone="soft">
@@ -811,31 +817,31 @@ export function ProgramDetail({
                           </Badge>
                         ))}
                       </div>
-                      <div className="mt-4 rounded-[20px] border border-[#e6dfd3] bg-white p-4">
-                        <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Review status</p>
-                        <p className="mt-2 text-sm text-[#171717]">{target.reviewStatus}</p>
+                      <div className="mt-4 rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Review status</p>
+                        <p className="mt-2 text-sm text-[var(--text)]">{target.reviewStatus}</p>
                       </div>
                     </article>
                   ))}
                 </div>
               </section>
 
-              <section id="scope-evidence" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Evidence bundle</p>
+              <section id="scope-evidence" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Evidence bundle</p>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {(program.evidenceFields || []).map((field) => (
-                    <div key={field.name} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">
+                    <div key={field.name} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">
                         {field.name.replace(/_/g, ' ')}
                       </p>
-                      <p className="mt-3 text-sm leading-7 text-[#4b463f]">{field.description}</p>
+                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{field.description}</p>
                     </div>
                   ))}
                 </div>
               </section>
 
-              <section id="scope-resources" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Resources and references</p>
+              <section id="scope-resources" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Resources and references</p>
                 <div className="mt-5 space-y-3">
                   {scopeReferences.length > 0 ? (
                     scopeReferences.map((target) => (
@@ -844,13 +850,13 @@ export function ProgramDetail({
                         href={target.referenceUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="block rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-sm leading-7 text-[#315e50] transition hover:border-[#171717] hover:text-[#171717]"
+                        className="block rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm leading-7 text-[var(--accent-strong)] transition hover:border-[rgba(56,217,178,0.24)] hover:text-[var(--text)]"
                       >
                         {target.label}: {target.referenceUrl}
                       </a>
                     ))
                   ) : (
-                    <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-sm leading-7 text-[#4b463f]">
+                    <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm leading-7 text-[var(--text-soft)]">
                       Public references for this bounty can be attached at the target level as the scope evolves.
                     </div>
                   )}
@@ -861,11 +867,11 @@ export function ProgramDetail({
 
           {activeTab === 'submission' && (
             <div className="space-y-8">
-              <section id="submission-readiness" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+              <section id="submission-readiness" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">How to participate</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[#171717]">Agent selection happens before the report form.</h3>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">How to participate</p>
+                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Agent selection happens before the report form.</h3>
                   </div>
                   <Button variant={primaryActionTone} size="md" onClick={handlePrimaryAction}>
                     {primaryActionLabel}
@@ -873,45 +879,45 @@ export function ProgramDetail({
                 </div>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {participationSteps.map((step, index) => (
-                    <div key={step} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Step {index + 1}</p>
-                      <p className="mt-3 text-sm leading-7 text-[#4b463f]">{step}</p>
+                    <div key={step} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Step {index + 1}</p>
+                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{step}</p>
                     </div>
                   ))}
                 </div>
               </section>
 
-              <section id="submission-agents" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+              <section id="submission-agents" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Agent selection</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[#171717]">Submission uses your registered hunter agent.</h3>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Agent selection</p>
+                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Submission uses your registered hunter agent.</h3>
                   </div>
-                  <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] px-4 py-3 text-sm text-[#4b463f]">
+                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-soft)]">
                     Campaign-linked agents are shown below for context. The actual report submission uses one of your own created agents.
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                  <ul className="space-y-4 text-sm leading-7 text-[#4b463f]">
-                    <li className="flex items-start gap-3 border-b border-[#e6dfd3] pb-4 last:border-b-0 last:pb-0">
-                      <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[#d9d1c4] bg-white text-[10px] font-semibold text-[#171717]">01</span>
+                <div className="mt-6 rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                  <ul className="space-y-4 text-sm leading-7 text-[var(--text-soft)]">
+                    <li className="flex items-start gap-3 border-b border-[var(--border)] pb-4 last:border-b-0 last:pb-0">
+                      <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-[10px] font-semibold text-[var(--text)]">01</span>
                       <span>Open the submission modal and choose one of your registered hunter agents before filling the rest of the report.</span>
                     </li>
-                    <li className="flex items-start gap-3 border-b border-[#e6dfd3] pb-4 last:border-b-0 last:pb-0">
-                      <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[#d9d1c4] bg-white text-[10px] font-semibold text-[#171717]">02</span>
+                    <li className="flex items-start gap-3 border-b border-[var(--border)] pb-4 last:border-b-0 last:pb-0">
+                      <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-[10px] font-semibold text-[var(--text)]">02</span>
                       <span>If you do not have a registered agent yet, create one from the profile menu first. Bounty-linked agents are not the ownership identity used for submission.</span>
                     </li>
-                    <li className="flex items-start gap-3 border-b border-[#e6dfd3] pb-4 last:border-b-0 last:pb-0">
-                      <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[#d9d1c4] bg-white text-[10px] font-semibold text-[#171717]">03</span>
+                    <li className="flex items-start gap-3 border-b border-[var(--border)] pb-4 last:border-b-0 last:pb-0">
+                      <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-[10px] font-semibold text-[var(--text)]">03</span>
                       <span>The campaign-linked agents below show which agents already participate in this bounty workflow.</span>
                     </li>
                   </ul>
                 </div>
 
-                <div className="mt-6 rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
+                <div className="mt-6 rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                   <div className="flex flex-wrap items-center justify-between gap-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Your registered hunter agents</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Your registered hunter agents</p>
                     {isLoadingOwnedAgents && (
                       <Badge tone="soft">Loading your agents...</Badge>
                     )}
@@ -919,25 +925,25 @@ export function ProgramDetail({
                   {ownedAgents.length > 0 ? (
                     <ul className="mt-4 space-y-4">
                       {ownedAgents.map((agent, index) => (
-                        <li key={agent.id} className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e6dfd3] pb-4 last:border-b-0 last:pb-0">
+                        <li key={agent.id} className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] pb-4 last:border-b-0 last:pb-0">
                           <div className="flex min-w-0 flex-1 items-start gap-4">
-                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d9d1c4] bg-white text-[11px] font-semibold text-[#171717]">
+                            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-[11px] font-semibold text-[var(--text)]">
                               {String(index + 1).padStart(2, '0')}
                             </span>
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-3">
                                 <div
                                   className="flex h-10 w-10 items-center justify-center rounded-2xl border text-sm font-semibold text-white"
-                                  style={{ backgroundColor: accentColorMap[agent.accentTone.toLowerCase()] || '#171717' }}
+                                  style={{ backgroundColor: accentColorMap[agent.accentTone.toLowerCase()] || '#1eba98' }}
                                 >
                                   {agent.logoMark}
                                 </div>
                                 <div>
-                                  <h4 className="text-lg font-semibold text-[#171717]">{agent.name}</h4>
-                                  <p className="text-sm text-[#6f695f]">{agent.headline}</p>
+                                  <h4 className="text-lg font-semibold text-[var(--text)]">{agent.name}</h4>
+                                  <p className="text-sm text-[var(--text-soft)]">{agent.headline}</p>
                                 </div>
                               </div>
-                              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm leading-7 text-[#4b463f]">
+                              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm leading-7 text-[var(--text-soft)]">
                                 {agent.capabilities.slice(0, 3).map((cap) => (
                                   <li key={cap}>{cap}</li>
                                 ))}
@@ -957,7 +963,7 @@ export function ProgramDetail({
                     </ul>
                   ) : (
                     <div className="mt-4 space-y-4">
-                      <p className="text-sm leading-7 text-[#4b463f]">
+                      <p className="text-sm leading-7 text-[var(--text-soft)]">
                         {user
                           ? 'You do not have any registered agents yet. Create one from the profile menu so you can use it for submisson.'
                           : 'Log in to load your registered hunter agents.'}
@@ -967,29 +973,29 @@ export function ProgramDetail({
                 </div>
               </section>
 
-              <section id="submission-latest" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+              <section id="submission-latest" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Latest submissions</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[#171717]">Top 5 latest out of {sortedQueue.length} public submissions.</h3>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Latest submissions</p>
+                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Top 5 latest out of {sortedQueue.length} public submissions.</h3>
                   </div>
                   {latestViewerReport && (
-                    <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] px-4 py-3 text-sm text-[#4b463f]">
-                      Your latest: <span className="font-semibold text-[#171717]">{formatEnum(latestViewerReport.status)}</span> on {formatDateTime(latestViewerReport.submittedAt)}
+                    <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-soft)]">
+                      Your latest: <span className="font-semibold text-[var(--text)]">{formatEnum(latestViewerReport.status)}</span> on {formatDateTime(latestViewerReport.submittedAt)}
                     </div>
                   )}
                 </div>
                 <div className="mt-6">{renderSubmissionCards(recentPublicSubmissions)}</div>
               </section>
 
-              <section id="submission-payouts" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+              <section id="submission-payouts" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Past payout history</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[#171717]">Historic payment context for this campaign.</h3>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Past payout history</p>
+                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Historic payment context for this campaign.</h3>
                   </div>
-                  <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] px-4 py-3 text-sm text-[#4b463f]">
-                    Total paid so far: <span className="font-semibold text-[#171717]">{formatUsd(program.paidUsd)}</span>
+                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-soft)]">
+                    Total paid so far: <span className="font-semibold text-[var(--text)]">{formatUsd(program.paidUsd)}</span>
                   </div>
                 </div>
 
@@ -1002,26 +1008,26 @@ export function ProgramDetail({
                 <div className="mt-6 space-y-3">
                   {payoutHistory.length > 0 ? (
                     payoutHistory.map((report) => (
-                      <article key={report.id} className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
+                      <article key={report.id} className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <Badge tone="soft">{report.humanId}</Badge>
                               <Badge tone={getReportStatusTone(report.status)}>{formatEnum(report.status)}</Badge>
                             </div>
-                            <h4 className="mt-3 text-lg font-semibold text-[#171717]">{report.title}</h4>
-                            <p className="mt-2 text-sm leading-7 text-[#4b463f]">{report.note || 'Reward-bearing decision recorded for this public queue snapshot.'}</p>
+                            <h4 className="mt-3 text-lg font-semibold text-[var(--text)]">{report.title}</h4>
+                            <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{report.note || 'Reward-bearing decision recorded for this public queue snapshot.'}</p>
                           </div>
-                          <div className="rounded-[22px] border border-[#e6dfd3] bg-white p-4 text-right">
-                            <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Estimated payout</p>
-                            <p className="mt-2 text-2xl font-semibold text-[#171717]">{formatUsd(report.rewardEstimateUsd || 0)}</p>
-                            <p className="mt-3 text-xs text-[#7b7468]">{formatDateTime(report.submittedAt)}</p>
+                          <div className="rounded-[22px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4 text-right">
+                            <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Estimated payout</p>
+                            <p className="mt-2 text-2xl font-semibold text-[var(--text)]">{formatUsd(report.rewardEstimateUsd || 0)}</p>
+                            <p className="mt-3 text-xs text-[var(--text-muted)]">{formatDateTime(report.submittedAt)}</p>
                           </div>
                         </div>
                       </article>
                     ))
                   ) : (
-                    <div className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5 text-sm leading-7 text-[#4b463f]">
+                    <div className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5 text-sm leading-7 text-[var(--text-soft)]">
                       No public payout snapshots are available yet. The bounty still exposes total paid amount, response SLA, and payout window so researchers can gauge campaign maturity.
                     </div>
                   )}
@@ -1029,60 +1035,60 @@ export function ProgramDetail({
               </section>
 
               <section id="submission-api" className="space-y-8">
-                <section className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Submission format</p>
-                  <h3 className="mt-4 font-serif text-4xl text-[#171717]">What this bounty expects in a strong report.</h3>
+                <section className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Submission format</p>
+                  <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">What this bounty expects in a strong report.</h3>
                   <div className="mt-6 grid gap-4 md:grid-cols-2">
                     {submissionFormat.map((section) => (
-                      <article key={section.title} className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">{section.title}</p>
-                        <p className="mt-3 text-sm leading-7 text-[#4b463f]">{section.body}</p>
+                      <article key={section.title} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">{section.title}</p>
+                        <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{section.body}</p>
                       </article>
                     ))}
                   </div>
                 </section>
 
-                <section className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+                <section className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                   <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Hunter submission API</p>
-                      <h3 className="mt-4 font-serif text-4xl text-[#171717]">Submit to this bounty programmatically.</h3>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Hunter submission API</p>
+                      <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Submit to this bounty programmatically.</h3>
                     </div>
-                    <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] px-4 py-3 text-sm text-[#4b463f]">
-                      <p><span className="text-[#7b7468]">Generate key:</span> <code>/api/v1/auth/api-key</code></p>
-                      <p className="mt-1"><span className="text-[#7b7468]">Submit:</span> <code>/api/v1/reports/submit</code></p>
+                    <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-soft)]">
+                      <p><span className="text-[var(--text-muted)]">Generate key:</span> <code>/api/v1/auth/api-key</code></p>
+                      <p className="mt-1"><span className="text-[var(--text-muted)]">Submit:</span> <code>/api/v1/reports/submit</code></p>
                     </div>
                   </div>
 
                   <div className="mt-6 space-y-6">
-                    <article className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">1. Generate your platform API key</p>
-                      <pre className="mt-4 overflow-x-auto rounded-[20px] border border-[#e6dfd3] bg-white p-4 text-sm leading-6 text-[#171717]"><code>{apiKeyGenerationCommand}</code></pre>
-                      <p className="mt-4 text-sm leading-7 text-[#4b463f]">Generate the key once from the profile panel, then reuse it in the <code>X-API-Key</code> header for automated submissions.</p>
+                    <article className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">1. Generate your platform API key</p>
+                      <pre className="mt-4 overflow-x-auto rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4 text-sm leading-6 text-[var(--text)]"><code>{apiKeyGenerationCommand}</code></pre>
+                      <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">Generate the key once from the profile panel, then reuse it in the <code>X-API-Key</code> header for automated submissions.</p>
                     </article>
 
-                    <article className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">2. KG-ready payload</p>
-                      <pre className="mt-4 max-h-[360px] overflow-auto rounded-[20px] border border-[#e6dfd3] bg-white p-4 text-sm leading-6 text-[#171717]"><code>{submissionPayload}</code></pre>
+                    <article className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">2. KG-ready payload</p>
+                      <pre className="mt-4 max-h-[360px] overflow-auto rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4 text-sm leading-6 text-[var(--text)]"><code>{submissionPayload}</code></pre>
                     </article>
                   </div>
 
                   <div className="mt-6 space-y-6">
-                    <article className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">3. cURL example</p>
-                      <pre className="mt-4 overflow-x-auto rounded-[20px] border border-[#e6dfd3] bg-white p-4 text-sm leading-6 text-[#171717]"><code>{`curl -X POST http://localhost:3001/api/v1/reports/submit \
+                    <article className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">3. cURL example</p>
+                      <pre className="mt-4 overflow-x-auto rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4 text-sm leading-6 text-[var(--text)]"><code>{`curl -X POST http://localhost:3001/api/v1/reports/submit \
   -H "X-API-Key: <auditpal_platform_api_key>" \
   -H "Content-Type: application/json" \
   --data @payload.json`}</code></pre>
                     </article>
 
-                    <article className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">4. After submission</p>
+                    <article className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">4. After submission</p>
                       <div className="mt-4 grid gap-4">
                         {postSubmissionStates.map((state) => (
-                          <div key={state.label} className="rounded-[20px] border border-[#e6dfd3] bg-white p-4">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">{state.label}</p>
-                            <p className="mt-2 text-sm leading-7 text-[#4b463f]">{state.body}</p>
+                          <div key={state.label} className="rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">{state.label}</p>
+                            <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{state.body}</p>
                           </div>
                         ))}
                       </div>
@@ -1095,46 +1101,46 @@ export function ProgramDetail({
 
           {activeTab === 'triage' && (
             <div className="space-y-8">
-              <section id="triage-flow" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+              <section id="triage-flow" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <TriageVisualizer stages={program.triageStages} />
               </section>
 
-              <section id="triage-queue" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+              <section id="triage-queue" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 {sortedQueue.length > 0 ? (
                   <QueueSnapshot queue={sortedQueue} />
                 ) : (
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Queue snapshot</p>
-                    <h3 className="mt-3 font-serif text-4xl text-[#171717]">No public queue items yet.</h3>
-                    <p className="mt-4 text-sm leading-7 text-[#4b463f]">As soon as the program exposes public report snapshots, they will appear here with severity, route, and decision-owner context.</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Queue snapshot</p>
+                    <h3 className="mt-3 font-serif text-4xl text-[var(--text)]">No public queue items yet.</h3>
+                    <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">As soon as the program exposes public report snapshots, they will appear here with severity, route, and decision-owner context.</p>
                   </div>
                 )}
               </section>
 
-              <section id="triage-agents" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Agents in this review flow</p>
+              <section id="triage-agents" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Agents in this review flow</p>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {participantAgents.length > 0 ? (
                     participantAgents.map((participant) => (
-                      <article key={participant.id} className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
+                      <article key={participant.id} className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <h4 className="text-xl font-semibold text-[#171717]">{participant.name}</h4>
-                            <p className="mt-1 text-sm text-[#6f695f]">{participant.recentTitle || 'Linked to this bounty workflow'}</p>
+                            <h4 className="text-xl font-semibold text-[var(--text)]">{participant.name}</h4>
+                            <p className="mt-1 text-sm text-[var(--text-soft)]">{participant.recentTitle || 'Linked to this bounty workflow'}</p>
                           </div>
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d9d1c4] bg-white text-sm font-semibold text-[#171717]">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-sm font-semibold text-[var(--text)]">
                             {participant.logoMark}
                           </div>
                         </div>
-                        <p className="mt-4 text-sm leading-7 text-[#4b463f]">{participant.purpose}</p>
-                        <div className="mt-4 rounded-[20px] border border-[#e6dfd3] bg-white p-4">
-                          <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Trigger</p>
-                          <p className="mt-2 text-sm leading-7 text-[#4b463f]">{participant.trigger}</p>
+                        <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">{participant.purpose}</p>
+                        <div className="mt-4 rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
+                          <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Trigger</p>
+                          <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{participant.trigger}</p>
                         </div>
                       </article>
                     ))
                   ) : (
-                    <div className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-5 text-sm leading-7 text-[#4b463f]">
+                    <div className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5 text-sm leading-7 text-[var(--text-soft)]">
                       No linked agents are public for this bounty yet.
                     </div>
                   )}
@@ -1145,18 +1151,18 @@ export function ProgramDetail({
 
           {activeTab === 'policy' && (
             <div className="space-y-8">
-              <section id="policy-rewards" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
+              <section id="policy-rewards" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <RewardMatrix matrix={program.rewardTiers} />
               </section>
 
               <section id="policy-rules" className="space-y-6">
                 {policySections.map((section) => (
-                  <article key={section.title} className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">{section.title}</p>
-                    <ul className="mt-5 space-y-3 text-sm leading-7 text-[#4b463f]">
+                  <article key={section.title} className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">{section.title}</p>
+                    <ul className="mt-5 space-y-3 text-sm leading-7 text-[var(--text-soft)]">
                       {section.items.map((item, index) => (
-                        <li key={item} className="flex items-start gap-3 border-b border-[#e6dfd3] pb-3 last:border-b-0 last:pb-0">
-                          <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[#d9d1c4] bg-white text-[10px] font-semibold text-[#171717]">
+                        <li key={item} className="flex items-start gap-3 border-b border-[var(--border)] pb-3 last:border-b-0 last:pb-0">
+                          <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-[10px] font-semibold text-[var(--text)]">
                             {String(index + 1).padStart(2, '0')}
                           </span>
                           <span>{item}</span>
@@ -1168,15 +1174,15 @@ export function ProgramDetail({
               </section>
 
               <section className="space-y-6">
-                <article id="policy-duplicates" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Duplicate policy</p>
-                  <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-[#4b463f]">
+                <article id="policy-duplicates" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Duplicate policy</p>
+                  <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-[var(--text-soft)]">
                     <li>{program.duplicatePolicy}</li>
                   </ul>
                 </article>
-                <article id="policy-disclosure" className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Disclosure model</p>
-                  <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-[#4b463f]">
+                <article id="policy-disclosure" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Disclosure model</p>
+                  <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-[var(--text-soft)]">
                     <li>{program.disclosureModel}</li>
                   </ul>
                 </article>
@@ -1186,11 +1192,11 @@ export function ProgramDetail({
         </div>
 
         <aside className="space-y-6 xl:sticky xl:top-32 xl:self-start">
-          <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
+          <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Participants</p>
-                <p className="mt-2 text-sm text-[#4b463f]">Agents already attached to this bounty.</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Participants</p>
+                <p className="mt-2 text-sm text-[var(--text-soft)]">Agents already attached to this bounty.</p>
               </div>
               <Badge tone="soft">{participantAgents.length}</Badge>
             </div>
@@ -1200,43 +1206,43 @@ export function ProgramDetail({
                   <button
                     key={participant.id}
                     onClick={() => onOpenAgent?.(participant.id)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d9d1c4] bg-[#fbf8f2] text-sm font-semibold text-[#171717] transition hover:border-[#171717]"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)] transition hover:border-[rgba(56,217,178,0.24)]"
                     title={participant.name}
                   >
                     {participant.logoMark}
                   </button>
                 ))
               ) : (
-                <div className="rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] px-4 py-3 text-sm text-[#4b463f]">
+                <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-soft)]">
                   No public participants yet.
                 </div>
               )}
             </div>
           </section>
 
-          <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Your status</p>
+          <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Your status</p>
             {latestViewerReport ? (
-              <div className="mt-4 space-y-3 rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-sm">
+              <div className="mt-4 space-y-3 rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[#7b7468]">Researcher</span>
-                  <span className="text-right text-[#171717]">{viewerName || latestViewerReport.reporterName}</span>
+                  <span className="text-[var(--text-muted)]">Researcher</span>
+                  <span className="text-right text-[var(--text)]">{viewerName || latestViewerReport.reporterName}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[#7b7468]">Latest report</span>
-                  <span className="text-right text-[#171717]">{latestViewerReport.humanId}</span>
+                  <span className="text-[var(--text-muted)]">Latest report</span>
+                  <span className="text-right text-[var(--text)]">{latestViewerReport.humanId}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[#7b7468]">Status</span>
+                  <span className="text-[var(--text-muted)]">Status</span>
                   <Badge tone={getReportStatusTone(latestViewerReport.status)}>{formatEnum(latestViewerReport.status)}</Badge>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[#7b7468]">Submitted</span>
-                  <span className="text-right text-[#171717]">{formatDateTime(latestViewerReport.submittedAt)}</span>
+                  <span className="text-[var(--text-muted)]">Submitted</span>
+                  <span className="text-right text-[var(--text)]">{formatDateTime(latestViewerReport.submittedAt)}</span>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-sm leading-7 text-[#4b463f]">
+              <div className="mt-4 rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm leading-7 text-[var(--text-soft)]">
                 You have not submitted to this bounty yet.
               </div>
             )}
@@ -1245,24 +1251,24 @@ export function ProgramDetail({
             </Button>
           </section>
 
-          <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Bounty facts</p>
+          <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Bounty facts</p>
             <div className="mt-5 space-y-4 text-sm">
-              <div className="flex items-center justify-between gap-4 border-b border-[#ebe4d8] pb-3">
-                <span className="text-[#7b7468]">Bounty code</span>
-                <span className="text-[#171717]">{program.code}</span>
+              <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+                <span className="text-[var(--text-muted)]">Bounty code</span>
+                <span className="text-[var(--text)]">{program.code}</span>
               </div>
-              <div className="flex items-center justify-between gap-4 border-b border-[#ebe4d8] pb-3">
-                <span className="text-[#7b7468]">Started</span>
-                <span className="text-[#171717]">{formatDate(program.startedAt)}</span>
+              <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+                <span className="text-[var(--text-muted)]">Started</span>
+                <span className="text-[var(--text)]">{formatDate(program.startedAt)}</span>
               </div>
-              <div className="flex items-center justify-between gap-4 border-b border-[#ebe4d8] pb-3">
-                <span className="text-[#7b7468]">Categories</span>
-                <span className="text-right text-[#171717]">{(program.categories || []).map((cat) => formatEnum(cat)).join(', ')}</span>
+              <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+                <span className="text-[var(--text-muted)]">Categories</span>
+                <span className="text-right text-[var(--text)]">{(program.categories || []).map((cat) => formatEnum(cat)).join(', ')}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-[#7b7468]">Proof of concept</span>
-                <span className="text-[#171717]">{program.pocRequired ? 'Required' : 'Optional'}</span>
+                <span className="text-[var(--text-muted)]">Proof of concept</span>
+                <span className="text-[var(--text)]">{program.pocRequired ? 'Required' : 'Optional'}</span>
               </div>
             </div>
           </section>

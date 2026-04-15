@@ -92,243 +92,16 @@ export function ReportCenter({
   const [validationSeverity, setValidationSeverity] = useState<Record<string, string>>({})
   const [activeValidationId, setActiveValidationId] = useState<string | null>(null)
 
-  const renderReportCard = (report: ResearcherReport) => {
-    const graphChips = buildGraphChips(report)
-    const graphContext = report.structuredData?.graphContext
-    const awaitingValidation = canValidate && ['AI_TRIAGED', 'TRIAGED', 'ESCALATED'].includes(report.status)
+  const canValidate = viewerRole === 'ADMIN' || viewerRole === 'ORGANIZATION'
+  const actionableCount = reports.filter((report) => !['ACCEPTED', 'RESOLVED', 'REJECTED', 'DUPLICATE', 'LOW_EFFORT'].includes(report.status)).length
+  const acceptedCount = reports.filter((report) => ['ACCEPTED', 'RESOLVED'].includes(report.status)).length
 
-    const primaryVuln = report.vulnerabilities?.[0]
-    const currentSeverity = validationSeverity[report.id] || primaryVuln?.severity || 'LOW'
-
-    return (
-      <article
-        key={report.id}
-        className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]"
-      >
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="soft">{report.humanId}</Badge>
-              {primaryVuln && (
-                <Badge tone={getSeverityTone(primaryVuln.severity)}>Severity: {formatEnum(primaryVuln.severity)}</Badge>
-              )}
-              <Badge tone={getStatusTone(report.status)}>{formatEnum(report.status)}</Badge>
-              <Badge tone="soft">{formatEnum(report.source)}</Badge>
-              {report.vulnerabilities?.length > 1 && (
-                <Badge tone="accent">+{report.vulnerabilities.length - 1} findings</Badge>
-              )}
-            </div>
-            <h2 className="mt-4 font-serif text-3xl leading-tight text-[#171717]">{report.title}</h2>
-            <button
-              onClick={() => onOpenProgram(report.programId)}
-              className="mt-2 text-sm font-medium text-[#315e50] transition hover:text-[#171717]"
-            >
-              {report.programName || 'Bounty'}{report.programCode ? ` · ${report.programCode}` : ''}
-            </button>
-            <p className="mt-2 text-sm text-[#6f695f]">
-              Submitted by {report.reporterName}{report.decisionOwner ? ` · Validator: ${report.decisionOwner}` : ''}
-            </p>
-            {primaryVuln && <p className="mt-4 text-sm leading-7 text-[#4b463f]">{primaryVuln.summary}</p>}
-
-            {onEditReport && isEditable(report, viewerRole, viewerId) && (
-              <div className="mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEditReport(report)}
-                >
-                  Edit application
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="min-w-[240px] rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Next action</p>
-            <p className="mt-2 text-sm leading-7 text-[#171717]">{report.nextAction || 'Awaiting next queue update.'}</p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-3 md:grid-cols-5">
-          <div className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Primary Target</p>
-            <p className="mt-2 text-sm text-[#171717]">{primaryVuln?.target || 'Unknown'}</p>
-          </div>
-          <div className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Route</p>
-            <p className="mt-2 text-sm text-[#171717]">{report.route}</p>
-          </div>
-          <div className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Submitted</p>
-            <p className="mt-2 text-sm text-[#171717]">{formatDate(report.submittedAt)}</p>
-          </div>
-          <div className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Response SLA</p>
-            <p className="mt-2 text-sm text-[#171717]">{report.responseSla || 'Pending bounty SLA'}</p>
-          </div>
-          <div className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">AI score</p>
-            <p className="mt-2 text-sm text-[#171717]">{report.aiScore !== null && report.aiScore !== undefined ? report.aiScore.toFixed(1) : 'Not scored'}</p>
-          </div>
-        </div>
-
-        {(report.aiSummary || report.note) && (
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            {report.aiSummary && (
-              <div className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">AI triage</p>
-                <p className="mt-3 text-sm leading-7 text-[#4b463f]">{report.aiSummary}</p>
-              </div>
-            )}
-            {report.note && (
-              <div className="rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Human decision</p>
-                <p className="mt-3 text-sm leading-7 text-[#4b463f]">
-                  {report.note || 'No validator note attached yet.'}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {primaryVuln && (
-          <div className="mt-5 rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Primary finding details</p>
-            <p className="mt-3 text-sm leading-7 text-[#4b463f]">
-              <span className="font-medium text-[#171717]">Impact:</span> {primaryVuln.impact}
-            </p>
-            <p className="mt-2 text-sm leading-7 text-[#4b463f]">
-              <span className="font-medium text-[#171717]">Proof:</span> {primaryVuln.proof}
-            </p>
-          </div>
-        )}
-
-        {(graphChips.length > 0 || graphContext) && (
-          <div className="mt-5 rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Graph seed context</p>
-            {graphChips.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {graphChips.map((chip) => (
-                  <Badge key={`${report.id}-${chip}`} tone="soft">
-                    {chip}
-                  </Badge>
-                ))}
-              </div>
-            )}
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-[#e6dfd3] bg-white p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Attack vector</p>
-                <p className="mt-2 text-sm leading-7 text-[#4b463f]">{graphContext?.attackVector || 'Not provided'}</p>
-              </div>
-              <div className="rounded-2xl border border-[#e6dfd3] bg-white p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Root cause</p>
-                <p className="mt-2 text-sm leading-7 text-[#4b463f]">{graphContext?.rootCause || 'Not provided'}</p>
-              </div>
-              <div className="rounded-2xl border border-[#e6dfd3] bg-white p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Prerequisites</p>
-                <p className="mt-2 text-sm leading-7 text-[#4b463f]">{graphContext?.prerequisites || 'None listed'}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {primaryVuln && (primaryVuln.errorLocation || primaryVuln.codeSnippet) && (
-          <div className="mt-5 rounded-[26px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Primary code context</p>
-              {primaryVuln.errorLocation && <Badge tone="soft">{primaryVuln.errorLocation}</Badge>}
-            </div>
-            {primaryVuln.codeSnippet && (
-              <pre className="mt-3 overflow-x-auto rounded-2xl border border-[#e6dfd3] bg-white p-4 text-sm leading-6 text-[#171717]">
-                <code>{primaryVuln.codeSnippet}</code>
-              </pre>
-            )}
-          </div>
-        )}
-
-        {awaitingValidation && onValidate && (
-          <div className="mt-5 rounded-[26px] border border-[#d9d1c4] bg-[#fff7e8] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Human validator action</p>
-            
-            <div className="mt-4 space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#7b7468]">Select Final Criticality</p>
-                <div className="flex flex-wrap gap-2">
-                    {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(sev => (
-                        <button
-                            key={sev}
-                            type="button"
-                            onClick={() => setValidationSeverity(curr => ({...curr, [report.id]: sev}))}
-                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition border ${
-                                currentSeverity === sev 
-                                    ? 'bg-[#171717] text-white border-[#171717]' 
-                                    : 'bg-white text-[#7b7468] border-[#d9d1c4] hover:border-[#171717]'
-                            }`}
-                        >
-                            {sev}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <textarea
-              rows={3}
-              value={validationNotes[report.id] || ''}
-              onChange={(event) => setValidationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
-              placeholder="Optional validator note for the accept, reject, or escalate decision."
-              className="mt-4 w-full rounded-[22px] border border-[#d9d1c4] bg-white px-4 py-3 text-sm leading-7 text-[#171717] outline-none transition focus:border-[#171717]"
-            />
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => handleValidation(report.id, 'ACCEPT', currentSeverity)}
-                disabled={activeValidationId !== null}
-              >
-                {activeValidationId === `${report.id}:ACCEPT` ? 'Accepting...' : 'Accept'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleValidation(report.id, 'ESCALATE')}
-                disabled={activeValidationId !== null}
-              >
-                {activeValidationId === `${report.id}:ESCALATE` ? 'Escalating...' : 'Escalate'}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleValidation(report.id, 'REJECT')}
-                disabled={activeValidationId !== null}
-              >
-                {activeValidationId === `${report.id}:REJECT` ? 'Rejecting...' : 'Reject'}
-              </Button>
-            </div>
-          </div>
-        )}
-      </article>
-    )
-  }
-
-  const canValidate = viewerRole === 'ORGANIZATION' || viewerRole === 'ADMIN'
-  const totalReports = reports.length
-  const triagedReports = reports.filter((report) => ['AI_TRIAGED', 'TRIAGED', 'ESCALATED', 'ACCEPTED', 'RESOLVED'].includes(report.status)).length
-  const validationReady = reports.filter((report) => ['AI_TRIAGED', 'TRIAGED', 'ESCALATED'].includes(report.status)).length
-  const acceptedReports = reports.filter((report) => report.status === 'ACCEPTED' || report.status === 'RESOLVED').length
-  const lowEffortReports = reports.filter((report) => report.status === 'LOW_EFFORT').length
-  const uniquePrograms = new Set(reports.map((report) => report.programId)).size
-  const latestReport = reports[0]
-
-  const handleValidation = async (reportId: string, action: ValidationAction, severity?: string) => {
+  const handleValidation = async (reportId: string, action: ValidationAction) => {
     if (!onValidate) return
 
-    const requestId = `${reportId}:${action}`
-    setActiveValidationId(requestId)
-
+    setActiveValidationId(reportId)
     try {
-      const success = await onValidate(reportId, action, validationNotes[reportId]?.trim() || undefined, severity)
-      if (success) {
-        setValidationNotes((current) => ({ ...current, [reportId]: '' }))
-      }
+      await onValidate(reportId, action, validationNotes[reportId], validationSeverity[reportId])
     } finally {
       setActiveValidationId(null)
     }
@@ -336,157 +109,244 @@ export function ReportCenter({
 
   if (reports.length === 0) {
     return (
-      <section className="rounded-[36px] border border-[#d9d1c4] bg-[#fffdf8] p-8 shadow-[0_20px_60px_rgba(30,24,16,0.08)] md:p-12">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#7b7468]">
-          {canValidate ? 'Application queue' : 'Application center'}
+      <section className="surface-card-strong rounded-[34px] p-8 text-center md:p-12">
+        <p className="section-kicker">Application center</p>
+        <h2 className="mt-4 font-serif text-4xl text-[var(--text)]">No submissions are showing up yet.</h2>
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-[var(--text-soft)]">
+          {viewerName
+            ? `${viewerName}, once you submit or receive program activity it will appear here with status, next actions, and decision context.`
+            : 'Browse the bounty directory to submit a report or sign in to see queue activity attached to your account.'}
         </p>
-        <h1 className="mt-4 max-w-3xl font-serif text-5xl leading-none text-[#171717] md:text-6xl">
-          {canValidate ? 'No applications are waiting in the queue yet.' : 'Track every finding from the same workspace.'}
-        </h1>
-        <p className="mt-5 max-w-2xl text-base leading-8 text-[#5f5a51]">
-          {canValidate
-            ? 'Once bounty hunters submit structured applications and they pass low-effort filtering plus AI triage, they will appear here for accept, reject, or escalate decisions.'
-            : 'This view becomes useful as soon as you submit your first application. Every submission now moves through low-effort filtering, AI triage, and organization validation.'}
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button variant="outline" size="md" onClick={onBrowsePrograms}>
-            Browse bounties
-          </Button>
-        </div>
+        <Button variant="outline" size="md" className="mt-6" onClick={onBrowsePrograms}>
+          Browse programs
+        </Button>
       </section>
     )
   }
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[36px] border border-[#d9d1c4] bg-[#fffdf8] p-8 shadow-[0_20px_60px_rgba(30,24,16,0.08)] md:p-10">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div className="max-w-3xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#7b7468]">
-              {canValidate ? 'Application queue' : 'Application center'}
-            </p>
-            <h1 className="mt-4 font-serif text-5xl leading-none text-[#171717] md:text-6xl">
-              {canValidate ? 'AI-triaged applications waiting for a human decision.' : 'Your applications, status changes, and next steps.'}
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-[#5f5a51]">
-              {canValidate
-                ? `Review findings that already passed low-effort filtering and AI triage. ${viewerName || 'Your team'} can accept, reject, or escalate each application from this queue.`
-                : 'Every submitted application now carries the structured metadata, code context, and status updates needed for the full intake workflow.'}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" size="md" onClick={onBrowsePrograms}>
-              Browse bounties
-            </Button>
-          </div>
+    <div className="space-y-6">
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="surface-card rounded-[28px] p-5">
+          <p className="section-kicker !tracking-[0.18em]">Total reports</p>
+          <p className="mt-4 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{reports.length}</p>
+          <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">All visible application records in this workspace.</p>
         </div>
-
-        <div className="mt-8 grid gap-4 md:grid-cols-4">
-          <article className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Applications submitted</p>
-            <p className="mt-3 text-4xl font-semibold text-[#171717]">{totalReports}</p>
-          </article>
-          <article className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">
-              {canValidate ? 'Ready for review' : 'Already triaged'}
-            </p>
-            <p className="mt-3 text-4xl font-semibold text-[#171717]">{canValidate ? validationReady : triagedReports}</p>
-          </article>
-          <article className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">
-              {canValidate ? 'Accepted or closed' : 'Bounties touched'}
-            </p>
-            <p className="mt-3 text-4xl font-semibold text-[#171717]">{canValidate ? acceptedReports : uniquePrograms}</p>
-          </article>
-          <article className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">
-              {canValidate ? 'Low-effort filtered' : 'Latest activity'}
-            </p>
-            <p className="mt-3 text-lg font-semibold text-[#171717]">
-              {canValidate ? lowEffortReports : latestReport ? formatDate(latestReport.submittedAt) : 'No activity yet'}
-            </p>
-          </article>
+        <div className="surface-card rounded-[28px] p-5">
+          <p className="section-kicker !tracking-[0.18em]">Needs action</p>
+          <p className="mt-4 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{actionableCount}</p>
+          <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">Reports still moving through AI or human review.</p>
+        </div>
+        <div className="surface-card rounded-[28px] p-5">
+          <p className="section-kicker !tracking-[0.18em]">Accepted or resolved</p>
+          <p className="mt-4 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{acceptedCount}</p>
+          <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">Confirmed signal that has reached a positive outcome.</p>
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-12">
-          {canValidate ? (
-            // State-wise view for organizations
-            <>
-              {[
-                {
-                  title: 'Ready for Decision',
-                  description: 'Applications that have passed AI triage and are waiting for your final validation.',
-                  statuses: ['AI_TRIAGED', 'TRIAGED', 'ESCALATED'],
-                },
-                {
-                  title: 'In Progress / Needs Info',
-                  description: 'Applications that are currently being triaged or require more information from the researcher.',
-                  statuses: ['SUBMITTED', 'NEEDS_INFO'],
-                },
-                {
-                  title: 'Finalized',
-                  description: 'Applications that have been accepted, rejected, or marked as low effort.',
-                  statuses: ['ACCEPTED', 'RESOLVED', 'REJECTED', 'DUPLICATE', 'LOW_EFFORT'],
-                },
-              ].map((group) => {
-                const groupReports = reports.filter((r) => group.statuses.includes(r.status))
-                if (groupReports.length === 0) return null
+      <div className="space-y-5">
+        {reports.map((report) => {
+          const graphChips = buildGraphChips(report)
+          const graphContext = report.structuredData?.graphContext
+          const primaryVulnerability = report.vulnerabilities?.[0]
+          const currentSeverity = validationSeverity[report.id] || primaryVulnerability?.severity || 'LOW'
+          const awaitingValidation = canValidate && ['AI_TRIAGED', 'TRIAGED', 'ESCALATED'].includes(report.status)
 
-                return (
-                  <div key={group.title} className="space-y-6">
+          return (
+            <article key={report.id} className="surface-card-strong rounded-[32px] p-6 md:p-7">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-3xl">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone="soft">{report.humanId}</Badge>
+                    {primaryVulnerability && <Badge tone={getSeverityTone(primaryVulnerability.severity)}>Severity: {formatEnum(primaryVulnerability.severity)}</Badge>}
+                    <Badge tone={getStatusTone(report.status)}>{formatEnum(report.status)}</Badge>
+                    <Badge tone="soft">{formatEnum(report.source)}</Badge>
+                    {report.vulnerabilities?.length && report.vulnerabilities.length > 1 && (
+                      <Badge tone="accent">+{report.vulnerabilities.length - 1} findings</Badge>
+                    )}
+                  </div>
+
+                  <h2 className="mt-4 font-serif text-3xl leading-tight text-[var(--text)]">{report.title}</h2>
+                  <button
+                    onClick={() => onOpenProgram(report.programId)}
+                    className="mt-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:text-[var(--text)]"
+                  >
+                    {report.programName || 'Program'}{report.programCode ? ` · ${report.programCode}` : ''}
+                  </button>
+                  <p className="mt-2 text-sm text-[var(--text-muted)]">
+                    Submitted by {report.reporterName}{report.decisionOwner ? ` · Validator: ${report.decisionOwner}` : ''}
+                  </p>
+
+                  {primaryVulnerability && <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">{primaryVulnerability.summary}</p>}
+
+                  {onEditReport && isEditable(report, viewerRole, viewerId) && (
+                    <div className="mt-4">
+                      <Button variant="outline" size="sm" onClick={() => onEditReport(report)}>
+                        Edit application
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="surface-card-muted min-w-[250px] rounded-[26px] p-4">
+                  <p className="section-kicker !tracking-[0.18em]">Next action</p>
+                  <p className="mt-3 text-sm leading-7 text-[var(--text)]">{report.nextAction || 'Awaiting the next queue update.'}</p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-5">
+                <div className="surface-card-muted rounded-[22px] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Primary target</p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{primaryVulnerability?.target || 'Unknown'}</p>
+                </div>
+                <div className="surface-card-muted rounded-[22px] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Route</p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{report.route}</p>
+                </div>
+                <div className="surface-card-muted rounded-[22px] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Submitted</p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{formatDate(report.submittedAt)}</p>
+                </div>
+                <div className="surface-card-muted rounded-[22px] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Response SLA</p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{report.responseSla || 'Pending bounty SLA'}</p>
+                </div>
+                <div className="surface-card-muted rounded-[22px] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">AI score</p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{report.aiScore !== null && report.aiScore !== undefined ? report.aiScore.toFixed(1) : 'Not scored'}</p>
+                </div>
+              </div>
+
+              {(report.aiSummary || report.note) && (
+                <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                  {report.aiSummary && (
+                    <div className="surface-card-muted rounded-[26px] p-4">
+                      <p className="section-kicker !tracking-[0.18em]">AI triage</p>
+                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{report.aiSummary}</p>
+                    </div>
+                  )}
+                  {report.note && (
+                    <div className="surface-card-muted rounded-[26px] p-4">
+                      <p className="section-kicker !tracking-[0.18em]">Human decision</p>
+                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{report.note}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {primaryVulnerability && (
+                <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                  <div className="surface-card-muted rounded-[26px] p-4">
+                    <p className="section-kicker !tracking-[0.18em]">Impact</p>
+                    <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{primaryVulnerability.impact}</p>
+                  </div>
+                  <div className="surface-card-muted rounded-[26px] p-4">
+                    <p className="section-kicker !tracking-[0.18em]">Proof</p>
+                    <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{primaryVulnerability.proof}</p>
+                  </div>
+                </div>
+              )}
+
+              {(graphChips.length > 0 || graphContext) && (
+                <div className="surface-card-muted mt-5 rounded-[26px] p-4">
+                  <p className="section-kicker !tracking-[0.18em]">Graph seed context</p>
+                  {graphChips.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {graphChips.map((chip) => (
+                        <Badge key={`${report.id}-${chip}`} tone="soft">
+                          {chip}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <div className="rounded-[22px] border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.8)] p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Attack vector</p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.attackVector || 'Not provided'}</p>
+                    </div>
+                    <div className="rounded-[22px] border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.8)] p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Root cause</p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.rootCause || 'Not provided'}</p>
+                    </div>
+                    <div className="rounded-[22px] border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.8)] p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Prerequisites</p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.prerequisites || 'None listed'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {primaryVulnerability && (primaryVulnerability.errorLocation || primaryVulnerability.codeSnippet) && (
+                <div className="surface-card-muted mt-5 rounded-[26px] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="section-kicker !tracking-[0.18em]">Primary code context</p>
+                    {primaryVulnerability.errorLocation && <Badge tone="soft">{primaryVulnerability.errorLocation}</Badge>}
+                  </div>
+                  {primaryVulnerability.codeSnippet && (
+                    <pre className="mt-3 overflow-x-auto rounded-[20px] border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.88)] p-4 text-sm leading-6 text-[var(--text)]">
+                      <code>{primaryVulnerability.codeSnippet}</code>
+                    </pre>
+                  )}
+                </div>
+              )}
+
+              {awaitingValidation && onValidate && (
+                <div className="mt-5 rounded-[26px] border border-[rgba(15,118,110,0.12)] bg-[rgba(30,186,152,0.12)] p-4">
+                  <p className="section-kicker !tracking-[0.18em]">Human validator action</p>
+
+                  <div className="mt-4 space-y-4">
                     <div>
-                      <h2 className="text-2xl font-semibold text-[#171717]">{group.title}</h2>
-                      <p className="mt-1 text-sm text-[#7b7468]">{group.description}</p>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Final criticality</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((severity) => {
+                          const isSelected = currentSeverity === severity
+                          return (
+                            <button
+                              key={severity}
+                              type="button"
+                              onClick={() => setValidationSeverity((current) => ({ ...current, [report.id]: severity }))}
+                              className={[
+                                'rounded-full px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition',
+                                isSelected
+                                  ? 'bg-[linear-gradient(135deg,rgba(30,186,152,1),rgba(7,79,70,0.94))] text-[#021614]'
+                                  : 'border border-[rgba(15,23,38,0.1)] bg-[rgba(9,18,27,0.8)] text-[var(--text-soft)] hover:border-[rgba(15,118,110,0.22)] hover:text-[var(--accent-strong)]',
+                              ].join(' ')}
+                            >
+                              {severity}
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
-                    <div className="space-y-4">
-                      {groupReports.map((report) => renderReportCard(report))}
+
+                    <div>
+                      <label className="field-label">Decision notes</label>
+                      <textarea
+                        value={validationNotes[report.id] || ''}
+                        onChange={(event) => setValidationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
+                        className="field-area !min-h-[116px]"
+                        placeholder="Add guidance, payout rationale, or next-step details for the reporter."
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <Button variant="primary" size="sm" onClick={() => handleValidation(report.id, 'ACCEPT')} disabled={activeValidationId === report.id}>
+                        {activeValidationId === report.id ? 'Saving...' : 'Accept report'}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleValidation(report.id, 'ESCALATE')} disabled={activeValidationId === report.id}>
+                        Escalate
+                      </Button>
+                      <Button variant="ghost" size="sm" className="border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.78)]" onClick={() => handleValidation(report.id, 'REJECT')} disabled={activeValidationId === report.id}>
+                        Reject
+                      </Button>
                     </div>
                   </div>
-                )
-              })}
-            </>
-          ) : (
-            // Default list view for researchers
-            reports.map((report) => renderReportCard(report))
-          )}
-        </div>
-
-        <aside className="space-y-4 xl:sticky xl:top-28 xl:self-start">
-          <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">How this flow works</p>
-            <div className="mt-4 space-y-3">
-              {(canValidate
-                ? [
-                  'Low-effort submissions are filtered out before they reach this queue.',
-                  'Only AI-triaged applications should be accepted, rejected, or escalated here.',
-                  'Accepted applications stay persisted with graph context, code evidence, and validator notes.',
-                ]
-                : [
-                  'Submit a structured application with the graph seed, code context, and replay narrative.',
-                  'Low-effort filtering and AI triage run before the application reaches a human validator.',
-                  'Status, validator notes, and accepted findings stay visible from the same workspace.',
-                ]).map((item, index) => (
-                  <div key={item} className="rounded-2xl border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b7468]">Step {index + 1}</p>
-                    <p className="mt-2 text-sm leading-7 text-[#4b463f]">{item}</p>
-                  </div>
-                ))}
-            </div>
-          </section>
-
-          <section className="rounded-[30px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_16px_50px_rgba(30,24,16,0.06)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">Queue snapshot</p>
-            <div className="mt-4 space-y-3 text-sm leading-7 text-[#4b463f]">
-              <p>AI triaged: {reports.filter((report) => report.status === 'AI_TRIAGED').length}</p>
-              <p>Escalated: {reports.filter((report) => report.status === 'ESCALATED').length}</p>
-              <p>Accepted: {acceptedReports}</p>
-              <p>Low effort filtered: {lowEffortReports}</p>
-            </div>
-          </section>
-        </aside>
-      </section>
+                </div>
+              )}
+            </article>
+          )
+        })}
+      </div>
     </div>
   )
 }

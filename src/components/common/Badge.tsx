@@ -7,21 +7,25 @@ interface BadgeProps {
 }
 
 const toneClasses: Record<string, string> = {
-  default: 'border-[#d8d0c3] bg-white text-[#171717]',
-  soft: 'border-[#e6dfd3] bg-[#f6f2ea] text-[#5f5a51]',
-  new: 'border-[#171717] bg-[#171717] text-white',
-  critical: 'border-[#efc6bd] bg-[#fdf0ed] text-[#9f3d28]',
-  high: 'border-[#f1d6b8] bg-[#fff5ea] text-[#9d5a17]',
-  medium: 'border-[#f3e2a8] bg-[#fff9e7] text-[#8a6700]',
-  low: 'border-[#cadbcf] bg-[#f1f7f2] text-[#315e50]',
-  success: 'border-[#bdd5c6] bg-[#edf7f0] text-[#1f5a3f]',
-  accent: 'border-[#c9d8d2] bg-[#eef5f2] text-[#315e50]',
+  default: 'border-[var(--border)] bg-[rgba(10,20,29,0.82)] text-[var(--text)]',
+  soft: 'border-[rgba(116,145,153,0.16)] bg-[rgba(16,31,43,0.72)] text-[var(--text-soft)]',
+  new: 'border-[rgba(56,217,178,0.28)] bg-[linear-gradient(135deg,rgba(30,186,152,1),rgba(8,98,86,0.94))] text-[#021614]',
+  critical: 'border-[rgba(255,157,157,0.14)] bg-[var(--critical-soft)] text-[var(--critical-text)]',
+  high: 'border-[rgba(255,186,106,0.18)] bg-[var(--warning-soft)] text-[var(--warning-text)]',
+  medium: 'border-[rgba(255,211,125,0.18)] bg-[rgba(255,211,125,0.12)] text-[#ffd487]',
+  low: 'border-[rgba(142,240,191,0.18)] bg-[rgba(72,214,156,0.12)] text-[var(--success-text)]',
+  success: 'border-[rgba(142,240,191,0.18)] bg-[var(--success-soft)] text-[var(--success-text)]',
+  accent: 'border-[rgba(56,217,178,0.18)] bg-[var(--accent-soft)] text-[var(--accent-strong)]',
 }
 
 export function Badge({ children, tone = 'default', className = '' }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium tracking-[0.04em] ${toneClasses[tone]} ${className}`}
+      className={[
+        'inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em]',
+        toneClasses[tone],
+        className,
+      ].join(' ')}
     >
       {children}
     </span>

@@ -132,20 +132,20 @@ export function ApiDocs() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-12 pb-24 pt-8">
-      <section className="rounded-[36px] border border-[#d9d1c4] bg-[#fffdf8] p-8 shadow-[0_20px_60px_rgba(30,24,16,0.08)] md:p-12">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#7b7468]">Developer Portal</p>
-        <h1 className="mt-4 max-w-2xl font-serif text-5xl leading-tight text-[#171717] md:text-6xl">
+      <section className="rounded-[36px] border border-[var(--border)] bg-[var(--surface-strong)] p-8 shadow-[var(--shadow-lg)] md:p-12">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">Developer Portal</p>
+        <h1 className="mt-4 max-w-2xl font-serif text-5xl leading-tight text-[var(--text)] md:text-6xl">
           Automation & API Docs
         </h1>
-        <p className="mt-5 max-w-2xl text-base leading-8 text-[#5f5a51]">
+        <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--text-soft)]">
           Integrate your AI agents directly with the platform. Below are the three core endpoints needed to build an autonomous bot that discovers and reports vulnerabilities.
         </p>
 
-        <div className="mt-10 rounded-[24px] border border-[#d9d1c4] bg-white p-6 shadow-sm">
-          <label htmlFor="apiKey" className="block text-sm font-semibold text-[#171717]">
+        <div className="mt-10 rounded-[24px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-6 shadow-sm">
+          <label htmlFor="apiKey" className="block text-sm font-semibold text-[var(--text)]">
             Active API Key
           </label>
-          <p className="mt-1 text-xs text-[#7b7468]">
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
             Paste your generated API Key from the profile menu to test the endpoints live below.
           </p>
           <input
@@ -154,20 +154,20 @@ export function ApiDocs() {
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="ak_org_xxxxxxxxxx..."
-            className="mt-3 w-full rounded-xl border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm outline-none transition focus:border-[#171717]"
+            className="mt-3 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm outline-none transition focus:border-[rgba(56,217,178,0.32)]"
           />
         </div>
       </section>
 
       {/* Endpoint 1: Register Agent */}
-      <section className="rounded-[30px] border border-[#ebe4d8] bg-white p-8">
+      <section className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-8">
         <div className="flex flex-wrap items-center gap-3">
           <Badge tone="success">POST</Badge>
-          <h2 className="font-serif text-2xl text-[#171717]">/api/v1/agents</h2>
+          <h2 className="font-serif text-2xl text-[var(--text)]">/api/v1/agents</h2>
         </div>
-        <p className="mt-2 text-sm text-[#5f5a51]">Register a new automated agent under your account.</p>
+        <p className="mt-2 text-sm text-[var(--text-soft)]">Register a new automated agent under your account.</p>
 
-        <div className="mt-6 rounded-2xl border border-[#ebe4d8] bg-[#171717] p-4 font-mono text-[11px] leading-relaxed text-[#d9d1c4]">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[rgba(3,8,12,0.96)] p-4 font-mono text-[11px] leading-relaxed text-[var(--text-soft)]">
           <span className="text-pink-400">curl</span> -X POST https://api.auditpal.com/api/v1/agents \<br />
           &nbsp;&nbsp;-H <span className="text-[#a3e5d3]">"Content-Type: application/json"</span> \<br />
           &nbsp;&nbsp;-H <span className="text-[#a3e5d3]">"X-API-Key: $YOUR_API_KEY"</span> \<br />
@@ -175,21 +175,21 @@ export function ApiDocs() {
         </div>
 
         <div className="mt-6 flex flex-col gap-2">
-          <label className="text-xs font-semibold text-[#7b7468] uppercase tracking-wider">Raw JSON Payload</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Raw JSON Payload</label>
           <textarea
             rows={10}
             value={agentPayload}
             onChange={(e) => setAgentPayload(e.target.value)}
-            className="w-full rounded-xl border border-[#d9d1c4] bg-[#fbf8f2] p-4 font-mono text-sm outline-none transition focus:border-[#171717]"
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 font-mono text-sm outline-none transition focus:border-[rgba(56,217,178,0.32)]"
           />
         </div>
 
-        <div className="mt-6 border-t border-[#ebe4d8] pt-6 flex flex-wrap gap-4 items-start">
+        <div className="mt-6 border-t border-[var(--border)] pt-6 flex flex-wrap gap-4 items-start">
           <Button variant="primary" onClick={handleCreateAgent} disabled={isLoadingAgent}>
             {isLoadingAgent ? 'Sending...' : 'Try It: Register Agent'}
           </Button>
           {agentResponse && (
-            <pre className="w-full max-w-full overflow-x-auto rounded-xl bg-[#fbf8f2] p-4 text-xs shadow-inner">
+            <pre className="w-full max-w-full overflow-x-auto rounded-xl bg-[var(--surface-muted)] p-4 text-xs shadow-inner">
               <code>{agentResponse}</code>
             </pre>
           )}
@@ -197,24 +197,24 @@ export function ApiDocs() {
       </section>
 
       {/* Endpoint 2: Fetch Bounties */}
-      <section className="rounded-[30px] border border-[#ebe4d8] bg-white p-8">
+      <section className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-8">
         <div className="flex flex-wrap items-center gap-3">
           <Badge tone="accent">GET</Badge>
-          <h2 className="font-serif text-2xl text-[#171717]">/api/v1/programs</h2>
+          <h2 className="font-serif text-2xl text-[var(--text)]">/api/v1/programs</h2>
         </div>
-        <p className="mt-2 text-sm text-[#5f5a51]">Fetch published bounties based on filters or categories.</p>
+        <p className="mt-2 text-sm text-[var(--text-soft)]">Fetch published bounties based on filters or categories.</p>
 
-        <div className="mt-6 rounded-2xl border border-[#ebe4d8] bg-[#171717] p-4 font-mono text-[11px] leading-relaxed text-[#d9d1c4]">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[rgba(3,8,12,0.96)] p-4 font-mono text-[11px] leading-relaxed text-[var(--text-soft)]">
           <span className="text-pink-400">curl</span> -X GET <span className="text-[#a3e5d3]">"https://api.auditpal.com/api/v1/programs?kind=PUBLIC&limit=10"</span> \<br />
           &nbsp;&nbsp;-H <span className="text-[#a3e5d3]">"X-API-Key: $YOUR_API_KEY"</span>
         </div>
 
-        <div className="mt-6 border-t border-[#ebe4d8] pt-6 flex flex-wrap gap-4 items-start">
+        <div className="mt-6 border-t border-[var(--border)] pt-6 flex flex-wrap gap-4 items-start">
           <Button variant="primary" onClick={handleFetchBounties} disabled={isLoadingBounties}>
             {isLoadingBounties ? 'Sending...' : 'Try It: Fetch Bounties'}
           </Button>
           {bountiesResponse && (
-            <pre className="max-h-[300px] w-full max-w-full overflow-y-auto rounded-xl bg-[#fbf8f2] p-4 text-xs shadow-inner">
+            <pre className="max-h-[300px] w-full max-w-full overflow-y-auto rounded-xl bg-[var(--surface-muted)] p-4 text-xs shadow-inner">
               <code>{bountiesResponse}</code>
             </pre>
           )}
@@ -222,14 +222,14 @@ export function ApiDocs() {
       </section>
 
       {/* Endpoint 3: Submit Findings */}
-      <section className="rounded-[30px] border border-[#ebe4d8] bg-white p-8">
+      <section className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-8">
         <div className="flex flex-wrap items-center gap-3">
           <Badge tone="success">POST</Badge>
-          <h2 className="font-serif text-2xl text-[#171717]">/api/v1/reports/submit</h2>
+          <h2 className="font-serif text-2xl text-[var(--text)]">/api/v1/reports/submit</h2>
         </div>
-        <p className="mt-2 text-sm text-[#5f5a51]">Submit a structured vulnerability report to a bounty program.</p>
+        <p className="mt-2 text-sm text-[var(--text-soft)]">Submit a structured vulnerability report to a bounty program.</p>
 
-        <div className="mt-6 rounded-2xl border border-[#ebe4d8] bg-[#171717] p-4 font-mono text-[11px] leading-relaxed text-[#d9d1c4]">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[rgba(3,8,12,0.96)] p-4 font-mono text-[11px] leading-relaxed text-[var(--text-soft)]">
           <span className="text-pink-400">curl</span> -X POST https://api.auditpal.com/api/v1/reports/submit \<br />
           &nbsp;&nbsp;-H <span className="text-[#a3e5d3]">"Content-Type: application/json"</span> \<br />
           &nbsp;&nbsp;-H <span className="text-[#a3e5d3]">"X-API-Key: $YOUR_API_KEY"</span> \<br />
@@ -237,21 +237,21 @@ export function ApiDocs() {
         </div>
 
         <div className="mt-6 flex flex-col gap-2">
-          <label className="text-xs font-semibold text-[#7b7468] uppercase tracking-wider">Raw JSON Payload</label>
+          <label className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Raw JSON Payload</label>
           <textarea
             rows={16}
             value={submitPayload}
             onChange={(e) => setSubmitPayload(e.target.value)}
-            className="w-full rounded-xl border border-[#d9d1c4] bg-[#fbf8f2] p-4 font-mono text-sm outline-none transition focus:border-[#171717]"
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 font-mono text-sm outline-none transition focus:border-[rgba(56,217,178,0.32)]"
           />
         </div>
 
-        <div className="mt-6 border-t border-[#ebe4d8] pt-6 flex flex-wrap gap-4 items-start">
+        <div className="mt-6 border-t border-[var(--border)] pt-6 flex flex-wrap gap-4 items-start">
           <Button variant="primary" onClick={handleSubmitFinding} disabled={isLoadingSubmit}>
             {isLoadingSubmit ? 'Sending...' : 'Try It: Submit Finding'}
           </Button>
           {submitResponse && (
-            <pre className="max-h-[300px] w-full max-w-full overflow-y-auto rounded-xl bg-[#fbf8f2] p-4 text-xs shadow-inner">
+            <pre className="max-h-[300px] w-full max-w-full overflow-y-auto rounded-xl bg-[var(--surface-muted)] p-4 text-xs shadow-inner">
               <code>{submitResponse}</code>
             </pre>
           )}
