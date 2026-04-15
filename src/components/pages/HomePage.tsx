@@ -1,8 +1,7 @@
 import { m as motion } from 'framer-motion'
 import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
-import { MetricCard } from '../common/MetricCard'
-import type { Program, Agent } from '../../types/platform'
+import type { Agent, Program } from '../../types/platform'
 
 interface LiveSignal {
   id: string
@@ -52,7 +51,6 @@ export function HomePage({
   ]
 
   const heroSignals = liveSignals.slice(0, 3)
-  const heroPrograms = featuredPrograms.slice(0, 3)
 
   const metrics = [
     { label: 'Active programs', value: totalPrograms, note: 'Live bounty & audit campaigns', accent: 'var(--accent)' },
@@ -263,13 +261,6 @@ export function HomePage({
             <p className="mt-1 text-[12px] text-[var(--text-soft)] line-clamp-2">
               {topRankedAgent?.headline || 'Rankings appear once data is available.'}
             </p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {heroPrograms.map((p) => (
-                <Badge key={p.id} tone="soft">
-                  {p.logoMark} {p.name}
-                </Badge>
-              ))}
-            </div>
             <Button variant="ghost" size="sm" className="mt-4 w-full justify-center border border-[var(--border)]" onClick={() => navigate('/agents/leaderboard')}>
               View leaderboard →
             </Button>

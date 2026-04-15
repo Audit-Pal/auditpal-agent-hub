@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '../common/Button'
 import { api } from '../../lib/api'
+import { useToast } from '../../contexts/ToastContext'
 
 const ALL_CATEGORIES = ['WEB', 'SMART_CONTRACT', 'APPS', 'BLOCKCHAIN']
 const ALL_PLATFORMS = ['ETHEREUM', 'ARBITRUM', 'BASE', 'MONAD', 'SUI', 'SOLANA', 'OFFCHAIN']
@@ -9,6 +10,7 @@ const ALL_LANGUAGES = ['SOLIDITY', 'RUST', 'TYPESCRIPT', 'SWIFT', 'GO', 'MOVE']
 
 export function BountyRegistration() {
   const { id: editId } = useParams<{ id: string }>()
+  const { showToast } = useToast()
   const isEditing = !!editId
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
@@ -146,15 +148,15 @@ export function BountyRegistration() {
       const res = isEditing ? await api.patch(`/programs/${editId}`, payload) : await api.post('/programs', payload)
 
       if (res.success) {
-        alert(isEditing ? 'Bounty updated successfully!' : 'Bounty registered! Please fund it to go active.')
+        showToast(isEditing ? 'Bounty updated successfully!' : 'Bounty registered! Please fund it to go active.', 'success')
         navigate('/org/dashboard')
       } else {
         const errorMessage = typeof res.error === 'object' ? JSON.stringify(res.error, null, 2) : res.error || 'Failed to register bounty'
-        alert(errorMessage)
+        showToast(errorMessage, 'error')
       }
     } catch (error: any) {
       console.error(error)
-      alert(error.message || 'An unexpected error occurred.')
+      showToast(error.message || 'An unexpected error occurred.', 'error')
     } finally {
       setLoading(false)
     }
@@ -174,10 +176,10 @@ export function BountyRegistration() {
             <label
               key={option}
               className={[
-                'flex cursor-pointer items-center gap-3 rounded-[18px] border px-4 py-3 text-sm transition',
+                'flex cursor-pointer items-center gap-3 rounded-[18px] border px-4 py-3 text-sm font-semibold transition',
                 selected
                   ? 'border-[rgba(15,118,110,0.18)] bg-[var(--accent-soft)] text-[var(--accent-strong)]'
-                  : 'border-[rgba(15,23,38,0.08)] bg-white/80 text-[var(--text-soft)] hover:border-[rgba(15,118,110,0.18)]',
+                  : 'border-[rgba(80,120,130,0.18)] bg-[rgba(8,16,24,0.8)] text-[var(--text)] hover:border-[rgba(15,118,110,0.18)] hover:bg-[rgba(12,24,34,0.9)]',
               ].join(' ')}
             >
               <input

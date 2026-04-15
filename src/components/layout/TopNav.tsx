@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../common/Button'
 import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
 import { api } from '../../lib/api'
 
 const navItems: { label: string; path: string; active: (pathname: string) => boolean }[] = [
@@ -43,6 +44,7 @@ function getRoleMessage(role?: string) {
 
 export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
   const { user, logout, generateApiKey } = useAuth()
+  const { showToast } = useToast()
   const location = useLocation()
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -95,7 +97,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
     setIsGeneratingKey(true)
     const key = await generateApiKey()
     setIsGeneratingKey(false)
-    if (!key) { window.alert('Unable to generate an API key right now.'); return }
+    if (!key) { showToast('Unable to generate an API key right now.', 'error'); return }
     setGeneratedApiKey(key)
     setCopyState('idle')
   }
@@ -133,9 +135,12 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="surface-card-strong signal-card rounded-2xl px-4 py-3 md:px-5"
+          className="surface-card-strong relative rounded-2xl px-4 py-3 md:px-5 shadow-[0_8px_32px_rgba(0,3,6,0.36)]"
         >
-          <div className="flex items-center justify-between gap-4">
+          {/* Shimmer effect layer - constrained with overflow: hidden */}
+          <div className="absolute inset-0 signal-card rounded-2xl pointer-events-none overflow-hidden" />
+          
+          <div className="relative z-10 flex items-center justify-between gap-4 overflow-visible">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 shrink-0 group">
               <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-[rgba(0,212,168,0.22)] bg-[rgba(0,212,168,0.08)] shadow-[0_0_20px_rgba(0,212,168,0.15)] transition-all duration-300 group-hover:shadow-[0_0_28px_rgba(0,212,168,0.28)]">
@@ -184,19 +189,24 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
               </div>
 
               {user ? (
-                <div className="relative" ref={profileRef}>
+                <>
+                  
+                  <div className="relative" ref={profileRef}>
                   <button
                     onClick={() => setIsProfileOpen((v) => !v)}
-                    className="flex items-center gap-2.5 rounded-xl border border-[var(--border)] bg-[rgba(8,16,24,0.8)] px-3 py-2 transition-all duration-200 hover:border-[rgba(0,212,168,0.3)] hover:bg-[rgba(12,24,34,0.95)]"
+                    className="flex items-center gap-2.5 rounded-xl border border-[var(--border)] bg-[rgba(8,16,24,0.8)] px-3 py-2 transition-all duration-200 hover:border-[rgba(0,212,168,0.3)] hover:bg-[rgba(12,24,34,0.95)] hover:shadow-[0_0_20px_rgba(0,212,168,0.15)]"
+                    title="Click to view profile and logout"
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[linear-gradient(135deg,var(--accent),rgba(0,160,128,0.9))] text-[11px] font-bold uppercase text-[var(--accent-ink)]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[linear-gradient(135deg,var(--accent),rgba(0,160,128,0.9))] text-[11px] font-bold uppercase text-[var(--accent-ink)] shadow-[0_0_12px_rgba(0,212,168,0.3)]">
                       {user.name.substring(0, 2)}
                     </div>
                     <div className="hidden sm:block text-left">
-                      <p className="text-[13px] font-semibold text-[var(--text)] leading-none">{user.name}</p>
+                      <p className="text-[13px] font-semibold text-[var(--text)] leading-none">
+                        {user.role === 'ORGANIZATION' ? 'New Researcher' : user.role === 'BOUNTY_HUNTER' ? 'New Agent' : user.name}
+                      </p>
                       <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] mt-0.5">{formatRole(user.role)}</p>
                     </div>
-                    <svg className={`h-3.5 w-3.5 text-[var(--text-muted)] transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <svg className={`h-3.5 w-3.5 text-[var(--accent)] transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
                     </svg>
                   </button>
@@ -208,7 +218,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.97 }}
                         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                        className="surface-card-strong absolute right-0 top-[calc(100%+10px)] z-50 w-[min(94vw,420px)] rounded-2xl p-4 shadow-[0_32px_80px_rgba(0,3,6,0.6)]"
+                        className="surface-card-strong absolute right-0 top-[calc(100%+14px)] z-[100] w-[min(94vw,420px)] rounded-2xl p-4 shadow-[0_32px_80px_rgba(0,3,6,0.9)] border-2 border-[rgba(0,212,168,0.2)]"
                       >
                         {/* Profile tabs */}
                         <div className="mb-4 flex gap-1 rounded-xl border border-[rgba(80,120,130,0.1)] bg-[rgba(6,12,18,0.8)] p-1">
@@ -254,7 +264,15 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Workspace</p>
                                 <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">{getRoleMessage(user.role)}</p>
                               </div>
-                              <Button variant="ghost" size="sm" className="w-full justify-center border border-[var(--border)]" onClick={logout}>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full justify-center border-[rgba(255,80,80,0.3)] bg-[rgba(255,80,80,0.08)] text-[#ff8080] hover:bg-[rgba(255,80,80,0.15)] hover:border-[rgba(255,80,80,0.4)]" 
+                                onClick={logout}
+                              >
+                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
                                 Sign out
                               </Button>
                             </div>
@@ -361,7 +379,8 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
+                  </div>
+                </>
               ) : (
                 <Button variant="primary" size="sm" onClick={onLogin}>
                   Sign in

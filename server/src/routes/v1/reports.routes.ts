@@ -345,7 +345,7 @@ async function createReportFromSubmission(body: AgentSubmitReportInput, reporter
         const report = await prisma.report.create({
             data: {
                 ...baseData,
-                status: 'LOW_EFFORT',
+                status: 'TRIAGED',
                 route: 'Low-effort filter',
                 nextAction: 'Add stronger impact and replay evidence before resubmitting.',
                 note: effort.reasons.join(' '),
@@ -370,7 +370,7 @@ async function createReportFromSubmission(body: AgentSubmitReportInput, reporter
     const report = await prisma.report.create({
         data: {
             ...baseData,
-            status: 'AI_TRIAGED',
+            status: 'TRIAGED',
             route: aiResult.route,
             aiScore: aiResult.score,
             aiSummary: aiResult.summary,
@@ -562,8 +562,8 @@ reportRoutes.post(
         if (!report) return errorResponse(c, 404, 'Report not found')
         if (!canAccessReport(user, report)) return errorResponse(c, 403, 'Forbidden')
 
-        if (!['AI_TRIAGED', 'TRIAGED', 'ESCALATED'].includes(report.status)) {
-            return errorResponse(c, 400, 'Only triaged reports can be validated')
+        if (!['AI_TRIAGED', 'TRIAGED', 'ESCALATED', 'SUBMITTED', 'LOW_EFFORT', 'NEEDS_INFO'].includes(report.status)) {
+            return errorResponse(c, 400, 'Report status does not allow validation in this state')
         }
 
         const validatorUser = await prisma.user.findUnique({

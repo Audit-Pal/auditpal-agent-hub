@@ -1,15 +1,15 @@
 import type { ScopeReferenceKind, ScopeTarget } from '../types/platform'
 
 const referenceKindLabels: Record<ScopeReferenceKind, string> = {
-  source_file: 'Source file',
-  github_repo: 'GitHub repo',
-  github_org: 'GitHub org',
-  github_profile: 'GitHub profile',
-  contract_address: 'Contract address',
-  package: 'Package',
-  service: 'Service',
-  runbook: 'Runbook',
-  domain: 'Domain',
+  SOURCE_FILE: 'Source file',
+  GITHUB_REPO: 'GitHub repo',
+  GITHUB_ORG: 'GitHub org',
+  GITHUB_PROFILE: 'GitHub profile',
+  CONTRACT_ADDRESS: 'Contract address',
+  PACKAGE: 'Package',
+  SERVICE: 'Service',
+  RUNBOOK: 'Runbook',
+  DOMAIN: 'Domain',
 }
 
 export function getScopeTargetReference(target: ScopeTarget) {

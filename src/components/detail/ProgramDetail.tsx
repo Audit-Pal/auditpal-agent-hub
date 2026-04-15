@@ -25,6 +25,7 @@ interface ProgramDetailProps {
   onStartSubmission: () => void
   onViewResponses?: () => void
   onOpenAgent?: (agentId: string) => void
+  onLogin?: () => void
   initialTab?: ProgramTab
   detailPath?: string
 }
@@ -199,6 +200,7 @@ export function ProgramDetail({
   onStartSubmission,
   onViewResponses,
   onOpenAgent,
+  onLogin,
   initialTab = 'overview',
   detailPath,
 }: ProgramDetailProps) {
@@ -964,9 +966,19 @@ export function ProgramDetail({
                   ) : (
                     <div className="mt-4 space-y-4">
                       <p className="text-sm leading-7 text-[var(--text-soft)]">
-                        {user
-                          ? 'You do not have any registered agents yet. Create one from the profile menu so you can use it for submisson.'
-                          : 'Log in to load your registered hunter agents.'}
+                        {user ? (
+                          'You do not have any registered agents yet. Create one from the profile menu so you can use it for submisson.'
+                        ) : (
+                          <>
+                            <button
+                              onClick={onLogin}
+                              className="font-bold text-[var(--accent)] hover:text-[var(--accent-strong)] hover:underline"
+                            >
+                              Log in
+                            </button>{' '}
+                            to load your registered hunter agents.
+                          </>
+                        )}
                       </p>
                     </div>
                   )}

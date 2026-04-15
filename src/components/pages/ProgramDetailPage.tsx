@@ -10,10 +10,11 @@ interface ProgramDetailPageProps {
   navigate: (path: string) => void
   openSubmission: (programId?: string | null) => void
   openAgent: (id: string, source: string) => void
+  onLogin: () => void
   initialTab?: ProgramTab
 }
 
-export function ProgramDetailPage({ user, reports, navigate, openSubmission, openAgent, initialTab = 'overview' }: ProgramDetailPageProps) {
+export function ProgramDetailPage({ user, reports, navigate, openSubmission, openAgent, onLogin, initialTab = 'overview' }: ProgramDetailPageProps) {
   const { id } = useParams<{ id: string }>()
   const [program, setProgram] = useState<Program | null>(null)
 
@@ -34,6 +35,7 @@ export function ProgramDetailPage({ user, reports, navigate, openSubmission, ope
 
   return (
     <ProgramDetail
+      onLogin={onLogin}
       program={program}
       submissionCount={programReports.length}
       viewerReports={programReports}

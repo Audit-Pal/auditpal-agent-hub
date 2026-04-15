@@ -96,6 +96,10 @@ class ApiClient {
             body: data ? JSON.stringify(data) : undefined,
         });
     }
+
+    delete<T>(path: string, options: RequestInit = {}) {
+        return this.fetch<T>(path, { ...options, method: 'DELETE' });
+    }
 }
 
 export const api = new ApiClient();

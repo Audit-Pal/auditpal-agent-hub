@@ -1,14 +1,16 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
 import { MetricCard } from '../common/MetricCard'
+import { ConfirmModal } from '../common/ConfirmModal'
+import { useToast } from '../../contexts/ToastContext'
 import { api } from '../../lib/api'
 import type { Program } from '../../types/platform'
 import { useAuth } from '../../contexts/AuthContext'
 
-const stagger = {
+const stagger: { container: Variants; item: Variants } = {
   container: { 
     hidden: {}, 
     show: { 
@@ -33,10 +35,24 @@ const stagger = {
 
 export function OrgDashboard() {
   const { user } = useAuth()
+  const { success, error } = useToast()
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
   const [fundAmounts, setFundAmounts] = useState<Record<string, number>>({})
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set())
+  
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    isDestructive?: boolean;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  })
 
   useEffect(() => {
     void fetchPrograms()
@@ -48,8 +64,8 @@ export function OrgDashboard() {
       if (res.success) {
         setPrograms(res.data)
       }
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -58,20 +74,21 @@ export function OrgDashboard() {
   const handleFund = useCallback(async (id: string) => {
     const amount = fundAmounts[id]
     if (!amount || amount <= 0) {
-      alert('Please enter a valid funding amount.')
+      error('Please enter a valid funding amount.')
       return
     }
     setProcessingIds((prev) => new Set(prev).add(id))
     try {
       const res = await api.post(`/programs/${id}/fund`, { amount })
       if (res.success) {
-        alert('Program funded and activated!')
+        success('Program funded and activated!')
         fetchPrograms()
       } else {
-        alert(res.error || 'Funding failed')
+        error(res.error || 'Funding failed')
       }
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      error('An error occurred while funding the program')
+      console.error(err)
     } finally {
       setProcessingIds((prev) => {
         const next = new Set(prev)
@@ -79,49 +96,66 @@ export function OrgDashboard() {
         return next
       })
     }
-  }, [fundAmounts])
+  }, [fundAmounts, success, error])
 
-  const handleDelete = useCallback(async (id: string) => {
-    if (!confirm('Are you sure you want to permanently delete this program?')) return
-    setProcessingIds((prev) => new Set(prev).add(id))
-    try {
-      const res = await api.delete(`/programs/${id}`)
-      if (res.success) {
-        fetchPrograms()
-      } else {
-        alert('Failed to delete program: ' + res.error)
-      }
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setProcessingIds((prev) => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
-    }
-  }, [])
+  const handleDelete = useCallback((id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Delete Program',
+      message: 'Are you sure you want to permanently delete this program? This action cannot be undone.',
+      isDestructive: true,
+      onConfirm: async () => {
+        setProcessingIds((prev) => new Set(prev).add(id))
+        try {
+          const res = await api.delete(`/programs/${id}`)
+          if (res.success) {
+            success('Program deleted successfully')
+            fetchPrograms()
+          } else {
+            error('Failed to delete program: ' + res.error)
+          }
+        } catch (err) {
+          error('An error occurred while deleting the program')
+          console.error(err)
+        } finally {
+          setProcessingIds((prev) => {
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+        }
+      },
+    })
+  }, [success, error, fetchPrograms])
 
-  const handleArchive = useCallback(async (id: string) => {
-    if (!confirm('Archive this program? It will no longer be visible.')) return
-    setProcessingIds((prev) => new Set(prev).add(id))
-    try {
-      const res = await api.patch(`/programs/${id}`, { status: 'CLOSED', isPublished: false })
-      if (res.success) {
-        fetchPrograms()
-      } else {
-        alert('Failed to archive program: ' + res.error)
-      }
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setProcessingIds((prev) => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
-    }
-  }, [])
+  const handleArchive = useCallback((id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Archive Program',
+      message: 'Archive this program? It will no longer be visible to researchers.',
+      onConfirm: async () => {
+        setProcessingIds((prev) => new Set(prev).add(id))
+        try {
+          const res = await api.patch(`/programs/${id}`, { status: 'CLOSED', isPublished: false })
+          if (res.success) {
+            success('Program archived successfully')
+            fetchPrograms()
+          } else {
+            error('Failed to archive program: ' + res.error)
+          }
+        } catch (err) {
+          error('An error occurred while archiving the program')
+          console.error(err)
+        } finally {
+          setProcessingIds((prev) => {
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+        }
+      },
+    })
+  }, [success, error, fetchPrograms])
 
   const { activePrograms, draftPrograms, totalApplications } = useMemo(() => {
     const active = programs.filter((p) => p.status === 'ACTIVE')
@@ -298,7 +332,7 @@ export function OrgDashboard() {
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Link to={`/reports?programId=${program.id}`} className="flex-1 min-w-[140px]">
-                        <Button variant="outline" size="md" className="w-full">
+                        <Button variant="outline" size="md" className="w-full border-[rgba(30,186,152,0.3)] bg-[rgba(30,186,152,0.08)] text-[var(--accent)] hover:bg-[rgba(30,186,152,0.15)] hover:border-[rgba(30,186,152,0.4)]">
                           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
                           </svg>
@@ -306,7 +340,7 @@ export function OrgDashboard() {
                         </Button>
                       </Link>
                       <Link to={`/org/edit-bounty/${program.id}`}>
-                        <Button variant="ghost" size="md" className="border border-[var(--border)]" disabled={isProcessing}>
+                        <Button variant="ghost" size="md" className="border border-[rgba(168,85,247,0.3)] bg-[rgba(168,85,247,0.08)] text-[#c084fc] hover:bg-[rgba(168,85,247,0.15)] hover:border-[rgba(168,85,247,0.4)]" disabled={isProcessing}>
                           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
@@ -317,7 +351,7 @@ export function OrgDashboard() {
                         <Button
                           variant="ghost"
                           size="md"
-                          className="border border-[var(--border)]"
+                          className="border border-[rgba(255,165,60,0.3)] bg-[rgba(255,165,60,0.08)] text-[#ffb347] hover:bg-[rgba(255,165,60,0.15)] hover:border-[rgba(255,165,60,0.4)]"
                           onClick={() => handleArchive(program.id)}
                           disabled={isProcessing}
                         >
@@ -330,7 +364,7 @@ export function OrgDashboard() {
                       <Button
                         variant="ghost"
                         size="md"
-                        className="border border-[rgba(181,69,52,0.14)] bg-[var(--critical-soft)] text-[var(--critical-text)] hover:bg-[var(--critical-soft)]"
+                        className="border border-[rgba(255,80,80,0.3)] bg-[rgba(255,80,80,0.08)] text-[#ff8080] hover:bg-[rgba(255,80,80,0.15)] hover:border-[rgba(255,80,80,0.4)]"
                         onClick={() => handleDelete(program.id)}
                         disabled={isProcessing}
                       >
@@ -347,6 +381,15 @@ export function OrgDashboard() {
           })
         )}
       </motion.div>
+      
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        isDestructive={confirmState.isDestructive}
+        onConfirm={confirmState.onConfirm}
+        onClose={() => setConfirmState((prev) => ({ ...prev, isOpen: false }))}
+      />
     </motion.div>
   )
 }

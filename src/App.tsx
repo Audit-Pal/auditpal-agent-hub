@@ -22,6 +22,7 @@ import { AgentDetailPage } from './components/pages/AgentDetailPage'
 
 import { api } from './lib/api'
 import { useAuth } from './contexts/AuthContext'
+import { useToast } from './contexts/ToastContext'
 
 type SortBy = 'recent' | 'bounty' | 'reviews' | 'name'
 
@@ -45,6 +46,7 @@ function formatUsd(value: number) {
 
 export default function App() {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -149,7 +151,11 @@ export default function App() {
             setIsSubmissionOpen(false)
             setEditingReport(null)
           } else {
-            alert(res.error || 'Update failed')
+        if (res.error) {
+          showToast(res.error, 'error')
+        } else {
+          showToast('Update failed', 'error')
+        }
           }
         }
         return
@@ -164,12 +170,14 @@ export default function App() {
         setReports((current) => [res.data, ...current.filter((report) => report.id !== res.data.id)])
         setIsSubmissionOpen(false)
         navigate('/reports')
-      } else {
-        alert(res.error || 'Submission failed')
+        showToast(res.error || 'Submission failed', 'error')
+      }
+      if (res.success) {
+        showToast('Report submitted successfully!', 'success')
       }
     } catch (error) {
       console.error('Report submission failed', error)
-      alert('An unexpected error occurred during submission.')
+      showToast('An unexpected error occurred during submission.', 'error')
     }
   }
 
@@ -191,10 +199,10 @@ export default function App() {
         return true
       }
 
-      alert(res.error || 'Validation failed')
+      showToast(res.error || 'Validation failed', 'error')
     } catch (error) {
       console.error('Report validation failed', error)
-      alert('An unexpected error occurred during validation.')
+      showToast('An unexpected error occurred during validation.', 'error')
     }
 
     return false
@@ -218,10 +226,10 @@ export default function App() {
         return true
       }
 
-      alert(res.error || 'Validation failed')
+      showToast(res.error || 'Validation failed', 'error')
     } catch (error) {
       console.error('Vulnerability validation failed', error)
-      alert('An unexpected error occurred during validation.')
+      showToast('An unexpected error occurred during validation.', 'error')
     }
 
     return false
@@ -388,10 +396,10 @@ export default function App() {
         />
         <Route path="/agents" element={<AgentsDirectoryPage leaderboardAgents={leaderboardAgents} openAgent={openAgent} navigate={navigate} />} />
         <Route path="/agents/leaderboard" element={<AgentLeaderboardPage topRankedAgent={topRankedAgent} leaderboardAgents={leaderboardAgents} openAgent={openAgent} />} />
-        <Route path="/bounty/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} />} />
-        <Route path="/bounty/:id/submission" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} initialTab="submission" />} />
-        <Route path="/program/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} />} />
-        <Route path="/program/:id/submission" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} initialTab="submission" />} />
+        <Route path="/bounty/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} />} />
+        <Route path="/bounty/:id/submission" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} initialTab="submission" />} />
+        <Route path="/program/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} />} />
+        <Route path="/program/:id/submission" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} initialTab="submission" />} />
         <Route path="/agent/:id" element={<AgentDetailPage agentBackTarget={agentBackTarget} navigate={navigate} />} />
         <Route path="/org/dashboard" element={<OrgDashboard />} />
         <Route path="/org/register-bounty" element={<BountyRegistration />} />
@@ -399,7 +407,7 @@ export default function App() {
         <Route path="/docs" element={<ApiDocs />} />
       </Routes>
 
-      <SubmissionModal isOpen={isSubmissionOpen} programs={programs} initialProgramId={submissionProgramId} initialData={editingReport} onClose={closeSubmission} onSubmit={handleSubmitReport} />
+      <SubmissionModal isOpen={isSubmissionOpen} programs={programs} initialProgramId={submissionProgramId} initialData={editingReport} onClose={closeSubmission} onLogin={handleOpenLogin} onSubmit={handleSubmitReport} />
 
       <RoleSelectionModal isOpen={isRoleSelectionOpen} onSelectRole={handleRoleSelection} onClose={() => setIsRoleSelectionOpen(false)} />
 

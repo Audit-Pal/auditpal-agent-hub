@@ -22,6 +22,8 @@ export type SubmissionStatus =
   | 'ESCALATED'
   | 'ACCEPTED'
 
+export type ProgramStatus = 'DRAFT' | 'AWAITING_FUNDS' | 'ACTIVE' | 'PAUSED' | 'CLOSED'
+
 export type VulnerabilityStatus = 'PENDING' | 'ESCALATED' | 'ACCEPTED' | 'REJECTED' | 'DUPLICATE'
 export type ScopeReferenceKind =
   | 'SOURCE_FILE'
@@ -215,6 +217,7 @@ export interface Program {
   description: string
   accentTone: AccentTone
   logoMark: string
+  status: ProgramStatus
   isNew: boolean
   triagedLabel: string
   maxBountyUsd: number

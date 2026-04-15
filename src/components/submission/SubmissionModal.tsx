@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import type { Program, ReportSubmissionInput, Severity, ResearcherReport } from '../../types/platform'
+import type { Program, ReportSubmissionInput, Severity, ResearcherReport, Agent } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
 import { getScopeTargetSelectionLabel } from '../../utils/scopeTargets'
@@ -13,6 +13,7 @@ interface SubmissionModalProps {
   initialProgramId?: string | null
   initialData?: ResearcherReport | null
   onClose: () => void
+  onLogin?: () => void
   onSubmit: (submission: ReportSubmissionInput) => void
 }
 
@@ -94,10 +95,7 @@ function buildKnowledgeGraph(form: FormState, selectedProgram: Program, reporter
     const findingId = `finding:${slugify(vuln.title)}`
     const targetLabel = selectedProgram.scopeTargets?.find(t => t.id === vuln.targetId)?.label || vuln.targetId
     const targetId = `target:${slugify(targetLabel)}`
-    const vulnerabilityId = `vulnerability:${slugify(vuln.vulnerabilityClass)}`
-    const componentId = `component:${slugify(vuln.affectedComponent)}`
-    const assetId = `asset:${slugify(vuln.affectedAsset)}`
-
+    
     entities.push(
       {
         id: findingId,
@@ -106,17 +104,11 @@ function buildKnowledgeGraph(form: FormState, selectedProgram: Program, reporter
         properties: { severity: vuln.severity, summary: vuln.summary.trim(), impact: vuln.impact.trim(), proof: vuln.proof.trim() },
       },
       { id: targetId, type: 'Target', name: targetLabel },
-      { id: vulnerabilityId, type: 'Vulnerability', name: vuln.vulnerabilityClass.trim() || 'Unclassified', properties: { attackVector: vuln.attackVector.trim(), rootCause: vuln.rootCause.trim() } },
-      { id: componentId, type: 'Component', name: vuln.affectedComponent.trim(), properties: { errorLocation: vuln.errorLocation.trim() || undefined } },
-      { id: assetId, type: 'Asset', name: vuln.affectedAsset.trim(), properties: { tags: splitMultiValueField(form.tags) } }
     )
 
     relations.push(
       { sourceId: findingId, targetId: programId, type: 'BELONGS_TO_PROGRAM' },
       { sourceId: findingId, targetId, type: 'TARGETS' },
-      { sourceId: findingId, targetId: vulnerabilityId, type: 'HAS_VULNERABILITY_CLASS' },
-      { sourceId: findingId, targetId: componentId, type: 'AFFECTS_COMPONENT' },
-      { sourceId: findingId, targetId: assetId, type: 'AFFECTS_ASSET' },
       { sourceId: findingId, targetId: reporterId, type: 'REPORTED_BY' },
     )
     if (agentId) {
@@ -177,6 +169,7 @@ export function SubmissionModal({
   initialProgramId,
   initialData,
   onClose,
+  onLogin,
   onSubmit,
 }: SubmissionModalProps) {
   const { user } = useAuth()
@@ -452,24 +445,24 @@ export function SubmissionModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-[#171717]/35 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(3,8,12,0.85)] px-4 py-6 backdrop-blur-xl animate-fade-in"
       onClick={onClose}
     >
-      <div className="mx-auto max-w-7xl" onClick={(event) => event.stopPropagation()}>
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="mx-auto max-w-7xl animate-scale-in" onClick={(event) => event.stopPropagation()}>
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
           <form
             onSubmit={handleSubmit}
-            className="rounded-[32px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-[0_24px_80px_rgba(30,24,16,0.14)] md:p-8"
+            className="hero-card rounded-[42px] border border-[rgba(0,212,168,0.18)] bg-[rgba(9,18,27,0.96)] p-6 shadow-[0_48px_120px_rgba(0,0,0,0.8)] md:p-10"
           >
-            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#ebe4d8] pb-6">
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[rgba(80,120,130,0.14)] pb-8">
               <div className="max-w-2xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
+                <p className="section-kicker">
                   Bounty submission
                 </p>
-                <h2 className="mt-3 font-serif text-4xl leading-none text-[#171717] md:text-5xl">
+                <h2 className="mt-4 font-serif text-4xl leading-tight text-[var(--text)] md:text-5xl">
                   {isEditing ? 'Edit your report' : 'Submit a multi-finding report'}
                 </h2>
-                <p className="mt-3 max-w-xl text-sm leading-7 text-[#5f5a51]">
+                <p className="section-copy mt-4 max-w-xl text-lg opacity-90">
                   {isEditing
                     ? 'Update your findings and save changes.'
                     : 'A single submission can contain multiple vulnerabilities. Complete the structured fields for each finding.'}
@@ -477,26 +470,29 @@ export function SubmissionModal({
               </div>
               <div className="flex items-center gap-4">
                 {isGenerating && (
-                  <div className="hidden border-r border-[#ebe4d8] pr-4 md:flex md:items-center md:gap-6">
-                    <div className={`flex flex-col items-center gap-1 transition-opacity ${simPhase === 'discovery' ? 'scale-110 opacity-100' : 'opacity-40'}`}>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1f5a3f] text-[10px] font-bold text-white shadow-sm">AT</div>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#7b7468]">Discovery</span>
+                  <div className="hidden border-r border-[rgba(80,120,130,0.14)] pr-6 md:flex md:items-center md:gap-8">
+                    <div className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${simPhase === 'discovery' ? 'scale-110 opacity-100' : 'opacity-30'}`}>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[10px] font-bold text-[var(--accent)] border border-[rgba(0,212,168,0.2)] shadow-glow">AT</div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--accent)]">Discovery</span>
                     </div>
-                    <div className={`flex flex-col items-center gap-1 transition-opacity ${simPhase === 'source' ? 'scale-110 opacity-100' : 'opacity-40'}`}>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8b5cf6] text-[10px] font-bold text-white shadow-sm">MS</div>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#7b7468]">Provenance</span>
+                    <div className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${simPhase === 'source' ? 'scale-110 opacity-100' : 'opacity-30'}`}>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[rgba(139,92,246,0.1)] text-[10px] font-bold text-[#8b5cf6] border border-[rgba(139,92,246,0.2)]">MS</div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#a78bfa]">Provenance</span>
                     </div>
-                    <div className={`flex flex-col items-center gap-1 transition-opacity ${simPhase === 'audit' ? 'scale-110 opacity-100' : 'opacity-40'}`}>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f97316] text-[10px] font-bold text-white shadow-sm">OD</div>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#7b7468]">AI Audit</span>
+                    <div className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${simPhase === 'audit' ? 'scale-110 opacity-100' : 'opacity-30'}`}>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[rgba(249,115,22,0.1)] text-[10px] font-bold text-[#f97316] border border-[rgba(249,115,22,0.2)]">OD</div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#fb923c]">AI Audit</span>
                     </div>
                   </div>
                 )}
-                <div className="flex gap-3">
-                  <Button type="button" variant="outline" size="sm" onClick={handleMagicScan} disabled={isGenerating}>
-                    {isGenerating ? 'Agents working...' : 'Magic AI Scan First Finding'}
+                <div className="flex gap-4">
+                  <Button type="button" variant="primary" size="md" onClick={handleMagicScan} disabled={isGenerating} className="animate-glow">
+                    <svg className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    {isGenerating ? 'Agents working...' : 'Magic AI Scan'}
                   </Button>
-                  <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+                  <Button type="button" variant="ghost" size="md" onClick={onClose}>
                     Close
                   </Button>
                 </div>
@@ -504,51 +500,50 @@ export function SubmissionModal({
             </div>
 
             {errors.length > 0 && (
-              <div className="mt-6 rounded-3xl border border-[#e7c7bf] bg-[#fdf1ee] p-5">
-                <p className="text-sm font-semibold text-[#7c2d12]">Please fix the following:</p>
-                <ul className="mt-2 space-y-1 text-xs text-[#8d4a36]">
+              <div className="mt-8 rounded-3xl border border-[rgba(255,80,80,0.2)] bg-[rgba(255,80,80,0.06)] p-6">
+                <p className="text-sm font-bold text-[var(--critical-text)]">Please fix the following:</p>
+                <ul className="mt-3 space-y-1.5 text-[13px] text-[rgba(255,128,128,0.85)]">
                   {errors.map((error, i) => (
-                    <li key={i}>- {error}</li>
+                    <li key={i} className="flex items-start gap-2">
+                       <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--critical-text)]" />
+                       {error}
+                    </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            <div className="mt-6 space-y-10">
+            <div className="mt-10 space-y-12">
               <section className="space-y-6">
                   <label className="block space-y-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Overall Submission Title</span>
+                      <span className="field-label">Overall Submission Title</span>
                       <input
                         type="text"
                         value={form.title}
                         onChange={(event) => updateForm('title', event.target.value)}
                         placeholder="E.g., Multiple Critical Flaws in Settlement Engine"
-                        className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                        className="field"
                       />
                   </label>
                   
-                  {/* Keep program selection and agents here for the overall submission */}
-                  <div className="grid gap-5 md:grid-cols-2">
+                  <div className="grid gap-6 md:grid-cols-2">
                     <label className="space-y-2">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Bounty program</span>
-                      </div>
+                      <span className="field-label">Bounty program</span>
                       {initialProgramId ? (
-                        <div className="w-full rounded-2xl border border-[#d9d1c4] bg-[#f6f2ea] px-4 py-3 text-sm font-semibold text-[#171717]">
+                        <div className="surface-card-muted flex min-h-[50px] items-center rounded-2xl border border-[rgba(80,120,130,0.2)] px-4 text-sm font-semibold text-[var(--text)]">
                           {selectedProgram.name}
                         </div>
                       ) : (
                         <select
                           value={form.programId}
                           onChange={(event) => {
-                            const nextProgram = programs.find((program) => program.id === event.target.value)
                             setForm((current) => ({
                               ...current,
                               programId: event.target.value,
                               reporterAgent: '',
                             }))
                           }}
-                          className="w-full rounded-2xl border border-[#d9d1c4] bg-white px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                          className="field-select"
                         >
                           {programs.map((program) => (
                             <option key={program.id} value={program.id}>
@@ -561,78 +556,99 @@ export function SubmissionModal({
                   </div>
               </section>
 
-              <section className="rounded-[28px] border border-[#ebe4d8] bg-[#fbf8f2] p-6">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <h3 className="text-2xl font-semibold text-[#171717]">Choose one of your registered hunter agents</h3>
-                  </div>
+              <section className="surface-card-strong rounded-[32px] border border-[rgba(80,120,130,0.18)] bg-[rgba(10,24,34,0.4)] p-8">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <h3 className="font-serif text-2xl text-[var(--text)]">Choose one of your registered hunter agents</h3>
                   {isLoadingOwnedAgents && (
-                    <div className="rounded-full border border-[#d9d1c4] bg-white px-3 py-1 text-xs text-[#7b7468]">
-                      Loading your agents...
+                    <div className="animate-pulse rounded-full border border-[var(--border)] bg-[rgba(8,16,24,0.6)] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      Scanning for agents...
                     </div>
                   )}
                 </div>
 
                 {ownedAgents.length > 0 ? (
-                  <div className="mt-5 rounded-[24px] border border-[#d9d1c4] bg-white p-2">
-                    {ownedAgents.map((agent, index) => {
+                  <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                    {ownedAgents.map((agent) => {
                       const isSelected = form.reporterAgent === agent.name
                       return (
                         <button
                           key={agent.id}
                           type="button"
                           onClick={() => updateForm('reporterAgent', agent.name)}
-                          className={`flex w-full items-start gap-4 rounded-[20px] px-4 py-4 text-left transition ${isSelected ? 'bg-[#171717] text-white' : 'text-[#171717] hover:bg-[#f6f2ea]'}`}
+                          className={`group relative flex items-start gap-4 overflow-hidden rounded-[24px] border border-[rgba(80,120,130,0.18)] p-5 text-left transition-all duration-300 ${isSelected ? 'border-[var(--accent)] bg-[rgba(0,212,168,0.08)] ring-1 ring-[var(--accent)]' : 'bg-[rgba(8,16,24,0.6)] hover:border-[rgba(0,212,168,0.4)] hover:bg-[rgba(12,24,34,0.8)]'}`}
                         >
-                          <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold ${isSelected ? 'border-white/20 bg-white/10 text-white' : 'border-[#d9d1c4] bg-white text-[#171717]'}`}>
-                            {String(index + 1).padStart(2, '0')}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-lg font-semibold">{agent.name}</h4>
-                            <p className={`text-sm ${isSelected ? 'text-white/75' : 'text-[#6f695f]'}`}>{agent.headline}</p>
+                          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl transition-colors ${isSelected ? 'bg-[var(--accent)] text-[var(--accent-ink)]' : 'bg-[rgba(80,120,130,0.12)] text-[var(--text-soft)]'}`}>
+                            {agent.logoMark || '🤖'}
                           </div>
-                          <Badge tone={isSelected ? 'new' : 'soft'}>{isSelected ? 'Selected' : 'Available'}</Badge>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold tracking-tight text-[var(--text)]">{agent.name}</h4>
+                            <p className="mt-1 text-xs leading-relaxed text-[var(--text-soft)] opacity-80">{agent.headline}</p>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute right-4 top-4">
+                              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-ink)]">
+                                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
                         </button>
                       )
                     })}
                   </div>
                 ) : (
-                  <div className="mt-5 rounded-[24px] border border-[#d9d1c4] bg-white p-4 text-sm leading-7 text-[#4b463f]">
-                    {user ? 'You do not have any registered agents yet.' : 'Log in to load your registered agents.'}
+                  <div className="mt-6 rounded-[24px] border border-[rgba(80,120,130,0.14)] bg-[rgba(8,16,24,0.6)] p-6 text-center">
+                    <p className="text-sm leading-7 text-[var(--text-soft)] opacity-80">
+                      {user ? (
+                        "You don't have any registered agents yet."
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={onLogin}
+                            className="font-bold text-[var(--accent)] hover:underline"
+                          >
+                            Log in
+                          </button>{' '}
+                          to access your registered security agents.
+                        </>
+                      )}
+                    </p>
                   </div>
                 )}
               </section>
 
               
               {form.vulnerabilities.map((vuln, index) => (
-                  <section key={vuln.id} className="space-y-6 rounded-[28px] border border-[#d9d1c4] bg-white p-6 shadow-sm relative">
-                    <div className="flex items-center justify-between pb-4 border-b border-[#ebe4d8]">
-                        <h3 className="font-serif text-2xl text-[#171717]">Finding #{index + 1}</h3>
+                  <section key={vuln.id} className="surface-card rounded-[32px] border border-[rgba(80,120,130,0.18)] p-6 md:p-8 animate-fade-up relative">
+                    <div className="flex items-center justify-between pb-6 border-b border-[rgba(80,120,130,0.12)]">
+                        <h3 className="font-serif text-3xl text-[var(--text)]">Finding #{index + 1}</h3>
                         {form.vulnerabilities.length > 1 && (
-                            <button type="button" onClick={() => removeVulnerability(vuln.id)} className="text-sm font-semibold text-[#dc2626] hover:underline">
+                            <button type="button" onClick={() => removeVulnerability(vuln.id)} className="text-sm font-bold text-[var(--critical-text)] hover:underline opacity-80 hover:opacity-100 transition-opacity">
                                 Remove finding
                             </button>
                         )}
                     </div>
 
-                    <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_220px]">
+                    <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_240px] mt-8">
                         <label className="space-y-2">
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Finding title</span>
+                            <span className="field-label">Finding title</span>
                             <input
                                 type="text"
                                 value={vuln.title}
                                 onChange={(e) => updateVulnerability(vuln.id, 'title', e.target.value)}
                                 placeholder="Brief description of the finding"
-                                className="w-full rounded-2xl border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                                className="field"
                             />
                         </label>
 
                         <label className="space-y-2">
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Severity</span>
+                            <span className="field-label">Severity</span>
                             <select
                                 value={vuln.severity}
                                 onChange={(e) => updateVulnerability(vuln.id, 'severity', e.target.value as Severity)}
-                                className="w-full rounded-2xl border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                                className="field-select"
                             >
                                 <option value="CRITICAL">Critical</option>
                                 <option value="HIGH">High</option>
@@ -642,15 +658,13 @@ export function SubmissionModal({
                         </label>
                     </div>
 
-                    <label className="block space-y-2">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Target component</span>
-                        </div>
+                    <label className="block space-y-2 mt-6">
+                        <span className="field-label">Target component</span>
                         <select
                             value={vuln.targetId}
                             onChange={(event) => updateVulnerability(vuln.id, 'targetId', event.target.value)}
                             disabled={availableTargets.length === 0}
-                            className="w-full rounded-2xl border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                            className="field-select"
                         >
                             {availableTargets.length === 0 ? (
                                 <option value="">No scoped targets available</option>
@@ -664,146 +678,159 @@ export function SubmissionModal({
                         </select>
                     </label>
 
-                    <div className="space-y-6">
+                    <div className="space-y-6 mt-8">
                         <label className="block space-y-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Summary</p>
-                        <textarea
-                            rows={3}
-                            value={vuln.summary}
-                            onChange={(e) => updateVulnerability(vuln.id, 'summary', e.target.value)}
-                            className="w-full rounded-[20px] border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[#171717]"
-                        />
+                          <p className="field-label">Summary</p>
+                          <textarea
+                              rows={3}
+                              value={vuln.summary}
+                              onChange={(e) => updateVulnerability(vuln.id, 'summary', e.target.value)}
+                              className="field-area"
+                          />
                         </label>
 
                         <label className="block space-y-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Impact</p>
-                        <textarea
-                            rows={3}
-                            value={vuln.impact}
-                            onChange={(e) => updateVulnerability(vuln.id, 'impact', e.target.value)}
-                            className="w-full rounded-[20px] border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[#171717]"
-                        />
+                          <p className="field-label">Impact</p>
+                          <textarea
+                              rows={3}
+                              value={vuln.impact}
+                              onChange={(e) => updateVulnerability(vuln.id, 'impact', e.target.value)}
+                              className="field-area"
+                          />
                         </label>
 
                         <label className="block space-y-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Proof of concept</p>
-                        <textarea
-                            rows={4}
-                            value={vuln.proof}
-                            onChange={(e) => updateVulnerability(vuln.id, 'proof', e.target.value)}
-                            className="w-full rounded-[20px] border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[#171717]"
-                        />
+                          <p className="field-label">Proof of concept</p>
+                          <textarea
+                              rows={4}
+                              value={vuln.proof}
+                              onChange={(e) => updateVulnerability(vuln.id, 'proof', e.target.value)}
+                              className="field-area"
+                          />
                         </label>
                     </div>
 
-                    <div className="grid gap-5 md:grid-cols-[200px_minmax(0,1fr)]">
+                    <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)] mt-8 pt-8 border-t border-[rgba(80,120,130,0.12)]">
                         <label className="space-y-2">
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Error location</span>
+                            <span className="field-label">Error location</span>
                             <input
                                 type="text"
                                 value={vuln.errorLocation}
                                 onChange={(e) => updateVulnerability(vuln.id, 'errorLocation', e.target.value)}
                                 placeholder="File.sol:123"
-                                className="w-full rounded-2xl border border-[#d9d1c4] bg-[#fbf8f2] px-4 py-3 text-sm text-[#171717] outline-none transition focus:border-[#171717]"
+                                className="field"
                             />
                         </label>
                         <label className="space-y-2">
-                            <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b7468]">Vulnerable snippet</span>
-                            </div>
+                            <span className="field-label">Vulnerable snippet</span>
                             <textarea
                                 rows={6}
                                 value={vuln.codeSnippet}
                                 onChange={(e) => updateVulnerability(vuln.id, 'codeSnippet', e.target.value)}
                                 placeholder="// Paste the vulnerable code snippet here"
-                                className="w-full rounded-[24px] border border-[#d9d1c4] bg-[#fafafa] p-5 font-mono text-[13px] leading-relaxed text-[#171717] outline-none focus:border-[#171717]"
+                                className="field-area bg-[rgba(3,8,12,0.4)] font-mono text-[13px] border-[rgba(80,120,130,0.3)] placeholder:opacity-30"
                             />
                         </label>
                     </div>
                   </section>
               ))}
 
-              <div className="flex justify-center pt-2 pb-6 border-b border-[#ebe4d8]">
-                  <Button type="button" variant="outline" size="lg" onClick={addVulnerability}>
-                      + Add another finding to this submission
+              <div className="flex justify-center pt-4 pb-10 border-b border-[rgba(80,120,130,0.14)]">
+                  <Button type="button" variant="outline" size="lg" onClick={addVulnerability} className="border-dashed border-[rgba(80,120,130,0.3)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add another finding to this submission
                   </Button>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="agreed"
-                    checked={form.agreedRules}
-                    onChange={(event) => updateForm('agreedRules', event.target.checked)}
-                    className="h-4 w-4 accent-[#171717]"
-                  />
-                  <label htmlFor="agreed" className="cursor-pointer text-sm text-[#4b463f]">
+              <div className="flex flex-wrap items-center justify-between gap-6 pt-6 mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative flex items-center">
+                    <input
+                      type="checkbox"
+                      id="agreed"
+                      checked={form.agreedRules}
+                      onChange={(event) => updateForm('agreedRules', event.target.checked)}
+                      className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-[var(--border)] bg-[rgba(8,16,24,0.6)] checked:bg-[var(--accent)] transition-all"
+                    />
+                    <svg className="absolute left-1 top-1 h-3 w-3 pointer-events-none opacity-0 peer-checked:opacity-100 text-[var(--accent-ink)] transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <label htmlFor="agreed" className="cursor-pointer text-sm font-medium text-[var(--text-soft)]">
                     I confirm these findings were discovered fairly and stay within scope.
                   </label>
                 </div>
-                <div className="flex gap-3">
-                  <Button type="button" variant="outline" size="md" onClick={onClose}>
+                <div className="flex gap-4">
+                  <Button type="button" variant="outline" size="lg" onClick={onClose}>
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     variant="primary"
-                    size="md"
+                    size="lg"
                     disabled={!form.reporterAgent.trim() || isGenerating}
+                    className="min-w-[200px]"
                   >
-                    {isEditing ? 'Save changes' : user ? 'Submit multiple findings' : 'Log in to submit'}
+                    {isEditing
+                      ? 'Save changes'
+                      : user
+                      ? 'Submit multiple findings'
+                      : (
+                        <span onClick={(e) => { e.stopPropagation(); onLogin?.(); }}>
+                          Log in to submit
+                        </span>
+                      )}
                   </Button>
                 </div>
               </div>
             </div>
           </form>
 
-          <aside className="space-y-5">
-            <section className="rounded-[28px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
+          <aside className="space-y-6">
+            <section className="surface-card-strong rounded-[36px] border border-[rgba(80,120,130,0.18)] bg-[rgba(9,18,27,0.98)] p-8 shadow-xl">
+              <p className="section-kicker">
                 Bounty context
               </p>
-              <h3 className="mt-3 font-serif text-2xl text-[#171717]">{selectedProgram.name}</h3>
-              <p className="mt-2 text-sm text-[#5f5a51]">{selectedProgram.tagline}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <h3 className="mt-4 font-serif text-3xl text-[var(--text)] leading-tight">{selectedProgram.name}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--text-soft)] opacity-90">{selectedProgram.tagline}</p>
+              <div className="mt-6 flex flex-wrap gap-2">
                 {(selectedProgram.categories || []).map((category) => (
                   <Badge key={category} tone="soft">
                     {formatEnum(category)}
                   </Badge>
                 ))}
               </div>
-              <div className="mt-5 grid gap-3 text-sm md:grid-cols-2">
-                <div className="rounded-[22px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Max bounty</p>
-                  <p className="mt-2 text-lg font-semibold text-[#171717]">{formatUsd(selectedProgram.maxBountyUsd)}</p>
+              <div className="mt-8 grid gap-4">
+                <div className="surface-card-muted rounded-[24px] border border-[rgba(80,120,130,0.12)] p-5">
+                  <p className="section-kicker text-[8px]">Max bounty</p>
+                  <p className="mt-2 text-2xl font-bold text-[var(--text)]">{formatUsd(selectedProgram.maxBountyUsd)}</p>
                 </div>
-                <div className="rounded-[22px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[#7b7468]">Payout window</p>
-                  <p className="mt-2 text-[#171717]">{selectedProgram.payoutWindow}</p>
+                <div className="surface-card-muted rounded-[24px] border border-[rgba(80,120,130,0.12)] p-5">
+                  <p className="section-kicker text-[8px]">Payout window</p>
+                  <p className="mt-2 text-2xl font-bold text-[var(--text)]">{selectedProgram.payoutWindow || '7 days'}</p>
                 </div>
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-[#d9d1c4] bg-[#fffdf8] p-6 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7b7468]">
+            <section className="surface-card-strong rounded-[36px] border border-[rgba(80,120,130,0.18)] bg-[rgba(9,18,27,0.98)] p-8 shadow-xl">
+              <p className="section-kicker">
                 Selected agent
               </p>
               {selectedAgent ? (
-                <div className="mt-4 rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d9d1c4] bg-white text-sm font-semibold text-[#171717]">
-                      {selectedAgent.logoMark}
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-semibold text-[#171717]">{selectedAgent.name}</h4>
-                      <p className="mt-2 text-sm leading-7 text-[#4b463f]">{selectedAgent.headline}</p>
-                    </div>
+                <div className="mt-6 flex flex-col items-center text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-[24px] bg-[var(--accent-soft)] text-3xl text-[var(--accent)] border border-[rgba(0,212,168,0.2)] mb-4">
+                    {selectedAgent.logoMark || '🤖'}
                   </div>
+                  <h4 className="text-xl font-bold text-[var(--text)]">{selectedAgent.name}</h4>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--text-soft)]">{selectedAgent.headline}</p>
                 </div>
               ) : (
-                <div className="mt-4 rounded-[24px] border border-[#ebe4d8] bg-[#fbf8f2] p-4 text-sm leading-7 text-[#4b463f]">
-                  Choose one of your registered hunter agents before you submit the report.
+                <div className="mt-6 rounded-[24px] border border-dashed border-[rgba(80,120,130,0.2)] p-8 text-center bg-[rgba(8,16,24,0.4)]">
+                   <p className="text-sm leading-relaxed text-[var(--text-soft)] italic opacity-70">
+                     Choose one of your registered hunter agents before you submit the report.
+                   </p>
                 </div>
               )}
             </section>

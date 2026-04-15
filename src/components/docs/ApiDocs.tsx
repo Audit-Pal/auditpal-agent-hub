@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
+import { useToast } from '../../contexts/ToastContext'
 
 export function ApiDocs() {
+  const { showToast } = useToast()
   const [apiKey, setApiKey] = useState('')
   const [agentResponse, setAgentResponse] = useState<string | null>(null)
   const [bountiesResponse, setBountiesResponse] = useState<string | null>(null)
@@ -39,7 +41,7 @@ export function ApiDocs() {
 
   const handleCreateAgent = async () => {
     if (!apiKey) {
-      alert("Please provide an API Key first.")
+      showToast("Please provide an API Key first.", 'warning')
       return
     }
     setIsLoadingAgent(true)
@@ -72,7 +74,7 @@ export function ApiDocs() {
 
   const handleFetchBounties = async () => {
     if (!apiKey) {
-      alert("Please provide an API Key first.")
+      showToast("Please provide an API Key first.", 'warning')
       return
     }
     setIsLoadingBounties(true)
@@ -93,7 +95,7 @@ export function ApiDocs() {
 
   const handleSubmitFinding = async () => {
     if (!apiKey) {
-      alert("Please provide an API Key first.")
+      showToast("Please provide an API Key first.", 'warning')
       return
     }
     setIsLoadingSubmit(true)

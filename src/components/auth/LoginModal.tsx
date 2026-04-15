@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../common/Button'
 import { useAuth, type UserRole } from '../../contexts/AuthContext'
@@ -24,12 +24,12 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
   const isOrgRole = initialRole === 'organization'
   const defaultEmail = isOrgRole ? demoCredentials.ORGANIZATION.email : demoCredentials.BOUNTY_HUNTER.email
   const defaultPassword = isOrgRole ? demoCredentials.ORGANIZATION.password : demoCredentials.BOUNTY_HUNTER.password
-  const defaultName = isOrgRole ? 'New Organization' : 'New Researcher'
+  const defaultName = isOrgRole ? 'New Researcher' : 'New Agent'
   const defaultUserRole: UserRole = isOrgRole ? 'ORGANIZATION' : 'BOUNTY_HUNTER'
 
-  const [email, setEmail] = useState(defaultEmail)
-  const [password, setPassword] = useState(defaultPassword)
-  const [name, setName] = useState(defaultName)
+  const [email, setEmail] = useState<string>(defaultEmail)
+  const [password, setPassword] = useState<string>(defaultPassword)
+  const [name, setName] = useState<string>(defaultName)
   const [role, setRole] = useState<UserRole>(defaultUserRole)
   const [organizationName, setOrganizationName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -47,7 +47,6 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
     }
   }, [isOpen, isOrgRole, defaultUserRole])
 
-  if (!isOpen) return null
 
   const applyDemoCredentials = (nextRole: keyof typeof demoCredentials) => {
     setMode('login')
@@ -56,7 +55,7 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
     setError(null)
   }
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setLoading(true)
     setError(null)
@@ -221,13 +220,13 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
             {mode === 'register' && (
               <div>
                 <label className="field-label">Name</label>
-                <input type="text" value={name} onChange={(event) => setName(event.target.value)} className="field" required />
+                <input type="text" value={name} onChange={(event: ChangeEvent<HTMLInputElement>) => setName(event.target.value)} className="field" required />
               </div>
             )}
 
             <div>
               <label className="field-label">Email address</label>
-              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="field" required />
+              <input type="email" value={email} onChange={(event: ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)} className="field" required />
             </div>
 
             <div>
@@ -236,7 +235,7 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
                   className="field !pr-12"
                   required
                 />
@@ -257,7 +256,7 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
                     <input
                       type="checkbox"
                       checked={role === 'ORGANIZATION'}
-                      onChange={(event) => setRole(event.target.checked ? 'ORGANIZATION' : 'BOUNTY_HUNTER')}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => setRole(event.target.checked ? 'ORGANIZATION' : 'BOUNTY_HUNTER')}
                       className="h-4 w-4 rounded border-[rgba(15,23,38,0.14)]"
                     />
                     Registering as an organization
@@ -270,7 +269,7 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
                     <input
                       type="text"
                       value={organizationName}
-                      onChange={(event) => setOrganizationName(event.target.value)}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => setOrganizationName(event.target.value)}
                       placeholder="Acme Security"
                       className="field"
                       required

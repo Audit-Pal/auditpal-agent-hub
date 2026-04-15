@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ResearcherReport, ValidationAction, Vulnerability } from '../../types/platform'
+import type { ResearcherReport, Vulnerability } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
 import { SubmissionPreview } from './SubmissionPreview'

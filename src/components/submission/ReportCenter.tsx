@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ResearcherReport, ValidationAction } from '../../types/platform'
+import type { ResearcherReport, ValidationAction, Severity } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
 import { formatEnum } from '../../utils/formatters'
@@ -48,7 +48,7 @@ function getStatusTone(status: ResearcherReport['status']) {
   }
 }
 
-function getSeverityTone(severity: ResearcherReport['severity']) {
+function getSeverityTone(severity: Severity) {
   if (severity === 'CRITICAL') return 'critical' as const
   if (severity === 'HIGH') return 'high' as const
   if (severity === 'MEDIUM') return 'medium' as const
@@ -150,7 +150,7 @@ export function ReportCenter({
           const graphContext = report.structuredData?.graphContext
           const primaryVulnerability = report.vulnerabilities?.[0]
           const currentSeverity = validationSeverity[report.id] || primaryVulnerability?.severity || 'LOW'
-          const awaitingValidation = canValidate && ['AI_TRIAGED', 'TRIAGED', 'ESCALATED'].includes(report.status)
+          const awaitingValidation = canValidate && ['AI_TRIAGED', 'TRIAGED', 'ESCALATED', 'SUBMITTED', 'LOW_EFFORT', 'NEEDS_INFO'].includes(report.status)
 
           return (
             <article key={report.id} className="surface-card-strong rounded-[32px] p-6 md:p-7">
@@ -227,7 +227,9 @@ export function ReportCenter({
                   )}
                   {report.note && (
                     <div className="surface-card-muted rounded-[26px] p-4">
-                      <p className="section-kicker !tracking-[0.18em]">Human decision</p>
+                      <p className="section-kicker !tracking-[0.18em]">
+                        {report.status === 'LOW_EFFORT' ? 'Automated filter' : 'Human decision'}
+                      </p>
                       <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{report.note}</p>
                     </div>
                   )}
