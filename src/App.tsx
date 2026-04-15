@@ -270,7 +270,7 @@ export default function App() {
 
   const liveSignals: LiveSignal[] = programs
     .flatMap((program) =>
-      (program.reportQueue || []).map((report) => ({
+      (program.reports || []).map((report) => ({
         id: report.id,
         programId: program.id,
         programName: program.name,

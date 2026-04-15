@@ -226,7 +226,7 @@ model Program {
   scopeTargets        ScopeTarget[]
   triageStages        TriageStage[]
   policySections      PolicySection[]
-  reportQueue         Report[]
+  reports             Report[]
   evidenceFields      EvidenceField[]
   linkedAgents        ProgramAgentLink[]
 

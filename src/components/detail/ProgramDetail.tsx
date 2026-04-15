@@ -217,7 +217,7 @@ export function ProgramDetail({
   const policySections = (program.policySections || []).filter((section) => section.title !== 'Focus Area')
   const primaryTarget = (program.scopeTargets || [])[0]
   const scopeReferences = (program.scopeTargets || []).filter((target) => Boolean(target.referenceUrl))
-  const sortedQueue = sortReportsDescending(program.reportQueue || [])
+  const sortedQueue = sortReportsDescending(program.reports || [])
   const recentPublicSubmissions = sortedQueue.slice(0, 5)
   const payoutHistory = sortedQueue
     .filter((report) => ['ACCEPTED', 'RESOLVED'].includes(report.status) || (report.rewardEstimateUsd || 0) > 0)

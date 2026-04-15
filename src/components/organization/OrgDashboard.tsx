@@ -160,7 +160,7 @@ export function OrgDashboard() {
   const { activePrograms, draftPrograms, totalApplications } = useMemo(() => {
     const active = programs.filter((p) => p.status === 'ACTIVE')
     const draft = programs.filter((p) => p.status !== 'ACTIVE' && p.status !== 'CLOSED')
-    const apps = programs.reduce((sum, p) => sum + ((p as any)._count?.reports || 0), 0)
+    const apps = programs.reduce((sum, p) => sum + (p._count?.reports || 0), 0)
     return { activePrograms: active.length, draftPrograms: draft.length, totalApplications: apps }
   }, [programs])
 
@@ -289,11 +289,11 @@ export function OrgDashboard() {
                         <Badge tone={program.status === 'ACTIVE' ? 'success' : program.status === 'CLOSED' ? 'medium' : 'accent'}>
                           {program.status === 'ACTIVE' ? 'Live' : program.status === 'CLOSED' ? 'Archived' : 'Draft'}
                         </Badge>
-                        <Badge tone="accent">{(program as any)._count?.reports || 0} applications</Badge>
+                        <Badge tone="accent">{program._count?.reports || 0} applications</Badge>
                         <Badge tone="soft">${program.maxBountyUsd.toLocaleString()} max</Badge>
-                        {(program as any).publishedAt && (
+                        {program.publishedAt && (
                           <span className="summary-chip">
-                            Live since {new Date((program as any).publishedAt).toLocaleDateString()}
+                            Live since {new Date(program.publishedAt).toLocaleDateString()}
                           </span>
                         )}
                       </div>

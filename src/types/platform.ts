@@ -224,6 +224,7 @@ export interface Program {
   paidUsd: number
   scopeReviews: number
   startedAt: string
+  publishedAt?: string | null
   updatedAt: string
   reputationRequired: number
   pocRequired: boolean
@@ -242,7 +243,10 @@ export interface Program {
   scopeTargets: readonly ScopeTarget[]
   triageStages: readonly TriageStage[]
   policySections: readonly PolicySection[]
-  reportQueue: readonly ReportSnapshot[]
+  reports: readonly ReportSnapshot[]
+  _count?: {
+    reports: number
+  }
   evidenceFields: readonly EvidenceField[]
   linkedAgents: readonly AgentLink[]
 }

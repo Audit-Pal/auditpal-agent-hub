@@ -19,7 +19,7 @@ const programDetail = {
     triageStages: { orderBy: { order: 'asc' as const } },
     policySections: { orderBy: { order: 'asc' as const } },
     evidenceFields: true,
-    reportQueue: { take: 10, orderBy: { submittedAt: 'desc' as const } },
+    reports: { take: 10, orderBy: { submittedAt: 'desc' as const } },
     linkedAgents: { include: { agent: { select: { id: true, name: true, logoMark: true, accentTone: true, headline: true, recentExecutions: { orderBy: { timestamp: 'desc' as const }, take: 5 } } } } },
 } satisfies Prisma.ProgramInclude
 
@@ -72,6 +72,9 @@ programRoutes.get('/', zValidator('query', programQuerySchema), async (c) => {
                 duplicatePolicy: true, disclosureModel: true,
                 summaryHighlights: true, submissionChecklist: true,
                 scopeTargets: true,
+                _count: {
+                    select: { reports: true }
+                }
             },
         }),
     ])
@@ -104,6 +107,10 @@ programRoutes.get('/mine', authMiddleware, requireRole('ORGANIZATION', 'ADMIN'),
                 scopeTargets: true,
                 status: true,
                 isPublished: true,
+                publishedAt: true,
+                _count: {
+                    select: { reports: true }
+                }
             },
         }),
     ])
