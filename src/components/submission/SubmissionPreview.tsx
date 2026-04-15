@@ -1,7 +1,6 @@
 import React from 'react'
 import type { ResearcherReport } from '../../types/platform'
 import { Badge } from '../common/Badge'
-import { Button } from '../common/Button'
 import { formatEnum } from '../../utils/formatters'
 
 interface SubmissionPreviewProps {

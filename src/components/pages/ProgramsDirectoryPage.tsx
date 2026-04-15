@@ -27,7 +27,7 @@ interface ProgramsDirectoryPageProps {
 
 const stagger = {
   container: { hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } } },
-  item: { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } },
+  item: { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as any } } },
 }
 
 function formatUsd(value: number) {

@@ -291,7 +291,7 @@ export function ProgramDetail({
     })
     .sort((left, right) => (right.latestTimestamp || '').localeCompare(left.latestTimestamp || ''))
 
-  const visibleParticipants = participantAgents.slice(0, 5)
+ 
   const isOrganization = user?.role === 'ORGANIZATION' || user?.role === 'ADMIN'
   const primaryActionLabel = isOrganization
     ? 'View applications'

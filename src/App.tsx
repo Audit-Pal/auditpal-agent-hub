@@ -170,10 +170,9 @@ export default function App() {
         setReports((current) => [res.data, ...current.filter((report) => report.id !== res.data.id)])
         setIsSubmissionOpen(false)
         navigate('/reports')
-        showToast(res.error || 'Submission failed', 'error')
-      }
-      if (res.success) {
         showToast('Report submitted successfully!', 'success')
+      } else {
+        showToast(res.error || 'Submission failed', 'error')
       }
     } catch (error) {
       console.error('Report submission failed', error)

@@ -26,7 +26,7 @@ interface HomePageProps {
 
 const stagger = {
   container: { hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } } },
-  item: { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } },
+  item: { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as any } } },
 }
 
 function SeverityBadge({ severity }: { severity: string }) {
@@ -42,7 +42,6 @@ export function HomePage({
   totalResearchersTouching,
   topRankedAgent,
   liveSignals,
-  featuredPrograms,
 }: HomePageProps) {
   const onboardingSteps = [
     { step: '01', title: 'Find a program', body: 'Filter by reward, platform, and scope to find exactly where your skills apply.' },

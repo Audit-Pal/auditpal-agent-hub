@@ -1,11 +1,11 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import type { Program, ReportSubmissionInput, Severity, ResearcherReport, Agent } from '../../types/platform'
+import { useEffect, useState, useMemo, type FormEvent, useCallback } from 'react'
+import type { Program, ReportSubmissionInput, ResearcherReport } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
-import { getScopeTargetSelectionLabel } from '../../utils/scopeTargets'
 import { formatEnum, formatUsd } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import { api } from '../../lib/api'
+import { FindingCard, type FormVulnerability } from './FindingCard'
 
 interface SubmissionModalProps {
   isOpen: boolean
@@ -17,23 +17,7 @@ interface SubmissionModalProps {
   onSubmit: (submission: ReportSubmissionInput) => void
 }
 
-interface FormVulnerability {
-  id: string
-  title: string
-  severity: Severity
-  targetId: string
-  summary: string
-  impact: string
-  proof: string
-  vulnerabilityClass: string
-  affectedAsset: string
-  affectedComponent: string
-  attackVector: string
-  rootCause: string
-  prerequisites: string
-  codeSnippet: string
-  errorLocation: string
-}
+
 
 interface FormState {
   programId: string
@@ -178,16 +162,15 @@ export function SubmissionModal({
   const [isGenerating, setIsGenerating] = useState(false)
   const [simPhase, setSimPhase] = useState<'none' | 'discovery' | 'source' | 'audit'>('none')
   const [programDetail, setProgramDetail] = useState<Program | null>(null)
-  const [isLoadingProgramDetail, setIsLoadingProgramDetail] = useState(false)
   const [ownedAgents, setOwnedAgents] = useState<SubmissionAgentOption[]>([])
   const [isLoadingOwnedAgents, setIsLoadingOwnedAgents] = useState(false)
+ 
 
   const isEditing = !!initialData
-
-  const programSummary = programs.find((program) => program.id === form.programId) ?? programs[0]
-  const selectedProgram = programDetail?.id === form.programId ? programDetail : programSummary
-  const availableTargets = selectedProgram?.scopeTargets || []
-  const selectedAgent = ownedAgents.find((agent) => agent.name === form.reporterAgent)
+  const programSummary = useMemo(() => programs.find((program) => program.id === form.programId) ?? programs[0], [programs, form.programId])
+  const selectedProgram = useMemo(() => programDetail?.id === form.programId ? programDetail : programSummary, [programDetail, form.programId, programSummary])
+  const availableTargets = useMemo(() => selectedProgram?.scopeTargets || [], [selectedProgram])
+  const selectedAgent = useMemo(() => ownedAgents.find((agent) => agent.name === form.reporterAgent), [ownedAgents, form.reporterAgent])
 
   useEffect(() => {
     if (!isOpen) return
@@ -249,7 +232,6 @@ export function SubmissionModal({
     if (!isOpen || !form.programId) return
 
     let cancelled = false
-    setIsLoadingProgramDetail(true)
 
     api.get<Program>(`/programs/${form.programId}`)
       .then((res) => {
@@ -260,11 +242,6 @@ export function SubmissionModal({
         if (!cancelled) {
           console.error('Failed to fetch submission program detail', error)
           setProgramDetail(null)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsLoadingProgramDetail(false)
         }
       })
 
@@ -318,33 +295,33 @@ export function SubmissionModal({
     }))
   }, [form.reporterAgent, isOpen, ownedAgents])
 
-  if (!isOpen || !selectedProgram) {
-    return null
-  }
-
-  const updateForm = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+  const updateForm = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [key]: value }))
-  }
+  }, [])
 
-  const updateVulnerability = (id: string, key: keyof FormVulnerability, value: any) => {
+  const updateVulnerability = useCallback((id: string, key: keyof FormVulnerability, value: any) => {
     setForm(current => ({
         ...current,
         vulnerabilities: current.vulnerabilities.map(v => v.id === id ? { ...v, [key]: value } : v)
     }))
-  }
+  }, [])
 
-  const addVulnerability = () => {
+  const addVulnerability = useCallback(() => {
     setForm(current => ({
         ...current,
         vulnerabilities: [...current.vulnerabilities, createDefaultVulnerability(selectedProgram)]
     }))
-  }
+  }, [selectedProgram])
 
-  const removeVulnerability = (id: string) => {
+  const removeVulnerability = useCallback((id: string) => {
     setForm(current => ({
         ...current,
         vulnerabilities: current.vulnerabilities.filter(v => v.id !== id)
     }))
+  }, [])
+
+  if (!isOpen || !selectedProgram) {
+    return null
   }
 
   const handleMagicScan = async () => {
@@ -621,118 +598,15 @@ export function SubmissionModal({
 
               
               {form.vulnerabilities.map((vuln, index) => (
-                  <section key={vuln.id} className="surface-card rounded-[32px] border border-[rgba(80,120,130,0.18)] p-6 md:p-8 animate-fade-up relative">
-                    <div className="flex items-center justify-between pb-6 border-b border-[rgba(80,120,130,0.12)]">
-                        <h3 className="font-serif text-3xl text-[var(--text)]">Finding #{index + 1}</h3>
-                        {form.vulnerabilities.length > 1 && (
-                            <button type="button" onClick={() => removeVulnerability(vuln.id)} className="text-sm font-bold text-[var(--critical-text)] hover:underline opacity-80 hover:opacity-100 transition-opacity">
-                                Remove finding
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_240px] mt-8">
-                        <label className="space-y-2">
-                            <span className="field-label">Finding title</span>
-                            <input
-                                type="text"
-                                value={vuln.title}
-                                onChange={(e) => updateVulnerability(vuln.id, 'title', e.target.value)}
-                                placeholder="Brief description of the finding"
-                                className="field"
-                            />
-                        </label>
-
-                        <label className="space-y-2">
-                            <span className="field-label">Severity</span>
-                            <select
-                                value={vuln.severity}
-                                onChange={(e) => updateVulnerability(vuln.id, 'severity', e.target.value as Severity)}
-                                className="field-select"
-                            >
-                                <option value="CRITICAL">Critical</option>
-                                <option value="HIGH">High</option>
-                                <option value="MEDIUM">Medium</option>
-                                <option value="LOW">Low</option>
-                            </select>
-                        </label>
-                    </div>
-
-                    <label className="block space-y-2 mt-6">
-                        <span className="field-label">Target component</span>
-                        <select
-                            value={vuln.targetId}
-                            onChange={(event) => updateVulnerability(vuln.id, 'targetId', event.target.value)}
-                            disabled={availableTargets.length === 0}
-                            className="field-select"
-                        >
-                            {availableTargets.length === 0 ? (
-                                <option value="">No scoped targets available</option>
-                            ) : (
-                                availableTargets.map((target) => (
-                                    <option key={target.id} value={target.id}>
-                                        {getScopeTargetSelectionLabel(target)}
-                                    </option>
-                                ))
-                            )}
-                        </select>
-                    </label>
-
-                    <div className="space-y-6 mt-8">
-                        <label className="block space-y-2">
-                          <p className="field-label">Summary</p>
-                          <textarea
-                              rows={3}
-                              value={vuln.summary}
-                              onChange={(e) => updateVulnerability(vuln.id, 'summary', e.target.value)}
-                              className="field-area"
-                          />
-                        </label>
-
-                        <label className="block space-y-2">
-                          <p className="field-label">Impact</p>
-                          <textarea
-                              rows={3}
-                              value={vuln.impact}
-                              onChange={(e) => updateVulnerability(vuln.id, 'impact', e.target.value)}
-                              className="field-area"
-                          />
-                        </label>
-
-                        <label className="block space-y-2">
-                          <p className="field-label">Proof of concept</p>
-                          <textarea
-                              rows={4}
-                              value={vuln.proof}
-                              onChange={(e) => updateVulnerability(vuln.id, 'proof', e.target.value)}
-                              className="field-area"
-                          />
-                        </label>
-                    </div>
-
-                    <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)] mt-8 pt-8 border-t border-[rgba(80,120,130,0.12)]">
-                        <label className="space-y-2">
-                            <span className="field-label">Error location</span>
-                            <input
-                                type="text"
-                                value={vuln.errorLocation}
-                                onChange={(e) => updateVulnerability(vuln.id, 'errorLocation', e.target.value)}
-                                placeholder="File.sol:123"
-                                className="field"
-                            />
-                        </label>
-                        <label className="space-y-2">
-                            <span className="field-label">Vulnerable snippet</span>
-                            <textarea
-                                rows={6}
-                                value={vuln.codeSnippet}
-                                onChange={(e) => updateVulnerability(vuln.id, 'codeSnippet', e.target.value)}
-                                placeholder="// Paste the vulnerable code snippet here"
-                                className="field-area bg-[rgba(3,8,12,0.4)] font-mono text-[13px] border-[rgba(80,120,130,0.3)] placeholder:opacity-30"
-                            />
-                        </label>
-                    </div>
-                  </section>
+                  <FindingCard
+                    key={vuln.id}
+                    vuln={vuln}
+                    index={index}
+                    availableTargets={availableTargets}
+                    onUpdate={updateVulnerability}
+                    onRemove={removeVulnerability}
+                    canRemove={form.vulnerabilities.length > 1}
+                  />
               ))}
 
               <div className="flex justify-center pt-4 pb-10 border-b border-[rgba(80,120,130,0.14)]">

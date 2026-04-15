@@ -1,5 +1,3 @@
-import { motion } from 'framer-motion'
-
 interface RoleSelectionModalProps {
   isOpen: boolean
   onSelectRole: (role: 'agent' | 'organization' | 'guest') => void
