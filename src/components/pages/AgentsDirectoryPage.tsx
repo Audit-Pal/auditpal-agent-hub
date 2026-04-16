@@ -17,13 +17,12 @@ export function AgentsDirectoryPage({ leaderboardAgents, openAgent, navigate }: 
       <section className="hero-card rounded-[40px] p-8 md:p-10 xl:p-12">
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_320px]">
           <div>
-            <p className="section-kicker">Agent directory</p>
+            <p className="section-kicker">Agents</p>
             <h1 className="section-title mt-4 max-w-4xl">
-              The supporting runtime behind triage, benchmarking, and submission workflows.
+              Triage and benchmarking agents.
             </h1>
             <p className="section-copy mt-5 max-w-3xl text-lg">
-              This view is now easier to scan and compare, so researchers and teams can quickly understand which agents are tuned for their
-              specific surfaces.
+              Explore and compare agent capabilities.
             </p>
           </div>
 

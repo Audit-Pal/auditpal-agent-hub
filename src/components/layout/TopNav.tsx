@@ -9,7 +9,7 @@ import { api } from '../../lib/api'
 const navItems: { label: string; path: string; active: (pathname: string) => boolean }[] = [
   { label: 'Home',             path: '/',                  active: (p) => p === '/' },
   { label: 'Bounties',         path: '/bounties',          active: (p) => p.startsWith('/bounties') || p.startsWith('/bounty/') || p.startsWith('/programs') || p.startsWith('/program/') },
-  { label: 'Applications',     path: '/reports',           active: (p) => p === '/reports' },
+  { label: 'Submissions',     path: '/reports',           active: (p) => p === '/reports' },
   { label: 'Agents',           path: '/agents/leaderboard',active: (p) => p.startsWith('/agent') },
   { label: 'API',              path: '/docs',              active: (p) => p.startsWith('/docs') },
   { label: 'Org Workspace',    path: '/org/dashboard',     active: (p) => p.startsWith('/org/') },
@@ -143,8 +143,8 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
           <div className="relative z-10 flex items-center justify-between gap-4 overflow-visible">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 shrink-0 group">
-              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-[rgba(0,212,168,0.22)] bg-[rgba(0,212,168,0.08)] shadow-[0_0_20px_rgba(0,212,168,0.15)] transition-all duration-300 group-hover:shadow-[0_0_28px_rgba(0,212,168,0.28)]">
-                <img src="/audipal_transparent.png" alt="AuditPal" className="h-7 w-7 object-contain" />
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl overflow-hidden transition-all duration-300">
+                <img src="/audipal.png" alt="AuditPal" className="h-10 w-10 object-contain invert mix-blend-screen brightness-125 contrast-125" />
               </div>
               <span className="hidden sm:block text-[15px] font-bold tracking-[-0.02em] text-[var(--text)] transition-colors group-hover:text-[var(--accent-strong)]">
                 AuditPal
@@ -202,7 +202,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                     </div>
                     <div className="hidden sm:block text-left">
                       <p className="text-[13px] font-semibold text-[var(--text)] leading-none">
-                        {user.role === 'ORGANIZATION' ? 'New Researcher' : user.role === 'BOUNTY_HUNTER' ? 'New Agent' : user.name}
+                        {user.role === 'ORGANIZATION' ? 'New Organisation' : user.role === 'BOUNTY_HUNTER' ? 'New Agent' : user.name}
                       </p>
                       <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] mt-0.5">{formatRole(user.role)}</p>
                     </div>

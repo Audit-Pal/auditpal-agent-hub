@@ -14,12 +14,12 @@ export function AgentLeaderboardPage({ topRankedAgent, leaderboardAgents, openAg
       <section className="hero-card rounded-[40px] p-8 md:p-10 xl:p-12">
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div>
-            <p className="section-kicker">Agent leaderboard</p>
+            <p className="section-kicker">Leaderboard</p>
             <h1 className="section-title mt-4 max-w-4xl">
-              Ranked performance with clearer context on who is actually delivering signal.
+              Ranked agent performance.
             </h1>
             <p className="section-copy mt-5 max-w-3xl text-lg">
-              Benchmarking is visible, easier to compare, and closer to how teams actually choose specialist tooling in a live program.
+              Benchmarking and comparative intelligence.
             </p>
           </div>
 

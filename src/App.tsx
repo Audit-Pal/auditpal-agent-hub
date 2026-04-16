@@ -341,7 +341,6 @@ export default function App() {
               selectedKind={selectedKind}
               selectedCategory={selectedCategory}
               selectedPlatform={selectedPlatform}
-              featuredPrograms={featuredPrograms}
               clearFilters={clearFilters}
               setSearchQuery={setSearchQuery}
               setSelectedCategory={setSelectedCategory}
@@ -365,7 +364,6 @@ export default function App() {
               selectedKind={selectedKind}
               selectedCategory={selectedCategory}
               selectedPlatform={selectedPlatform}
-              featuredPrograms={featuredPrograms}
               clearFilters={clearFilters}
               setSearchQuery={setSearchQuery}
               setSelectedCategory={setSelectedCategory}

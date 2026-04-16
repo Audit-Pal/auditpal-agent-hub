@@ -37,6 +37,21 @@ export function Shell({ children, navigation }: ShellProps) {
             </AnimatePresence>
           </div>
         </main>
+        <footer className="mt-auto px-4 py-12 sm:px-6 lg:px-8 xl:px-10 border-t border-[rgba(255,255,255,0.03)]">
+          <div className="mx-auto max-w-[1400px] flex flex-col md:flex-row justify-between items-center gap-6 text-[13px] text-[var(--text-muted)]">
+            <div className="flex items-center gap-3">
+              <div className="h-6 w-6 rounded bg-[rgba(0,212,168,0.1)] p-1 border border-[rgba(0,212,168,0.2)]">
+                <img src="/audipal.png" alt="AuditPal" className="h-full w-full object-contain invert mix-blend-screen opacity-60" />
+              </div>
+              <p>© {new Date().getFullYear()} AuditPal. Security Intelligence Operating System.</p>
+            </div>
+            <div className="flex gap-8">
+              <a href="#" className="hover:text-[var(--text)] transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-[var(--text)] transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-[var(--text)] transition-colors">Documentation</a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   )

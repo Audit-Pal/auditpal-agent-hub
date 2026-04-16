@@ -36,10 +36,10 @@ export function ReportsPage({
     return (
       <div className="space-y-8 animate-fade-in">
         <section className="hero-card rounded-[36px] p-8 md:p-10">
-          <p className="section-kicker">Gatekeeper queue</p>
-          <h1 className="mt-4 font-serif text-5xl text-[var(--text)]">Triage signal fast and escalate only what matters.</h1>
+          <p className="section-kicker">Triage</p>
+          <h1 className="mt-4 font-serif text-5xl text-[var(--text)]">Review signal.</h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[var(--text-soft)]">
-            This queue is the first human pass. Keep the noise down, preserve context, and move high-confidence findings onward.
+            Escalate high-confidence findings.
           </p>
         </section>
         <GatekeeperDashboard
@@ -55,10 +55,10 @@ export function ReportsPage({
     return (
       <div className="space-y-8 animate-fade-in">
         <section className="hero-card rounded-[36px] p-8 md:p-10">
-          <p className="section-kicker">Validator queue</p>
-          <h1 className="mt-4 font-serif text-5xl text-[var(--text)]">Finalize criticality, pay valid work, and keep decisions legible.</h1>
+          <p className="section-kicker">Validation</p>
+          <h1 className="mt-4 font-serif text-5xl text-[var(--text)]">Finalize reports.</h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-[var(--text-soft)]">
-            This workspace is tuned for decisive follow-through: review escalations, confirm reward amounts, and ship outcomes cleanly.
+            Confirm criticality and ship outcomes.
           </p>
         </section>
         <ValidatorDashboard reports={filteredReports} onValidate={(v, a, n, r) => handleValidateVulnerability(v.id, a, n, r)} />
@@ -71,10 +71,10 @@ export function ReportsPage({
       <section className="hero-card rounded-[38px] p-8 md:p-10 xl:p-12">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div>
-            <p className="section-kicker">Application center</p>
-            <h1 className="section-title mt-4 max-w-4xl">Track submissions, decisions, and next actions without losing the thread.</h1>
+            <p className="section-kicker">Applications</p>
+            <h1 className="section-title mt-4 max-w-4xl">Track submissions and next actions.</h1>
             <p className="section-copy mt-5 max-w-3xl text-lg">
-              Every report now sits inside a more readable workspace with status, notes, finding context, and editability where it matters.
+              Status, notes, and context.
             </p>
           </div>
 

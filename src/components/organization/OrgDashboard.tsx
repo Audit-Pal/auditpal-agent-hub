@@ -202,11 +202,10 @@ export function OrgDashboard() {
       >
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
           <div>
-            <p className="section-kicker">Organization workspace</p>
-            <h1 className="section-title mt-4 max-w-4xl">Launch programs, activate funding, and keep applications moving.</h1>
+            <p className="section-kicker">Workspace</p>
+            <h1 className="section-title mt-4 max-w-4xl">Manage programs and applications.</h1>
             <p className="section-copy mt-5 max-w-3xl text-lg">
-              The organization experience is streamlined: onboard a program, assign reviewers, fund the campaign,
-              and jump directly into application management when the queue starts moving.
+              Launch new campaigns and track active triage queues.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/org/register-bounty">
@@ -249,10 +248,10 @@ export function OrgDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <p className="section-kicker">No programs yet</p>
-            <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">Your organization hasn't launched a program yet.</h2>
+            <p className="section-kicker">Empty</p>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">No programs found.</h2>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-[var(--text-soft)]">
-              Start with the guided onboarding flow to configure rewards, scope references, reviewer roles, and launch timing.
+              Register a bounty program to begin.
             </p>
             <Link to="/org/register-bounty" className="mt-6 inline-block">
               <Button variant="primary" size="lg">

@@ -2,6 +2,10 @@ import { m as motion } from 'framer-motion'
 import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
 import type { Agent, Program } from '../../types/platform'
+import { ParticleMesh } from '../animations/ParticleMesh'
+import { Globe } from '../animations/Globe'
+import { HolographicShield } from '../animations/HolographicShield'
+import { HolographicCard } from '../animations/HolographicCard'
 
 interface LiveSignal {
   id: string
@@ -43,23 +47,18 @@ export function HomePage({
   topRankedAgent,
   liveSignals,
 }: HomePageProps) {
-  const onboardingSteps = [
-    { step: '01', title: 'Find a program', body: 'Filter by reward, platform, and scope to find exactly where your skills apply.' },
-    { step: '02', title: 'Submit with structure', body: 'The reporting flow maps impact, proof, and target — with agent attribution built in.' },
-    { step: '03', title: 'Track every decision', body: 'Status, validator notes, and AI triage states stay visible — no more email black holes.' },
-  ]
-
   const heroSignals = liveSignals.slice(0, 3)
 
   const metrics = [
-    { label: 'Active programs', value: totalPrograms, note: 'Live bounty & audit campaigns', accent: 'var(--accent)' },
-    { label: 'Reward capacity', value: totalBountyCapacity, note: 'Max payout ceiling across programs', accent: undefined },
-    { label: 'In-flight reports', value: totalQueueItems, note: 'Moving through triage queues', accent: 'var(--accent-strong)' },
-    { label: 'Research touches', value: totalResearchersTouching, note: 'Scope reviews tracked historically', accent: undefined },
+    { label: 'Programs', value: totalPrograms, note: 'Live campaigns', accent: 'var(--accent)' },
+    { label: 'Capacity', value: totalBountyCapacity, note: 'Max reward ceiling', accent: undefined },
+    { label: 'Reports', value: totalQueueItems, note: 'Active triage', accent: 'var(--accent-strong)' },
+    { label: 'Research', value: totalResearchersTouching, note: 'Historical touches', accent: undefined },
   ]
 
   return (
-    <motion.div variants={stagger.container} initial="hidden" animate="show" className="space-y-6">
+    <motion.div variants={stagger.container} initial="hidden" animate="show" className="space-y-6 relative">
+      <ParticleMesh />
       {/* Hero Section */}
       <motion.section variants={stagger.item} className="hero-card overflow-hidden rounded-3xl p-7 md:p-10 xl:p-12">
         <div className="grid gap-10 xl:grid-cols-[minmax(0,1.1fr)_400px]">
@@ -74,14 +73,14 @@ export function HomePage({
                 <span className="summary-chip">Bittensor network</span>
               </div>
 
-              <p className="section-kicker">AuditPal · Security OS</p>
+              <p className="section-kicker">Security OS</p>
               <h1 className="mt-3 font-serif text-[clamp(2.8rem,5.5vw,5.8rem)] leading-[0.95] tracking-[-0.03em] text-[var(--text)]">
-                Operating system<br />
-                <span className="text-[var(--accent)]">for smart contract</span><br />
-                audits.
+                Security<br />
+                <span className="text-[var(--accent)]">Intelligence</span><br />
+                Operating System.
               </h1>
               <p className="section-copy mt-5 max-w-xl text-[15px]">
-                Continuous security intelligence, AI-assisted audit workspace, and automated analysis — all in one mission-control interface.
+                Continuous intelligence, AI-assisted workspace, and automated analysis for secure protocols.
               </p>
             </div>
 
@@ -116,8 +115,8 @@ export function HomePage({
             <div className="relative z-10 flex flex-col h-full gap-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="section-kicker">Live command deck</p>
-                  <h2 className="mt-1 text-lg font-bold tracking-[-0.03em] text-[var(--text)]">Signal in motion</h2>
+                  <p className="section-kicker">Intelligence deck</p>
+                  <h2 className="mt-1 text-lg font-bold tracking-[-0.03em] text-[var(--text)]">Live Signals</h2>
                 </div>
                 <span className="summary-chip">
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
@@ -125,16 +124,12 @@ export function HomePage({
                 </span>
               </div>
 
-              <div className="hero-radar animate-float mx-auto">
-                <div className="hero-radar__ring hero-radar__ring--lg" />
-                <div className="hero-radar__ring hero-radar__ring--md" />
-                <div className="hero-radar__ring hero-radar__ring--sm" />
-                <div className="hero-radar__orbit" />
-                <div className="hero-radar__beam" />
-                <div className="hero-radar__core" />
-                <div className="hero-radar__blip hero-radar__blip--one" />
-                <div className="hero-radar__blip hero-radar__blip--two" />
-                <div className="hero-radar__blip hero-radar__blip--three" />
+
+              <div className="relative mx-auto w-full aspect-square max-w-[280px] flex items-center justify-center">
+                <HolographicShield />
+                <div className="absolute inset-0 z-0 p-8">
+                  <Globe />
+                </div>
               </div>
 
               <div className="space-y-2 flex-1">
@@ -159,113 +154,58 @@ export function HomePage({
                 )}
               </div>
 
-              <div className="subtle-divider pt-4">
-                <p className="section-kicker mb-2">Top ranked agent</p>
-                <p className="font-bold text-[var(--text)]">{topRankedAgent?.name || 'Awaiting rankings'}</p>
-                <p className="text-[12px] text-[var(--text-soft)] mt-1 line-clamp-2">
-                  {topRankedAgent?.headline || 'Rankings appear once benchmark data is available.'}
-                </p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {topRankedAgent?.rank && <Badge tone="accent">Rank #{topRankedAgent.rank}</Badge>}
-                  {topRankedAgent?.score !== undefined && <Badge tone="soft">Score {topRankedAgent.score.toFixed(1)}</Badge>}
-                </div>
+
+              <div className="pt-2">
+                <p className="section-kicker mb-3">Top ranked agent</p>
+                <HolographicCard agent={topRankedAgent} />
               </div>
             </div>
           </aside>
         </div>
       </motion.section>
 
-      {/* How it Works */}
-      <motion.section variants={stagger.item} className="surface-card-strong rounded-3xl p-7 md:p-10">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-7">
-          <div>
-            <p className="section-kicker">How it works</p>
-            <h2 className="mt-2 font-serif text-[clamp(1.8rem,3.5vw,3rem)] text-[var(--text)]">From first click to paid finding.</h2>
-          </div>
-          <span className="summary-chip">Built for repeat use</span>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {onboardingSteps.map((step) => (
-            <div
-              key={step.step}
-              className="surface-card-muted rounded-2xl p-5 group hover:border-[rgba(0,212,168,0.2)] transition-all hover:-translate-y-1"
+
+      {/* Ecosystem & Messaging Section */}
+      <motion.section variants={stagger.item} className="pt-8 pb-16 space-y-24">
+        {/* Supported Chains Marquee */}
+        <div className="space-y-6">
+          <p className="text-center text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--text-muted)] opacity-60">
+            Supported Chains & Ecosystem
+          </p>
+          <div className="relative flex overflow-hidden border-y border-white/[0.04] bg-white/[0.01] py-8">
+            <motion.div 
+              animate={{ x: [0, -1000] }}
+              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              className="flex gap-20 whitespace-nowrap px-10"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent-soft)] border border-[rgba(0,212,168,0.2)]">
-                  <span className="text-[11px] font-bold text-[var(--accent)]">{step.step}</span>
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex gap-20 items-center">
+                  {['ETHEREUM', 'ARBITRUM', 'OPTIMISM', 'POLYGON', 'BASE', 'BSC', 'LINEA', 'AVALANCHE'].map((chain) => (
+                    <span key={chain} className="text-2xl font-black italic tracking-tighter text-[var(--text)] opacity-20 hover:opacity-100 transition-opacity duration-300">
+                      {chain}
+                    </span>
+                  ))}
                 </div>
-                <div className="h-px flex-1 bg-[var(--border)]" />
-              </div>
-              <h3 className="text-[15px] font-bold text-[var(--text)]">{step.title}</h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-[var(--text-soft)]">{step.body}</p>
-            </div>
-          ))}
+              ))}
+            </motion.div>
+            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[var(--bg)] to-transparent z-10" />
+            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[var(--bg)] to-transparent z-10" />
+          </div>
+        </div>
+
+        {/* Speed Messaging */}
+        <div className="max-w-4xl mx-auto text-center px-6">
+          <h2 className="font-serif text-[clamp(2.5rem,6vw,5.5rem)] leading-[1.1] tracking-[-0.03em] mb-8">
+            <span className="text-[var(--text)]">BEYOND</span>{" "}
+            <span className="text-[var(--text-muted)] opacity-40">HUMAN SPEED</span>
+          </h2>
+          <p className="text-[clamp(1rem,1.5vw,1.3rem)] leading-relaxed text-[var(--text-soft)] max-w-3xl mx-auto font-medium">
+            Traditional audits are point-in-time and take weeks. Our agents perform continuous real-time analysis, 
+            attack simulations, and exploit discovery at machine speed to increase efficiency and frees auditors 
+            to focus on business logic, protocol design, and critical risk decisions.
+          </p>
         </div>
       </motion.section>
-
-      {/* Bottom Row */}
-      <motion.div variants={stagger.item} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <section className="surface-card-strong rounded-3xl p-6 md:p-8">
-          <div className="flex items-center justify-between gap-4 mb-5">
-            <div>
-              <p className="section-kicker">Live queue</p>
-              <h3 className="mt-1 text-xl font-bold tracking-[-0.03em] text-[var(--text)]">Recent signal</h3>
-            </div>
-            <Badge tone="accent">{liveSignals.length} surfaced</Badge>
-          </div>
-          <div className="space-y-2">
-            {liveSignals.length > 0 ? (
-              liveSignals.map((signal) => (
-                <button
-                  key={signal.id}
-                  onClick={() => navigate('/bounty/' + signal.programId)}
-                  className="surface-card-muted w-full rounded-xl p-4 text-left transition-all hover:border-[rgba(0,212,168,0.2)] hover:translate-x-1"
-                >
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <Badge tone="soft">{signal.programName}</Badge>
-                    <SeverityBadge severity={signal.severity} />
-                  </div>
-                  <p className="text-[13px] font-semibold text-[var(--text)]">{signal.title}</p>
-                  <p className="mt-1 text-[12px] text-[var(--text-soft)] line-clamp-1">{signal.note}</p>
-                </button>
-              ))
-            ) : (
-              <div className="surface-card-muted rounded-xl p-5 text-[13px] leading-relaxed text-[var(--text-soft)]">
-                Queue snapshots appear here as reports enter the system.
-              </div>
-            )}
-          </div>
-        </section>
-
-        <aside className="flex flex-col gap-4">
-          <section className="surface-card-muted rounded-3xl p-6 flex-1">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-soft)] border border-[rgba(0,212,168,0.2)] mb-4">
-              <svg className="h-5 w-5 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <p className="section-kicker mb-2">For organizations</p>
-            <h3 className="text-lg font-bold text-[var(--text)] leading-snug">Launch a bounty program in minutes.</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-[var(--text-soft)]">
-              Guided onboarding for program metadata, reward design, reviewer setup, and go-live scheduling.
-            </p>
-            <Button variant="outline" size="md" className="mt-5 w-full justify-center" onClick={() => navigate('/org/register-bounty')}>
-              Start onboarding
-            </Button>
-          </section>
-
-          <section className="surface-card-muted rounded-3xl p-6">
-            <p className="section-kicker mb-2">Top agent</p>
-            <p className="font-bold text-[var(--text)]">{topRankedAgent?.name || 'No rankings yet'}</p>
-            <p className="mt-1 text-[12px] text-[var(--text-soft)] line-clamp-2">
-              {topRankedAgent?.headline || 'Rankings appear once data is available.'}
-            </p>
-            <Button variant="ghost" size="sm" className="mt-4 w-full justify-center border border-[var(--border)]" onClick={() => navigate('/agents/leaderboard')}>
-              View leaderboard →
-            </Button>
-          </section>
-        </aside>
-      </motion.div>
     </motion.div>
   )
 }

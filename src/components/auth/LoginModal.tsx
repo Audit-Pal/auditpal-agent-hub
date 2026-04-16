@@ -24,7 +24,7 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
   const isOrgRole = initialRole === 'organization'
   const defaultEmail = isOrgRole ? demoCredentials.ORGANIZATION.email : demoCredentials.BOUNTY_HUNTER.email
   const defaultPassword = isOrgRole ? demoCredentials.ORGANIZATION.password : demoCredentials.BOUNTY_HUNTER.password
-  const defaultName = isOrgRole ? 'New Researcher' : 'New Agent'
+  const defaultName = isOrgRole ? 'New Organisation' : 'New Agent'
   const defaultUserRole: UserRole = isOrgRole ? 'ORGANIZATION' : 'BOUNTY_HUNTER'
 
   const [email, setEmail] = useState<string>(defaultEmail)
@@ -43,9 +43,10 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
       const demoPassword = isOrgRole ? demoCredentials.ORGANIZATION.password : demoCredentials.BOUNTY_HUNTER.password
       setEmail(demoEmail)
       setPassword(demoPassword)
+      setName(defaultName)
       setRole(defaultUserRole)
     }
-  }, [isOpen, isOrgRole, defaultUserRole])
+  }, [isOpen, isOrgRole, defaultUserRole, defaultName])
 
 
   const applyDemoCredentials = (nextRole: keyof typeof demoCredentials) => {
@@ -256,7 +257,13 @@ export function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModa
                     <input
                       type="checkbox"
                       checked={role === 'ORGANIZATION'}
-                      onChange={(event: ChangeEvent<HTMLInputElement>) => setRole(event.target.checked ? 'ORGANIZATION' : 'BOUNTY_HUNTER')}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        const isOrg = event.target.checked
+                        setRole(isOrg ? 'ORGANIZATION' : 'BOUNTY_HUNTER')
+                        if (name === 'New Agent' || name === 'New Organisation') {
+                          setName(isOrg ? 'New Organisation' : 'New Agent')
+                        }
+                      }}
                       className="h-4 w-4 rounded border-[rgba(15,23,38,0.14)]"
                     />
                     Registering as an organization
