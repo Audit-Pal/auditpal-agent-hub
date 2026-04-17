@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, Suspense, lazy } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { LazyMotion, domAnimation } from 'framer-motion'
 import type { ProgramKind, ResearcherReport, Program, Agent, ReportSubmissionInput, ValidationAction } from './types/platform'
@@ -8,17 +8,19 @@ import { TopNav } from './components/layout/TopNav'
 import { SubmissionModal } from './components/submission/SubmissionModal'
 import { LoginModal } from './components/auth/LoginModal'
 import { RoleSelectionModal } from './components/auth/RoleSelectionModal'
-import { OrgDashboard } from './components/organization/OrgDashboard'
-import { BountyRegistration } from './components/organization/BountyRegistration'
-import { ApiDocs } from './components/docs/ApiDocs'
+const OrgDashboard = lazy(() => import('./components/organization/OrgDashboard').then(m => ({ default: m.OrgDashboard })))
+const BountyRegistration = lazy(() => import('./components/organization/BountyRegistration').then(m => ({ default: m.BountyRegistration })))
+const ApiDocs = lazy(() => import('./components/docs/ApiDocs').then(m => ({ default: m.ApiDocs })))
 
-import { HomePage } from './components/pages/HomePage'
-import { ProgramsDirectoryPage } from './components/pages/ProgramsDirectoryPage'
-import { ReportsPage } from './components/pages/ReportsPage'
-import { AgentsDirectoryPage } from './components/pages/AgentsDirectoryPage'
-import { AgentLeaderboardPage } from './components/pages/AgentLeaderboardPage'
-import { ProgramDetailPage } from './components/pages/ProgramDetailPage'
-import { AgentDetailPage } from './components/pages/AgentDetailPage'
+const HomePage = lazy(() => import('./components/pages/HomePage').then(m => ({ default: m.HomePage })))
+const ProgramsDirectoryPage = lazy(() => import('./components/pages/ProgramsDirectoryPage').then(m => ({ default: m.ProgramsDirectoryPage })))
+const ReportsPage = lazy(() => import('./components/pages/ReportsPage').then(m => ({ default: m.ReportsPage })))
+const AgentsDirectoryPage = lazy(() => import('./components/pages/AgentsDirectoryPage').then(m => ({ default: m.AgentsDirectoryPage })))
+const AgentLeaderboardPage = lazy(() => import('./components/pages/AgentLeaderboardPage').then(m => ({ default: m.AgentLeaderboardPage })))
+const ProgramDetailPage = lazy(() => import('./components/pages/ProgramDetailPage').then(m => ({ default: m.ProgramDetailPage })))
+const AgentDetailPage = lazy(() => import('./components/pages/AgentDetailPage').then(m => ({ default: m.AgentDetailPage })))
+
+import { PageLoader } from './components/common/PageLoader'
 
 import { api } from './lib/api'
 import { useAuth } from './contexts/AuthContext'
@@ -316,93 +318,95 @@ export default function App() {
   return (
     <LazyMotion features={domAnimation} strict>
       <Shell navigation={<TopNav pathname={location.pathname} reportCount={reports.length} onLogin={handleOpenLogin} />}>
-        <Routes>
-        <Route
-          path="/"
-          element={
-            <HomePage
-              navigate={navigate}
-              totalPrograms={totalPrograms}
-              totalBountyCapacity={totalBountyCapacity}
-              totalQueueItems={totalQueueItems}
-              totalResearchersTouching={totalResearchersTouching}
-              topRankedAgent={topRankedAgent}
-              liveSignals={liveSignals}
-              featuredPrograms={featuredPrograms}
-            />
-          }
-        />
-        <Route
-          path="/bounties"
-          element={
-            <ProgramsDirectoryPage
-              navigate={navigate}
-              searchQuery={searchQuery}
-              selectedKind={selectedKind}
-              selectedCategory={selectedCategory}
-              selectedPlatform={selectedPlatform}
-              clearFilters={clearFilters}
-              setSearchQuery={setSearchQuery}
-              setSelectedCategory={setSelectedCategory}
-              setSelectedKind={setSelectedKind}
-              setSelectedPlatform={setSelectedPlatform}
-              setSortBy={setSortBy}
-              sortBy={sortBy}
-              categories={categoryOptions}
-              kinds={kindOptions as ProgramKind[]}
-              platforms={platformOptions}
-              filteredPrograms={filteredPrograms}
-            />
-          }
-        />
-        <Route
-          path="/programs"
-          element={
-            <ProgramsDirectoryPage
-              navigate={navigate}
-              searchQuery={searchQuery}
-              selectedKind={selectedKind}
-              selectedCategory={selectedCategory}
-              selectedPlatform={selectedPlatform}
-              clearFilters={clearFilters}
-              setSearchQuery={setSearchQuery}
-              setSelectedCategory={setSelectedCategory}
-              setSelectedKind={setSelectedKind}
-              setSelectedPlatform={setSelectedPlatform}
-              setSortBy={setSortBy}
-              sortBy={sortBy}
-              categories={categoryOptions}
-              kinds={kindOptions as ProgramKind[]}
-              platforms={platformOptions}
-              filteredPrograms={filteredPrograms}
-            />
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <ReportsPage
-              sortedReports={sortedReports}
-              user={user}
-              navigate={navigate}
-              handleValidateReport={handleValidateReport}
-              handleValidateVulnerability={handleValidateVulnerability}
-              handleEditReport={handleEditReport}
-            />
-          }
-        />
-        <Route path="/agents" element={<AgentsDirectoryPage leaderboardAgents={leaderboardAgents} openAgent={openAgent} navigate={navigate} />} />
-        <Route path="/agents/leaderboard" element={<AgentLeaderboardPage topRankedAgent={topRankedAgent} leaderboardAgents={leaderboardAgents} openAgent={openAgent} />} />
-        <Route path="/bounty/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} />} />
-        <Route path="/bounty/:id/submission" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} initialTab="submission" />} />
-        <Route path="/program/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} />} />
-        <Route path="/program/:id/submission" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} initialTab="submission" />} />
-        <Route path="/agent/:id" element={<AgentDetailPage agentBackTarget={agentBackTarget} navigate={navigate} />} />
-        <Route path="/org/dashboard" element={<OrgDashboard />} />
-        <Route path="/org/register-bounty" element={<BountyRegistration />} />
-        <Route path="/org/edit-bounty/:id" element={<BountyRegistration />} />
-        <Route path="/docs" element={<ApiDocs />} />
-      </Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+          <Route
+            path="/"
+            element={
+              <HomePage
+                navigate={navigate}
+                totalPrograms={totalPrograms}
+                totalBountyCapacity={totalBountyCapacity}
+                totalQueueItems={totalQueueItems}
+                totalResearchersTouching={totalResearchersTouching}
+                topRankedAgent={topRankedAgent}
+                liveSignals={liveSignals}
+                featuredPrograms={featuredPrograms}
+              />
+            }
+          />
+          <Route
+            path="/bounties"
+            element={
+              <ProgramsDirectoryPage
+                navigate={navigate}
+                searchQuery={searchQuery}
+                selectedKind={selectedKind}
+                selectedCategory={selectedCategory}
+                selectedPlatform={selectedPlatform}
+                clearFilters={clearFilters}
+                setSearchQuery={setSearchQuery}
+                setSelectedCategory={setSelectedCategory}
+                setSelectedKind={setSelectedKind}
+                setSelectedPlatform={setSelectedPlatform}
+                setSortBy={setSortBy}
+                sortBy={sortBy}
+                categories={categoryOptions}
+                kinds={kindOptions as ProgramKind[]}
+                platforms={platformOptions}
+                filteredPrograms={filteredPrograms}
+              />
+            }
+          />
+          <Route
+            path="/programs"
+            element={
+              <ProgramsDirectoryPage
+                navigate={navigate}
+                searchQuery={searchQuery}
+                selectedKind={selectedKind}
+                selectedCategory={selectedCategory}
+                selectedPlatform={selectedPlatform}
+                clearFilters={clearFilters}
+                setSearchQuery={setSearchQuery}
+                setSelectedCategory={setSelectedCategory}
+                setSelectedKind={setSelectedKind}
+                setSelectedPlatform={setSelectedPlatform}
+                setSortBy={setSortBy}
+                sortBy={sortBy}
+                categories={categoryOptions}
+                kinds={kindOptions as ProgramKind[]}
+                platforms={platformOptions}
+                filteredPrograms={filteredPrograms}
+              />
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ReportsPage
+                sortedReports={sortedReports}
+                user={user}
+                navigate={navigate}
+                handleValidateReport={handleValidateReport}
+                handleValidateVulnerability={handleValidateVulnerability}
+                handleEditReport={handleEditReport}
+              />
+            }
+          />
+          <Route path="/agents" element={<AgentsDirectoryPage leaderboardAgents={leaderboardAgents} openAgent={openAgent} navigate={navigate} />} />
+          <Route path="/agents/leaderboard" element={<AgentLeaderboardPage topRankedAgent={topRankedAgent} leaderboardAgents={leaderboardAgents} openAgent={openAgent} />} />
+          <Route path="/bounty/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} />} />
+          <Route path="/bounty/:id/submission" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} initialTab="submission" />} />
+          <Route path="/program/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} />} />
+          <Route path="/program/:id/submission" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} initialTab="submission" />} />
+          <Route path="/agent/:id" element={<AgentDetailPage agentBackTarget={agentBackTarget} navigate={navigate} />} />
+          <Route path="/org/dashboard" element={<OrgDashboard />} />
+          <Route path="/org/register-bounty" element={<BountyRegistration />} />
+          <Route path="/org/edit-bounty/:id" element={<BountyRegistration />} />
+          <Route path="/docs" element={<ApiDocs />} />
+        </Routes>
+        </Suspense>
 
       <SubmissionModal isOpen={isSubmissionOpen} programs={programs} initialProgramId={submissionProgramId} initialData={editingReport} onClose={closeSubmission} onLogin={handleOpenLogin} onSubmit={handleSubmitReport} />
 

@@ -2,9 +2,9 @@
 
 import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 
-export function HolographicShield() {
+export const HolographicShield = memo(function HolographicShield() {
     const [stats, setStats] = useState({
         validators: 12,
         miners: 48,
@@ -120,7 +120,7 @@ export function HolographicShield() {
             </motion.div>
         </div>
     );
-}
+});
 
 // Add these to index.css if not already there, but including here for context
 /*

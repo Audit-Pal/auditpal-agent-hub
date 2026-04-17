@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 
-export function ParticleMesh() {
+export const ParticleMesh = memo(function ParticleMesh() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -138,4 +138,4 @@ export function ParticleMesh() {
             className="fixed inset-0 z-0 pointer-events-none opacity-40 mix-blend-screen"
         />
     );
-}
+});

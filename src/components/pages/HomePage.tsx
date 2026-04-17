@@ -2,10 +2,11 @@ import { m as motion } from 'framer-motion'
 import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
 import type { Agent, Program } from '../../types/platform'
-import { ParticleMesh } from '../animations/ParticleMesh'
-import { Globe } from '../animations/Globe'
-import { HolographicShield } from '../animations/HolographicShield'
-import { HolographicCard } from '../animations/HolographicCard'
+import { lazy, Suspense } from 'react'
+const ParticleMesh = lazy(() => import('../animations/ParticleMesh').then(m => ({ default: m.ParticleMesh })))
+const Globe = lazy(() => import('../animations/Globe').then(m => ({ default: m.Globe })))
+const HolographicShield = lazy(() => import('../animations/HolographicShield').then(m => ({ default: m.HolographicShield })))
+const HolographicCard = lazy(() => import('../animations/HolographicCard').then(m => ({ default: m.HolographicCard })))
 
 interface LiveSignal {
   id: string
@@ -58,7 +59,7 @@ export function HomePage({
 
   return (
     <motion.div variants={stagger.container} initial="hidden" animate="show" className="space-y-6 relative">
-      <ParticleMesh />
+      <Suspense fallback={null}><ParticleMesh /></Suspense>
       {/* Hero Section */}
       <motion.section variants={stagger.item} className="hero-card overflow-hidden rounded-3xl p-7 md:p-10 xl:p-12">
         <div className="grid gap-10 xl:grid-cols-[minmax(0,1.1fr)_400px]">
@@ -126,10 +127,12 @@ export function HomePage({
 
 
               <div className="relative mx-auto w-full aspect-square max-w-[280px] flex items-center justify-center">
-                <HolographicShield />
-                <div className="absolute inset-0 z-0 p-8">
-                  <Globe />
-                </div>
+                <Suspense fallback={<div className="w-[100px] h-[100px] border border-[var(--accent)]/30 rounded-full animate-pulse" />}>
+                   <HolographicShield />
+                   <div className="absolute inset-0 z-0 p-8">
+                     <Globe />
+                   </div>
+                </Suspense>
               </div>
 
               <div className="space-y-2 flex-1">
@@ -157,7 +160,9 @@ export function HomePage({
 
               <div className="pt-2">
                 <p className="section-kicker mb-3">Top ranked agent</p>
-                <HolographicCard agent={topRankedAgent} />
+                <Suspense fallback={<div className="h-24 rounded-xl bg-[rgba(255,255,255,0.02)] animate-pulse" />}>
+                   <HolographicCard agent={topRankedAgent} />
+                </Suspense>
               </div>
             </div>
           </aside>

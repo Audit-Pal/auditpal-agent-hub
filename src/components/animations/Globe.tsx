@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 import { motion } from "framer-motion";
 
-export function Globe() {
+export const Globe = memo(function Globe() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -95,4 +95,4 @@ export function Globe() {
             />
         </div>
     );
-}
+});
