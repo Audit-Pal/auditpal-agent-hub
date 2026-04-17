@@ -22,48 +22,54 @@ export function QueueSnapshot({ queue = [] }: QueueSnapshotProps) {
     }).format(value)
 
   return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Live queue snapshot</p>
-          <h3 className="mt-3 font-serif text-4xl text-[var(--text)]">Representative findings already moving through triage.</h3>
+    <div className="space-y-10">
+      <div className="flex flex-wrap items-start justify-between gap-8">
+        <div className="max-w-xl">
+          <p className="section-kicker !tracking-[0.4em] mb-4">INTELLIGENCE QUEUE</p>
+          <h3 className="hero-title !text-3xl lg:!text-4xl">Representative findings in high-fidelity triage.</h3>
         </div>
       </div>
 
-      <div className="mt-6 space-y-3">
+      <div className="grid gap-6">
         {queue.map((report) => (
-          <article key={report.id} className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="max-w-3xl">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone="soft">{report.id}</Badge>
-                  <Badge tone={severityTone[report.severity]}>{formatEnum(report.severity)}</Badge>
-                  <Badge tone="accent">{formatEnum(report.status)}</Badge>
-                </div>
-                <h4 className="mt-4 text-xl font-semibold text-[var(--text)]">{report.title}</h4>
-                <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{report.note}</p>
-              </div>
-
-              <div className="min-w-[220px] rounded-[24px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Estimated reward</p>
-                <p className="mt-2 text-2xl font-semibold text-[var(--text)]">{formatUsd(report.rewardEstimateUsd || 0)}</p>
-                <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Route</p>
-                <p className="mt-2 text-sm text-[var(--text)]">{report.route}</p>
-              </div>
+          <article key={report.id} className="group relative overflow-hidden rounded-[32px] border border-[var(--border)] bg-[rgba(10,20,30,0.6)] p-8 transition-all hover:bg-[rgba(255,255,255,0.02)]">
+            <div className="absolute top-0 right-0 p-6 opacity-20">
+              <span className="text-[10px] font-black font-mono tracking-widest text-[var(--accent)] group-hover:opacity-100 transition-opacity">
+                SIGNAL // {report.id}
+              </span>
             </div>
+            
+            <div className="grid gap-10 lg:grid-cols-[1fr_300px]">
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Badge tone={severityTone[report.severity]} className="!shadow-none">{formatEnum(report.severity)}</Badge>
+                  <Badge tone="accent" className="!shadow-none">{formatEnum(report.status)}</Badge>
+                </div>
+                <h4 className="hero-title !text-2xl lg:!text-3xl group-hover:text-[var(--accent)] transition-colors">{report.title}</h4>
+                <p className="text-lg leading-relaxed text-[var(--text-soft)] italic border-l-2 border-[var(--border)] pl-6">{report.note}</p>
+                
+                <div className="grid gap-4 sm:grid-cols-3 pt-4">
+                  <div className="rounded-2xl border border-[var(--border)] bg-[rgba(3,6,8,0.4)] p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-1">Source</p>
+                    <p className="text-xs font-mono text-[var(--text)]">{report.source}</p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--border)] bg-[rgba(3,6,8,0.4)] p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-1">Reported</p>
+                    <p className="text-xs font-mono text-[var(--text)]">{report.submittedAt}</p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--border)] bg-[rgba(3,6,8,0.4)] p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-1">Validator</p>
+                    <p className="text-xs font-mono text-[var(--text)]">{report.decisionOwner || 'System AI'}</p>
+                  </div>
+                </div>
+              </div>
 
-            <div className="mt-5 grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Source</p>
-                <p className="mt-2 text-sm text-[var(--text)]">{report.source}</p>
-              </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Submitted</p>
-                <p className="mt-2 text-sm text-[var(--text)]">{report.submittedAt}</p>
-              </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Decision owner</p>
-                <p className="mt-2 text-sm text-[var(--text)]">{report.decisionOwner}</p>
+              <div className="flex flex-col justify-center rounded-[28px] border border-[var(--border)] bg-[rgba(0,212,168,0.03)] p-8 text-center group-hover:bg-[rgba(0,212,168,0.06)] transition-colors">
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--accent)] mb-2">Estimated Bounty</p>
+                <p className="text-4xl font-extrabold text-[var(--text)] tracking-tighter">{formatUsd(report.rewardEstimateUsd || 0)}</p>
+                <div className="h-px w-12 bg-[var(--accent)] mx-auto my-6 opacity-30" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-1">Attack Surface</p>
+                <p className="text-xs font-mono text-[var(--text-soft)] truncate">{report.route}</p>
               </div>
             </div>
           </article>

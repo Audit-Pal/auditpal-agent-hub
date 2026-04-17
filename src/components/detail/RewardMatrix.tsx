@@ -21,41 +21,50 @@ const severityBgs: Record<Severity, string> = {
 
 export function RewardMatrix({ matrix }: RewardMatrixProps) {
   return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Reward matrix</p>
-          <h3 className="mt-3 font-serif text-4xl text-[var(--text)]">Severity bands and payout expectations.</h3>
+    <div className="space-y-10">
+      <div className="flex flex-wrap items-start justify-between gap-8">
+        <div className="max-w-xl">
+          <p className="section-kicker !tracking-[0.4em] mb-4">REWARD MATRIX</p>
+          <h3 className="hero-title !text-3xl lg:!text-4xl">Severity bands and payout expectations.</h3>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2">
         {matrix.map((reward) => (
           <article
             key={reward.severity}
-            className={`rounded-[28px] border border-[var(--border)] p-5 ${severityBgs[reward.severity]}`}
+            className={`group relative overflow-hidden rounded-[32px] border border-[var(--border)] bg-[rgba(10,20,30,0.6)] p-6 xl:p-8 transition-all hover:bg-[rgba(255,255,255,0.02)] ${severityBgs[reward.severity]}`}
           >
-            <p className={`text-[11px] font-semibold uppercase tracking-[0.28em] ${severityColors[reward.severity]}`}>
-              {formatEnum(reward.severity)}
-            </p>
-            <p className="mt-4 text-3xl font-semibold text-[var(--text)]">{formatUsd(reward.maxRewardUsd)}</p>
-            <div className="mt-5 space-y-3 text-sm text-[var(--text-soft)]">
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-[var(--text-muted)]">Triage SLA</span>
-                <span>{reward.triageSla}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-[var(--text-muted)]">Payout window</span>
-                <span>{reward.payoutWindow}</span>
+            <div className="absolute top-0 right-0 p-6 opacity-10">
+              <div className="h-10 w-10 rounded-full border border-[var(--border)] flex items-center justify-center text-[10px] font-black group-hover:bg-[rgba(255,255,255,0.05)] transition-colors">
+                {reward.severity[0]}
               </div>
             </div>
-            <div className="mt-5 border-t border-white/8 pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">Examples</p>
-              <div className="mt-3 space-y-2">
-                {reward.examples.slice(0, 2).map((example) => (
-                  <p key={example} className="text-sm leading-7 text-[var(--text-soft)]">
-                    {example}
-                  </p>
+
+            <p className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-4 ${severityColors[reward.severity]}`}>
+              {formatEnum(reward.severity)}
+            </p>
+            <p className="hero-title !text-3xl xl:!text-5xl group-hover:scale-105 transition-transform origin-left">{formatUsd(reward.maxRewardUsd)}</p>
+            
+            <div className="mt-8 space-y-4 pt-8 border-t border-[rgba(255,255,255,0.05)]">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Triage SLA</span>
+                <span className="text-sm font-bold text-[var(--text-soft)]">{reward.triageSla}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Payout</span>
+                <span className="text-sm font-bold text-[var(--text-soft)]">{reward.payoutWindow}</span>
+              </div>
+            </div>
+            
+            <div className="mt-8">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-4">Vulnerability Intel</p>
+              <div className="space-y-3">
+                {reward.examples.slice(0, 3).map((example) => (
+                  <div key={example} className="flex gap-3 items-start group/example">
+                    <div className="h-1.5 w-1.5 rounded-full bg-[var(--border)] mt-1.5 group-hover/example:bg-[var(--accent)] transition-colors" />
+                    <p className="text-sm leading-relaxed text-[var(--text-soft)] italic opacity-70 group-hover/example:opacity-100">{example}</p>
+                  </div>
                 ))}
               </div>
             </div>

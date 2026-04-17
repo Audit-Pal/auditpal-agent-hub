@@ -13,6 +13,8 @@ import { getScopeTargetContextChips, getScopeTargetReference } from '../../utils
 import { formatEnum, formatUsd } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import { api } from '../../lib/api'
+import { HolographicShield } from '../animations/HolographicShield'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { Agent } from '../../types/platform'
 
 interface ProgramDetailProps {
@@ -418,33 +420,54 @@ export function ProgramDetail({
   const renderSubmissionCards = (reports: readonly ReportSnapshot[]) => {
     if (reports.length === 0) {
       return (
-        <div className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-muted)] p-5 text-sm leading-7 text-[var(--text-soft)]">
-          No public submission snapshots are available for this bounty yet.
+        <div className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-muted)] p-8 text-center text-[var(--text-muted)]">
+          <p className="text-sm font-bold uppercase tracking-widest italic">Signal transmission pending</p>
+          <p className="mt-2 text-xs">No public dossier snapshots recorded for this campaign.</p>
         </div>
       )
     }
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {reports.map((report) => (
-          <article key={report.id} className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="max-w-3xl">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone="soft">{report.humanId}</Badge>
+          <article key={report.id} className="group relative overflow-hidden rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 transition-all hover:bg-[rgba(255,255,255,0.02)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+            <div className="flex flex-wrap items-start justify-between gap-6">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-[10px] font-black font-mono tracking-wider text-[var(--accent)] opacity-60 group-hover:opacity-100">
+                    ID // {report.humanId}
+                  </span>
                   <Badge tone={getSeverityTone(report.severity)}>{formatEnum(report.severity)}</Badge>
                   <Badge tone={getReportStatusTone(report.status)}>{formatEnum(report.status)}</Badge>
                 </div>
-                <h4 className="mt-4 text-xl font-semibold text-[var(--text)]">{report.title}</h4>
-                <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{report.note || report.route}</p>
+                <h4 className="mt-5 font-serif text-2xl text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">
+                  {report.title}
+                </h4>
+                <p className="mt-4 text-sm leading-relaxed text-[var(--text-soft)] max-w-3xl border-l-2 border-[var(--border)] pl-5 italic">
+                  {report.note || report.route}
+                </p>
               </div>
 
-              <div className="min-w-[220px] rounded-[22px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4 text-sm">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Submitted</p>
-                <p className="mt-2 text-[var(--text)]">{formatDateTime(report.submittedAt)}</p>
-                <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Route</p>
-                <p className="mt-2 text-[var(--text)]">{report.route}</p>
+              <div className="w-full xl:w-[240px] shrink-0 space-y-4">
+                <div className="rounded-[22px] border border-[var(--border)] bg-[rgba(3,6,8,0.6)] p-5 backdrop-blur-sm">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--text-muted)]">Observed</p>
+                      <p className="mt-1 text-xs font-mono text-[var(--text)]">{formatDateTime(report.submittedAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--text-muted)]">Attack Route</p>
+                      <p className="mt-1 text-xs font-mono text-[var(--text)] truncate">{report.route}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
+            </div>
+            
+            {/* Action hint visible on hover */}
+            <div className="mt-6 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--text-muted)]">Access Full Report</span>
+              <div className="h-[1px] w-8 bg-[var(--accent)]" />
             </div>
           </article>
         ))}
@@ -461,101 +484,84 @@ export function ProgramDetail({
         ]}
       />
 
-      <section className="overflow-hidden rounded-[38px] border border-[var(--border)] bg-[var(--surface-strong)] shadow-[var(--shadow-lg)]">
+      <section className="overflow-hidden rounded-[42px] border border-[var(--border)] bg-[var(--surface-strong)] shadow-[var(--shadow-lg)] hero-card">
         <div
-          className="border-b border-[var(--border)] px-6 py-8 md:px-8 md:py-10"
+          className="relative px-6 py-12 md:px-12 md:py-16"
           style={{
-            background: `linear-gradient(135deg, ${accentColor}22, rgba(9,18,27,0.96) 46%, rgba(7,14,20,1) 100%)`,
+            background: `linear-gradient(135deg, ${accentColor}12, rgba(9,18,27,0.98) 40%, rgba(3,6,8,1) 100%)`,
           }}
         >
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1.25fr)_320px]">
-            <div className="space-y-6">
+          <div className="grid gap-12 xl:grid-cols-[1fr_minmax(0,320px)]">
+            <div className="flex flex-col justify-center space-y-8">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="soft">{formatEnum(program.kind)}</Badge>
                 <Badge tone="accent">{program.triagedLabel}</Badge>
-                <Badge tone="soft">Bounty code {program.code}</Badge>
-                <Badge tone="soft">Updated {formatDate(program.updatedAt)}</Badge>
+                <Badge tone="soft">{formatEnum(program.kind)}</Badge>
+                <span className="h-1 w-1 rounded-full bg-[var(--text-muted)] opacity-50" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Code {program.code}</p>
               </div>
 
-              <div className="flex items-start gap-5">
-                <div
-                  className="flex h-20 w-20 items-center justify-center rounded-[26px] border text-2xl font-semibold text-[var(--text)]"
-                  style={{ borderColor: `${accentColor}55`, backgroundColor: `${accentColor}14` }}
-                >
-                  {program.logoMark}
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">
-                    {program.company}
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <p className="section-kicker !tracking-[0.4em] mb-4">
+                    {program.company} // SEC-OPS IDENTITY
                   </p>
-                  <h1 className="mt-3 font-serif text-5xl leading-none text-[var(--text)] md:text-6xl">
+                  <h1 className="hero-title">
                     {program.name}
                   </h1>
-                  <p className="mt-4 max-w-3xl text-lg leading-8 text-[var(--text-soft)]">{program.tagline}</p>
                 </div>
-              </div>
+                
+                <p className="max-w-2xl text-xl leading-relaxed text-[var(--text-soft)] lg:text-2xl">
+                  {program.tagline}
+                </p>
 
-              <p className="max-w-4xl text-base leading-8 text-[var(--text-soft)]">{program.description}</p>
+                <div className="flex flex-wrap items-center gap-6 pt-4">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--text-muted)]">Max Bounty</p>
+                    <p className="text-3xl font-extrabold text-[var(--text)]">{formatUsd(program.maxBountyUsd)}</p>
+                  </div>
+                  <div className="h-12 w-[1px] bg-[var(--border)]" />
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--text-muted)]">Active Scope</p>
+                    <p className="text-3xl font-extrabold text-[var(--text)]">{(program.scopeTargets || []).length}</p>
+                  </div>
+                  <div className="h-12 w-[1px] bg-[var(--border)]" />
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--text-muted)]">SLA</p>
+                    <p className="text-3xl font-extrabold text-[var(--text)]">{program.responseSla}</p>
+                  </div>
+                </div>
 
-              <div className="flex flex-wrap gap-2">
-                {(program.platforms || []).map((platform) => (
-                  <Badge key={platform} tone="soft">
-                    {formatEnum(platform)}
-                  </Badge>
-                ))}
-                {(program.languages || []).map((language) => (
-                  <Badge key={language} tone="soft">
-                    {language}
-                  </Badge>
-                ))}
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <Button variant={primaryActionTone} size="lg" className="min-w-[200px]" onClick={handlePrimaryAction}>
+                    {primaryActionLabel}
+                  </Button>
+                  <Button variant="outline" size="lg" className="min-w-[200px]" onClick={openSubmissionGuide}>
+                    Technical Brief
+                  </Button>
+                </div>
               </div>
             </div>
 
-            <aside className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.82)] p-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Bounty brief</p>
-              <div className="mt-5 space-y-4">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Maximum bounty</p>
-                  <p className="mt-2 text-4xl font-semibold text-[var(--text)]">{formatUsd(program.maxBountyUsd)}</p>
-                </div>
-
-                <div className="space-y-3 rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm text-[var(--text-soft)]">
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-[var(--text-muted)]">First response target</span>
-                    <span className="text-right text-[var(--text)]">{program.responseSla}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-[var(--text-muted)]">Payout window</span>
-                    <span className="text-right text-[var(--text)]">{program.payoutWindow}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-[var(--text-muted)]">
-                      {isOrganization ? 'Program applications' : 'Your submissions'}
-                    </span>
-                    <span className="text-[var(--text)]">{submissionCount}</span>
-                  </div>
-                </div>
-
-                <p className="text-sm leading-7 text-[var(--text-soft)]">{program.duplicatePolicy}</p>
-
-                <div className="grid gap-3">
-                  <Button variant={primaryActionTone} size="lg" className="w-full" onClick={handlePrimaryAction}>
-                    {primaryActionLabel}
-                  </Button>
-                  <Button variant="outline" size="lg" className="w-full" onClick={openSubmissionGuide}>
-                    Open submission guide
-                  </Button>
-                </div>
-              </div>
-            </aside>
+            <div className="relative hidden xl:block">
+              <div className="absolute inset-0 bg-radial-[circle,rgba(0,212,168,0.1)_0%,transparent_70%] opacity-50" />
+              <HolographicShield />
+            </div>
           </div>
         </div>
 
-        <div className="grid gap-4 border-t border-[var(--border)] px-6 py-6 md:px-8 xl:grid-cols-4">
-          <MetricCard label="Maximum bounty" value={formatUsd(program.maxBountyUsd)} note={program.payoutCurrency} accent={accentColor} />
-          <MetricCard label="Paid out" value={formatUsd(program.paidUsd)} note="Accepted and verified" accent={accentColor} />
-          <MetricCard label="Scope assets" value={(program.scopeTargets || []).length} note="Contracts, services, and controls" accent={accentColor} />
-          <MetricCard label="Public submissions" value={sortedQueue.length} note="Snapshots shown on this bounty" accent={accentColor} />
+        <div className="grid gap-px bg-[var(--border)] md:grid-cols-4">
+          <div className="bg-[var(--surface-strong)] px-8 py-6">
+            <MetricCard label="Accepted Reports" value={sortedQueue.length} note="Public snapshots" accent={accentColor} className="!border-0 !bg-transparent !shadow-none !p-0" />
+          </div>
+          <div className="bg-[var(--surface-strong)] px-8 py-6">
+            <MetricCard label="Total Payouts" value={formatUsd(program.paidUsd)} note="Verified findings" accent={accentColor} className="!border-0 !bg-transparent !shadow-none !p-0" />
+          </div>
+          <div className="bg-[var(--surface-strong)] px-8 py-6">
+            <MetricCard label="Avg Response" value={program.responseSla} note="First triage target" accent={accentColor} className="!border-0 !bg-transparent !shadow-none !p-0" />
+          </div>
+          <div className="bg-[var(--surface-strong)] px-8 py-6">
+            <MetricCard label="Status" value="Verified" note={`Updated ${formatDate(program.updatedAt)}`} accent={accentColor} className="!border-0 !bg-transparent !shadow-none !p-0" />
+          </div>
         </div>
       </section>
 
@@ -579,194 +585,216 @@ export function ProgramDetail({
         </div>
       </nav>
 
-      <div className="grid gap-8 xl:grid-cols-[220px_minmax(0,1fr)_300px]">
-        <aside className="hidden xl:block xl:sticky xl:top-32 xl:self-start">
-          <div className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-5 shadow-[var(--shadow-md)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">
-              {tabMeta.find((tab) => tab.id === activeTab)?.label}
-            </p>
-            <div className="mt-4 space-y-2">
-              {guideSections.map((section, index) => {
-                const isActive = activeSection === section.id
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+          className="grid gap-8 xl:grid-cols-[220px_minmax(0,1fr)_300px]"
+        >
+          <aside className="hidden xl:block xl:sticky xl:top-32 xl:self-start">
+            <div className="rounded-[30px] border border-[var(--border)] bg-[rgba(10,20,30,0.4)] p-5 shadow-[var(--shadow-md)] backdrop-blur-xl">
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--accent)] mb-4">
+                Section // {tabMeta.find((tab) => tab.id === activeTab)?.label.toUpperCase()}
+              </p>
+              <div className="space-y-2">
+                {guideSections.map((section, index) => {
+                  const isActive = activeSection === section.id
 
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => jumpToSection(section.id)}
-                    className={`flex w-full items-start gap-3 rounded-[20px] border px-3 py-3 text-left transition ${isActive ? 'border-[rgba(56,217,178,0.28)] bg-[rgba(30,186,152,0.16)] text-[var(--text)]' : 'border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-soft)] hover:border-[rgba(56,217,178,0.22)]'}`}
-                  >
-                    <span
-                      className={`mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ${isActive ? 'bg-black/10 text-[var(--accent-ink)]' : 'bg-[rgba(9,18,27,0.88)] text-[var(--text)]'}`}
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => jumpToSection(section.id)}
+                      className={`flex w-full items-start gap-4 rounded-[20px] border px-4 py-4 text-left transition-all duration-300 ${isActive ? 'border-[var(--accent)] bg-[rgba(0,212,168,0.06)] text-[var(--text)] shadow-[0_0_20px_rgba(0,212,168,0.05)]' : 'border-transparent bg-transparent text-[var(--text-muted)] hover:text-[var(--text-soft)]'}`}
                     >
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <span>
-                      <span className="block text-sm font-semibold">{section.label}</span>
-                      <span className={`mt-1 block text-xs ${isActive ? 'text-[var(--text-soft)]' : 'text-[var(--text-muted)]'}`}>{section.hint}</span>
-                    </span>
-                  </button>
-                )
-              })}
+                      <span
+                        className={`mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-[9px] font-black border ${isActive ? 'bg-[var(--accent)] border-[var(--accent)] text-[var(--accent-ink)]' : 'bg-transparent border-[var(--text-muted)] text-[var(--text-muted)] opacity-40'}`}
+                      >
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span className="min-w-0">
+                        <span className={`block text-sm font-semibold tracking-tight ${isActive ? 'text-[var(--text)]' : 'text-[var(--text-soft)]'}`}>{section.label}</span>
+                        <span className={`mt-0.5 block text-[10px] uppercase font-bold tracking-widest ${isActive ? 'text-[var(--accent)] opacity-80' : 'text-[var(--text-muted)]'}`}>{section.hint}</span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
 
-        <div className="space-y-8">
-          <div className="flex gap-2 overflow-x-auto xl:hidden">
-            {guideSections.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => jumpToSection(section.id)}
-                className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm transition ${activeSection === section.id ? 'border-[rgba(56,217,178,0.28)] bg-[rgba(30,186,152,0.16)] text-[var(--text)]' : 'border-[var(--border)] bg-[var(--surface-strong)] text-[var(--text-soft)]'}`}
-              >
-                {section.label}
-              </button>
-            ))}
-          </div>
+          <div className="space-y-12">
+            <div className="flex gap-2 overflow-x-auto xl:hidden">
+              {guideSections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => jumpToSection(section.id)}
+                  className={`whitespace-nowrap rounded-full border px-5 py-2.5 text-xs font-bold uppercase tracking-widest transition ${activeSection === section.id ? 'border-[var(--accent)] bg-[rgba(0,212,168,0.1)] text-[var(--text)]' : 'border-[var(--border)] bg-[var(--surface-strong)] text-[var(--text-muted)]'}`}
+                >
+                  {section.label}
+                </button>
+              ))}
+            </div>
 
           {activeTab === 'overview' && (
-            <div className="space-y-8">
-              <section id="overview-summary" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Overview</p>
-                <h2 className="mt-4 font-serif text-4xl text-[var(--text)] md:text-5xl">A bounty page with the full brief up front.</h2>
-                <p className="mt-5 text-base leading-8 text-[var(--text-soft)]">{program.description}</p>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="space-y-12">
+              <section id="overview-summary" className="relative overflow-hidden rounded-[42px] border border-[var(--border)] bg-[var(--surface-strong)] p-8 shadow-[var(--shadow-xl)] md:p-12">
+                <div className="absolute top-0 right-0 p-8 opacity-20">
+                  <Badge tone="soft">Dossier ID: {program.code}</Badge>
+                </div>
+                <p className="section-kicker !tracking-[0.5em] mb-6">INTELLIGENCE BRIEF</p>
+                <h2 className="hero-title max-w-4xl">Comprehensive technical baseline for the {program.name} campaign.</h2>
+                <div className="h-1 w-24 bg-[var(--accent)] my-10 rounded-full" />
+                <p className="max-w-4xl text-xl leading-relaxed text-[var(--text-soft)]">{program.description}</p>
+                <div className="mt-12 grid gap-6 md:grid-cols-2">
                   {(program.summaryHighlights || []).map((highlight) => (
-                    <div key={highlight} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-                      <p className="text-sm leading-7 text-[var(--text-soft)]">{highlight}</p>
+                    <div key={highlight} className="group relative overflow-hidden rounded-[28px] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-6 transition-all hover:bg-[rgba(255,255,255,0.04)]">
+                      <div className="absolute -left-1 top-6 h-12 w-1 bg-[var(--accent)] opacity-20 transition-all group-hover:opacity-100" />
+                      <p className="text-lg leading-relaxed text-[var(--text-soft)] group-hover:text-[var(--text)]">{highlight}</p>
                     </div>
                   ))}
                 </div>
               </section>
 
-              <section id="overview-task" className="space-y-6">
-                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">The task</p>
-                  <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">What bounty reviewers care about most.</h3>
-                  <div className="mt-6 space-y-4">
-                    {(focusArea?.items || []).map((item) => (
-                      <div key={item} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-                        <p className="text-sm leading-7 text-[var(--text-soft)]">{item}</p>
+              <section id="overview-task" className="grid gap-8 md:grid-cols-[1.5fr_1fr]">
+                <article className="relative overflow-hidden rounded-[42px] border border-[var(--border)] bg-[rgba(10,20,30,0.8)] p-8 backdrop-blur-md">
+                  <div className="absolute top-0 right-0 h-32 w-32 bg-radial-[circle,rgba(0,212,168,0.1)_0%,transparent_70%] pointer-events-none" />
+                  <p className="section-kicker !tracking-[0.4em] mb-4">CRITICAL FOCUS</p>
+                  <h3 className="hero-title !text-3xl lg:!text-4xl mb-8">Primary objectives for this engagement.</h3>
+                  <div className="space-y-4">
+                    {(focusArea?.items || []).map((item, idx) => (
+                      <div key={item} className="flex gap-4 group">
+                        <span className="mt-1 h-5 w-5 shrink-0 rounded-full border border-[var(--border)] bg-[var(--surface-muted)] flex items-center justify-center text-[10px] font-black text-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-[var(--accent-ink)] transition-all">
+                          {idx + 1}
+                        </span>
+                        <p className="text-lg leading-relaxed text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors">{item}</p>
                       </div>
                     ))}
                   </div>
                 </article>
 
-                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Submission checklist</p>
-                  <div className="mt-6 space-y-4">
+                <article className="relative overflow-hidden rounded-[42px] border border-[var(--border)] bg-[rgba(10,20,30,0.6)] p-8">
+                  <p className="section-kicker !tracking-[0.3em] mb-4">OPERATIONAL FLOW</p>
+                  <h3 className="text-xl font-bold uppercase tracking-widest text-[var(--text)] mb-8">Submission protocol</h3>
+                  <div className="space-y-6">
                     {(program.submissionChecklist || []).map((item, index) => (
-                      <div key={item} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Step {index + 1}</p>
-                        <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{item}</p>
+                      <div key={item} className="relative pl-8 border-l border-[var(--border)] group">
+                        <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-[var(--accent)] group-hover:scale-150 transition-transform" />
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] opacity-60">Phase {String(index + 1).padStart(2, '0')}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-[var(--text-soft)] group-hover:text-[var(--text)]">{item}</p>
                       </div>
                     ))}
                   </div>
                 </article>
               </section>
 
-              <section id="overview-tracks" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Tracks</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Surfaces, chains, and environments in play.</h3>
+              <section id="overview-tracks" className="relative overflow-hidden rounded-[42px] border border-[var(--border)] bg-[rgba(10,20,30,0.8)] p-8 backdrop-blur-md">
+                <div className="flex flex-wrap items-start justify-between gap-8">
+                  <div className="max-w-xl">
+                    <p className="section-kicker !tracking-[0.4em] mb-4">SURFACE INTEL</p>
+                    <h3 className="hero-title !text-3xl lg:!text-4xl mb-6">Environments and technologies in play.</h3>
+                    <p className="text-lg leading-relaxed text-[var(--text-soft)]">{program.liveMessage}</p>
                   </div>
-                  <p className="max-w-xl text-sm leading-7 text-[var(--text-soft)]">{program.liveMessage}</p>
                 </div>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Categories</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
+
+                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-[28px] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-6 group hover:translate-y-[-4px] transition-all">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-4">Categories</p>
+                    <div className="flex flex-wrap gap-2">
                       {(program.categories || []).map((category) => (
-                        <Badge key={category} tone="soft">{formatEnum(category)}</Badge>
+                        <Badge key={category} tone="soft" className="!lowercase !tracking-normal !px-2">{formatEnum(category)}</Badge>
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Platforms</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(program.platforms || []).map((platform) => (
-                        <Badge key={platform} tone="soft">{formatEnum(platform)}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Languages</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="rounded-[28px] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-6 group hover:translate-y-[-4px] transition-all">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-4">Stacks</p>
+                    <div className="flex flex-wrap gap-2">
                       {(program.languages || []).map((language) => (
-                        <Badge key={language} tone="soft">{language}</Badge>
+                        <Badge key={language} tone="soft" className="!lowercase !tracking-normal !px-2">{language}</Badge>
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Primary target</p>
-                    <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">
-                      {primaryTarget ? getScopeTargetReference(primaryTarget) : 'Targets are listed in the resources tab.'}
+                  <div className="rounded-[28px] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-6 group hover:translate-y-[-4px] transition-all">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-4">Platforms</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(program.platforms || []).map((platform) => (
+                        <Badge key={platform} tone="soft" className="!lowercase !tracking-normal !px-2">{formatEnum(platform)}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded-[28px] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-6 group hover:translate-y-[-4px] transition-all">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-4">Entry Target</p>
+                    <p className="text-sm font-bold text-[var(--text-soft)]">
+                      {primaryTarget ? getScopeTargetReference(primaryTarget) : 'N/A'}
                     </p>
                   </div>
                 </div>
               </section>
 
-              <section id="overview-evaluation" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Evaluation modes</p>
-                <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">How this bounty evaluates a finding.</h3>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <section id="overview-evaluation" className="relative overflow-hidden rounded-[42px] border border-[var(--border)] bg-[rgba(10,20,30,0.8)] p-8">
+                <p className="section-kicker !tracking-[0.4em] mb-4">TRIAGE PROTOCOL</p>
+                <h3 className="hero-title !text-3xl lg:!text-4xl mb-12">How findings are scored and validated.</h3>
+                <div className="grid gap-px bg-[var(--border)] rounded-[28px] overflow-hidden">
                   {(program.triageStages || []).map((stage, index) => (
-                    <div key={stage.title} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                      <div className="flex items-start justify-between gap-3">
+                    <div key={stage.title} className="bg-[rgba(10,20,30,0.4)] p-8 flex flex-wrap items-center justify-between gap-8 group hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                      <div className="flex gap-6 items-center">
+                        <span className="h-10 w-10 shrink-0 border border-[var(--border)] bg-[var(--surface-muted)] flex items-center justify-center text-sm font-black text-[var(--text-muted)]">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
                         <div>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Mode {index + 1}</p>
-                          <h4 className="mt-2 text-xl font-semibold text-[var(--text)]">{stage.title}</h4>
+                          <h4 className="text-xl font-bold text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">{stage.title}</h4>
+                          <p className="mt-1 text-sm text-[var(--text-muted)] font-bold uppercase tracking-widest">{stage.owner}</p>
                         </div>
-                        <Badge tone={stage.automation === 'HUMAN' ? 'soft' : 'accent'}>{formatEnum(stage.automation)}</Badge>
                       </div>
-                      <p className="mt-3 text-sm text-[var(--text-soft)]">{stage.owner}</p>
-                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{stage.humanGate}</p>
+                      <div className="flex-1 max-w-xl">
+                        <p className="text-base leading-relaxed text-[var(--text-soft)]">{stage.humanGate}</p>
+                      </div>
+                      <Badge tone={stage.automation === 'HUMAN' ? 'soft' : 'accent'}>{formatEnum(stage.automation)}</Badge>
                     </div>
                   ))}
                 </div>
               </section>
 
-              <section id="overview-timeline" className="space-y-6">
-                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                  <div className="flex flex-wrap items-end justify-between gap-4">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">How to participate</p>
-                      <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">A clearer path from discovery to response.</h3>
+              <section id="overview-timeline" className="grid gap-8 lg:grid-cols-2">
+                <article className="relative overflow-hidden rounded-[42px] border border-[var(--border)] bg-[rgba(10,20,30,0.8)] p-8">
+                  <p className="section-kicker !tracking-[0.4em] mb-4">CAMPAIGN STATS</p>
+                  <h3 className="hero-title !text-3xl mb-8">Baseline operational data.</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-4 border-b border-[var(--border)] group">
+                      <span className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] group-hover:text-[var(--text-soft)]">Opened</span>
+                      <span className="text-lg font-bold text-[var(--text)]">{formatDate(program.startedAt)}</span>
                     </div>
-                    <Button variant="outline" size="md" onClick={openSubmissionGuide}>
-                      Open submission guide
-                    </Button>
-                  </div>
-                  <div className="mt-6 grid gap-4 md:grid-cols-2">
-                    {participationSteps.map((step, index) => (
-                      <div key={step} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Step {index + 1}</p>
-                        <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{step}</p>
-                      </div>
-                    ))}
+                    <div className="flex items-center justify-between py-4 border-b border-[var(--border)] group">
+                      <span className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] group-hover:text-[var(--text-soft)]">Triage Target</span>
+                      <span className="text-lg font-bold text-[var(--text)] text-right">{program.responseSla}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-4 border-b border-[var(--border)] group">
+                      <span className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] group-hover:text-[var(--text-soft)]">Payout Target</span>
+                      <span className="text-lg font-bold text-[var(--text)] text-right">{program.payoutWindow}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-4 group">
+                      <span className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] group-hover:text-[var(--text-soft)]">Exploit Proof</span>
+                      <span className="text-lg font-bold text-[var(--text)]">{program.pocRequired ? 'MANDATORY' : 'OPTIONAL'}</span>
+                    </div>
                   </div>
                 </article>
 
-                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Timeline</p>
-                  <div className="mt-5 space-y-4 text-sm">
-                    <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
-                      <span className="text-[var(--text-muted)]">Bounty opened</span>
-                      <span className="text-[var(--text)]">{formatDate(program.startedAt)}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
-                      <span className="text-[var(--text-muted)]">First response target</span>
-                      <span className="text-right text-[var(--text)]">{program.responseSla}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
-                      <span className="text-[var(--text-muted)]">Payout window</span>
-                      <span className="text-right text-[var(--text)]">{program.payoutWindow}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="text-[var(--text-muted)]">Proof of concept</span>
-                      <span className="text-[var(--text)]">{program.pocRequired ? 'Required' : 'Optional'}</span>
-                    </div>
+                <article className="relative overflow-hidden rounded-[42px] border border-[var(--border)] bg-[rgba(0,212,168,0.03)] p-8">
+                  <div className="absolute top-0 right-0 p-8">
+                    <div className="h-2 w-2 rounded-full bg-[var(--accent)] animate-pulse" />
+                  </div>
+                  <p className="section-kicker !tracking-[0.4em] mb-4 text-[var(--accent)]">ACTION REQUIRED</p>
+                  <h3 className="hero-title !text-3xl mb-8">Ready to join the engagement?</h3>
+                  <p className="text-lg leading-relaxed text-[var(--text-soft)] mb-10">Review the technical guide or proceed directly to report submission using the unified interface.</p>
+                  <div className="grid gap-4">
+                    <Button variant={primaryActionTone} size="lg" className="w-full" onClick={handlePrimaryAction}>
+                      {primaryActionLabel}
+                    </Button>
+                    <Button variant="outline" size="lg" className="w-full" onClick={openSubmissionGuide}>
+                      Technical Brief
+                    </Button>
                   </div>
                 </article>
               </section>
@@ -790,38 +818,41 @@ export function ProgramDetail({
 
               <section id="scope-notes" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Target notes</p>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className="mt-8 grid gap-6 md:grid-cols-2">
                   {(program.scopeTargets || []).map((target) => (
-                    <article key={target.id} className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <article key={target.id} className="group relative overflow-hidden rounded-[32px] border border-[var(--border)] bg-[rgba(10,20,30,0.6)] p-6 xl:p-8 transition-all hover:bg-[rgba(255,255,255,0.02)]">
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h4 className="text-xl font-semibold text-[var(--text)]">{target.label}</h4>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-xl font-bold text-[var(--text)] group-hover:text-[var(--accent)] transition-colors truncate">{target.label}</h4>
                           {target.referenceUrl ? (
                             <a
                               href={target.referenceUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="mt-1 inline-flex text-sm text-[var(--accent-strong)] transition hover:text-[var(--text)]"
+                              className="mt-2 block truncate text-xs font-mono text-[var(--accent)] opacity-70 hover:opacity-100 transition-opacity"
                             >
                               {getScopeTargetReference(target)}
                             </a>
                           ) : (
-                            <p className="mt-1 text-sm text-[var(--text-soft)]">{getScopeTargetReference(target)}</p>
+                            <p className="mt-2 block truncate text-xs font-mono text-[var(--text-muted)]">{getScopeTargetReference(target)}</p>
                           )}
                         </div>
-                        <Badge tone={getSeverityTone(target.severity)}>{formatEnum(target.severity)}</Badge>
+                        <Badge tone={getSeverityTone(target.severity)} className="shrink-0">{formatEnum(target.severity)}</Badge>
                       </div>
-                      <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">{target.note}</p>
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      
+                      <p className="mt-6 text-sm leading-relaxed text-[var(--text-soft)] italic">{target.note}</p>
+                      
+                      <div className="mt-6 flex flex-wrap gap-2">
                         {getScopeTargetContextChips(target).map((chip) => (
                           <Badge key={`${target.id}-${chip}`} tone="soft">
                             {formatEnum(chip)}
                           </Badge>
                         ))}
                       </div>
-                      <div className="mt-4 rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
-                        <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Review status</p>
-                        <p className="mt-2 text-sm text-[var(--text)]">{target.reviewStatus}</p>
+                      
+                      <div className="mt-6 rounded-2xl border border-[rgba(255,255,255,0.03)] bg-[rgba(3,6,8,0.4)] p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Review status</p>
+                        <p className="text-sm font-semibold text-[var(--text-soft)]">{target.reviewStatus}</p>
                       </div>
                     </article>
                   ))}
@@ -869,53 +900,55 @@ export function ProgramDetail({
 
           {activeTab === 'submission' && (
             <div className="space-y-8">
-              <section id="submission-readiness" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">How to participate</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Agent selection happens before the report form.</h3>
+              <section id="submission-readiness" className="relative overflow-hidden rounded-[42px] border border-[var(--border)] bg-[rgba(10,20,30,0.8)] p-8">
+                <div className="flex flex-wrap items-center justify-between gap-8 mb-12">
+                  <div className="max-w-2xl">
+                    <p className="section-kicker !tracking-[0.4em] mb-4">SUBMISSION PROTOCOL</p>
+                    <h3 className="hero-title !text-3xl lg:!text-4xl">Agent synchronization required for reporting.</h3>
                   </div>
-                  <Button variant={primaryActionTone} size="md" onClick={handlePrimaryAction}>
+                  <Button variant={primaryActionTone} size="lg" className="min-w-[200px] shadow-[0_0_30px_rgba(0,212,168,0.2)]" onClick={handlePrimaryAction}>
                     {primaryActionLabel}
                   </Button>
                 </div>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                   {participationSteps.map((step, index) => (
-                    <div key={step} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Step {index + 1}</p>
-                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{step}</p>
+                    <div key={step} className="group relative rounded-[28px] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-6 transition-all hover:bg-[rgba(255,255,255,0.04)]">
+                      <span className="text-[10px] font-black font-mono text-[var(--accent)] opacity-40 group-hover:opacity-100">STEP // {String(index + 1).padStart(2, '0')}</span>
+                      <p className="mt-4 text-sm leading-relaxed text-[var(--text-soft)] group-hover:text-[var(--text)]">{step}</p>
                     </div>
                   ))}
                 </div>
               </section>
 
-              <section id="submission-agents" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Agent selection</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Submission uses your registered hunter agent.</h3>
+              <section id="submission-agents" className="relative overflow-hidden rounded-[42px] border border-[var(--border)] bg-[rgba(10,20,30,0.6)] p-8">
+                <div className="flex flex-wrap items-end justify-between gap-8 mb-10">
+                  <div className="max-w-xl">
+                    <p className="section-kicker !tracking-[0.4em] mb-4">AGENT SELECTION</p>
+                    <h3 className="hero-title !text-3xl">Authorized hunter identity.</h3>
                   </div>
-                  <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-soft)]">
-                    Campaign-linked agents are shown below for context. The actual report submission uses one of your own created agents.
+                  <div className="max-w-md rounded-[24px] border border-[var(--border)] bg-[rgba(3,6,8,0.4)] p-5 text-sm leading-relaxed text-[var(--text-muted)] italic">
+                    Campaign-linked agents are shown for architectural context. Submissions must originate from your securely registered agent pool.
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                  <ul className="space-y-4 text-sm leading-7 text-[var(--text-soft)]">
-                    <li className="flex items-start gap-3 border-b border-[var(--border)] pb-4 last:border-b-0 last:pb-0">
-                      <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-[10px] font-semibold text-[var(--text)]">01</span>
-                      <span>Open the submission modal and choose one of your registered hunter agents before filling the rest of the report.</span>
-                    </li>
-                    <li className="flex items-start gap-3 border-b border-[var(--border)] pb-4 last:border-b-0 last:pb-0">
-                      <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-[10px] font-semibold text-[var(--text)]">02</span>
-                      <span>If you do not have a registered agent yet, create one from the profile menu first. Bounty-linked agents are not the ownership identity used for submission.</span>
-                    </li>
-                    <li className="flex items-start gap-3 border-b border-[var(--border)] pb-4 last:border-b-0 last:pb-0">
-                      <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.88)] text-[10px] font-semibold text-[var(--text)]">03</span>
-                      <span>The campaign-linked agents below show which agents already participate in this bounty workflow.</span>
-                    </li>
-                  </ul>
-                </div>
+                <div className="grid gap-6">
+                  <div className="rounded-[32px] border border-[var(--border)] bg-[rgba(255,255,255,0.01)] p-6">
+                    <ul className="grid gap-4 md:grid-cols-3">
+                      <li className="flex gap-4 p-4 rounded-[22px] bg-[rgba(3,6,8,0.2)] border border-[var(--border)]">
+                        <span className="h-6 w-6 shrink-0 rounded border border-[var(--accent)]/30 bg-[rgba(0,212,168,0.1)] flex items-center justify-center text-[10px] font-black text-[var(--accent)]">01</span>
+                        <p className="text-xs leading-relaxed text-[var(--text-soft)]">Initialize submission and select a registered hunter agent.</p>
+                      </li>
+                      <li className="flex gap-4 p-4 rounded-[22px] bg-[rgba(3,6,8,0.2)] border border-[var(--border)]">
+                        <span className="h-6 w-6 shrink-0 rounded border border-[var(--accent)]/30 bg-[rgba(0,212,168,0.1)] flex items-center justify-center text-[10px] font-black text-[var(--accent)]">02</span>
+                        <p className="text-xs leading-relaxed text-[var(--text-soft)]">Anonymous or unregistered agents are not permitted for this bounty.</p>
+                      </li>
+                      <li className="flex gap-4 p-4 rounded-[22px] bg-[rgba(3,6,8,0.2)] border border-[var(--border)]">
+                        <span className="h-6 w-6 shrink-0 rounded border border-[var(--accent)]/30 bg-[rgba(0,212,168,0.1)] flex items-center justify-center text-[10px] font-black text-[var(--accent)]">03</span>
+                        <p className="text-xs leading-relaxed text-[var(--text-soft)]">Review campaign-linked agents below to understand automated response paths.</p>
+                      </li>
+                    </ul>
+                  </div>
 
                 <div className="mt-6 rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                   <div className="flex flex-wrap items-center justify-between gap-4">
@@ -983,7 +1016,8 @@ export function ProgramDetail({
                     </div>
                   )}
                 </div>
-              </section>
+              </div>
+            </section>
 
               <section id="submission-latest" className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">
@@ -1204,88 +1238,94 @@ export function ProgramDetail({
         </div>
 
         <aside className="space-y-6 xl:sticky xl:top-32 xl:self-start">
-          <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
+          <section className="relative overflow-hidden rounded-[30px] border border-[var(--border)] bg-[rgba(10,20,30,0.4)] p-6 shadow-[var(--shadow-md)] backdrop-blur-xl">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <div className="h-12 w-12 rounded-full border-2 border-dashed border-[var(--accent)] animate-[spin_10s_linear_infinite]" />
+            </div>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Participants</p>
-                <p className="mt-2 text-sm text-[var(--text-soft)]">Agents already attached to this bounty.</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--accent)]">ACTIVE AGENTS</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">Verified participation log.</p>
               </div>
-              <Badge tone="soft">{participantAgents.length}</Badge>
+              <Badge tone="soft" className="!bg-[rgba(0,212,168,0.1)] !text-[var(--accent)]">{participantAgents.length}</Badge>
             </div>
-            <div className="mt-5 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap gap-3">
               {participantAgents.length > 0 ? (
                 participantAgents.slice(0, 8).map((participant) => (
                   <button
                     key={participant.id}
                     onClick={() => onOpenAgent?.(participant.id)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-muted)] text-sm font-semibold text-[var(--text)] transition hover:border-[rgba(56,217,178,0.24)]"
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[rgba(255,255,255,0.02)] text-sm font-black text-[var(--text-soft)] transition-all hover:border-[var(--accent)] hover:bg-[rgba(0,212,168,0.1)] hover:text-[var(--accent)] hover:scale-110"
                     title={participant.name}
                   >
                     {participant.logoMark}
                   </button>
                 ))
               ) : (
-                <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-soft)]">
-                  No public participants yet.
+                <div className="rounded-[20px] border border-dashed border-[var(--border)] px-4 py-3 text-xs text-[var(--text-muted)] italic">
+                  No registered participants.
                 </div>
               )}
             </div>
           </section>
 
-          <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Your status</p>
+          <section className="relative overflow-hidden rounded-[30px] border border-[var(--border)] bg-[rgba(10,20,30,0.6)] p-6 shadow-[var(--shadow-lg)]">
+            <div className="absolute -right-8 -top-8 h-24 w-24 bg-[var(--accent)] opacity-5 blur-3xl" />
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--text-muted)]">HUNTER PROFILE</p>
             {latestViewerReport ? (
-              <div className="mt-4 space-y-3 rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[var(--text-muted)]">Researcher</span>
-                  <span className="text-right text-[var(--text)]">{viewerName || latestViewerReport.reporterName}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[var(--text-muted)]">Latest report</span>
-                  <span className="text-right text-[var(--text)]">{latestViewerReport.humanId}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[var(--text-muted)]">Status</span>
-                  <Badge tone={getReportStatusTone(latestViewerReport.status)}>{formatEnum(latestViewerReport.status)}</Badge>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[var(--text-muted)]">Submitted</span>
-                  <span className="text-right text-[var(--text)]">{formatDateTime(latestViewerReport.submittedAt)}</span>
+              <div className="mt-6 space-y-4">
+                <div className="rounded-[24px] border border-[var(--border)] bg-[rgba(3,6,8,0.4)] p-5 space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Operator</span>
+                    <span className="text-sm font-bold text-[var(--text)]">{viewerName || latestViewerReport.reporterName}</span>
+                  </div>
+                  <div className="h-px bg-[var(--border)]" />
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Last Report</span>
+                    <span className="text-sm font-mono text-[var(--accent)]">{latestViewerReport.humanId}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Status</span>
+                    <Badge tone={getReportStatusTone(latestViewerReport.status)}>{formatEnum(latestViewerReport.status)}</Badge>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm leading-7 text-[var(--text-soft)]">
-                You have not submitted to this bounty yet.
+              <div className="mt-6 rounded-[24px] border border-dashed border-[var(--border)] p-6 text-center">
+                <p className="text-xs text-[var(--text-muted)] italic leading-relaxed">Identity ready for engagement. No active dossiers recorded.</p>
               </div>
             )}
-            <Button variant={primaryActionTone} size="md" className="mt-4 w-full" onClick={handlePrimaryAction}>
+            <Button variant={primaryActionTone} size="lg" className="mt-8 w-full shadow-[0_10px_30px_rgba(0,0,0,0.3)]" onClick={handlePrimaryAction}>
               {primaryActionLabel}
             </Button>
           </section>
 
-          <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Bounty facts</p>
-            <div className="mt-5 space-y-4 text-sm">
-              <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
-                <span className="text-[var(--text-muted)]">Bounty code</span>
-                <span className="text-[var(--text)]">{program.code}</span>
+          <section className="rounded-[30px] border border-[var(--border)] bg-[rgba(10,20,30,0.2)] p-6">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--text-muted)]">MISSION LOG</p>
+            <div className="mt-8 space-y-5">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Assigned Code</span>
+                <span className="text-sm font-mono text-[var(--text)]">{program.code}</span>
               </div>
-              <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
-                <span className="text-[var(--text-muted)]">Started</span>
-                <span className="text-[var(--text)]">{formatDate(program.startedAt)}</span>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Intelligence Live</span>
+                <span className="text-sm font-mono text-[var(--text)]">{formatDate(program.startedAt)}</span>
               </div>
-              <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
-                <span className="text-[var(--text-muted)]">Categories</span>
-                <span className="text-right text-[var(--text)]">{(program.categories || []).map((cat) => formatEnum(cat)).join(', ')}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-[var(--text-muted)]">Proof of concept</span>
-                <span className="text-[var(--text)]">{program.pocRequired ? 'Required' : 'Optional'}</span>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Target Scope</span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {(program.categories || []).map((cat) => (
+                    <span key={cat} className="text-[10px] px-2 py-0.5 rounded-sm bg-[var(--surface-muted)] text-[var(--text-soft)] border border-[var(--border)]">
+                      {formatEnum(cat)}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
         </aside>
-      </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }

@@ -10,15 +10,21 @@ export function MetricCard({ label, value, note, accent, className = '' }: Metri
   return (
     <div
       className={[
-        'surface-card signal-card rounded-[28px] p-5 md:p-6',
-        accent ? 'border-[rgba(56,217,178,0.2)]' : '',
+        'relative overflow-hidden rounded-[32px] border border-[var(--border)] bg-[rgba(10,20,30,0.6)] p-6 backdrop-blur-md transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] group',
+        accent ? 'border-[rgba(0,212,168,0.2)]' : '',
         className,
       ].join(' ')}
-      style={accent ? { boxShadow: `0 18px 38px ${accent}1f, inset 0 0 0 1px ${accent}2f` } : undefined}
     >
-      <p className="section-kicker !tracking-[0.22em]">{label}</p>
-      <h3 className="mt-4 text-3xl font-extrabold tracking-[-0.05em] text-[var(--text)] md:text-[2.2rem]">{value}</h3>
-      {note && <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{note}</p>}
+      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+        <div className="h-8 w-8 rounded-full border border-dashed border-[var(--text-muted)] group-hover:animate-spin" />
+      </div>
+      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--text-muted)] mb-4">{label}</p>
+      <h3 className="text-4xl font-extrabold tracking-tighter text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">{value}</h3>
+      {note && (
+        <p className="mt-4 text-xs font-medium leading-relaxed text-[var(--text-soft)] italic opacity-60 border-l border-[var(--border)] pl-4">
+          {note}
+        </p>
+      )}
     </div>
   )
 }
