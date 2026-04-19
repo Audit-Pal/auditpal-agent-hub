@@ -67,6 +67,9 @@ export function ProgramCard({ program, onClick }: ProgramCardProps) {
           <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[rgba(16,31,43,0.72)] px-3 py-1 text-xs font-medium text-[var(--text)]">
             {program.pocRequired ? 'PoC required' : 'PoC optional'}
           </span>
+          <span className="inline-flex items-center rounded-full border border-[rgba(255,159,67,0.18)] bg-[rgba(255,159,67,0.12)] px-3 py-1 text-xs font-medium text-[#ff9f43]">
+            50 Credits required
+          </span>
         </div>
 
         <p className="text-sm text-[var(--text-soft)]">

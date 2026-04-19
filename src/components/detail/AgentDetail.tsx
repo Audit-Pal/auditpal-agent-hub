@@ -18,7 +18,12 @@ interface AgentDetailProps {
   onBack: () => void
 }
 
-type AgentPanel = 'workbench' | 'overview' | 'runtime' | 'activity'
+type AgentTab = 'introduction' | 'workbench'
+
+const tabMeta: { id: AgentTab; label: string }[] = [
+  { id: 'introduction', label: 'Introduction' },
+  { id: 'workbench', label: 'Workbench' },
+]
 
 const accentColorMap: Record<string, string> = {
   mint: '#1eba98',
@@ -29,15 +34,56 @@ const accentColorMap: Record<string, string> = {
   rose: '#ff7f96',
 }
 
-const panelMeta: { id: AgentPanel; label: string; hint: string }[] = [
-  { id: 'workbench', label: 'Workbench', hint: 'GitHub intake and repo-focused analysis' },
-  { id: 'overview', label: 'Overview', hint: 'Role, linked bounties, and toolchain' },
-  { id: 'runtime', label: 'Runtime', hint: 'How this agent moves through each stage' },
-  { id: 'activity', label: 'Activity', hint: 'Recent benchmarked work and signals' },
-]
+function DetailSection({
+  id,
+  title,
+  subtitle,
+  children,
+}: {
+  id?: string
+  title: string
+  subtitle?: string
+  children: React.ReactNode
+}) {
+  return (
+    <section id={id} className="content-auto contain-paint border-t border-[var(--border)] pt-8 first:border-t-0 first:pt-0">
+      <div className="max-w-4xl">
+        <h2 className="text-[clamp(1.6rem,2.5vw,2.25rem)] font-semibold tracking-tight text-[var(--text)]">{title}</h2>
+        {subtitle ? <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{subtitle}</p> : null}
+      </div>
+      <div className="mt-6">{children}</div>
+    </section>
+  )
+}
+
+function MetricRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-3 text-sm">
+      <span className="text-[var(--text-soft)]">{label}</span>
+      <span className="text-right font-medium text-[var(--text)]">{value}</span>
+    </div>
+  )
+}
+
+function DetailList({ items, emptyText }: { items: readonly string[]; emptyText?: string }) {
+  if (!items.length) {
+    return <p className="text-sm leading-7 text-[var(--text-soft)]">{emptyText || 'Nothing added yet.'}</p>
+  }
+
+  return (
+    <ul className="space-y-3 text-sm leading-7 text-[var(--text-soft)]">
+      {items.map((item) => (
+        <li key={item} className="flex items-start gap-3">
+          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps) {
-  const [activePanel, setActivePanel] = useState<AgentPanel>('workbench')
+  const [activeTab, setActiveTab] = useState<AgentTab>('introduction')
   const accentColor = accentColorMap[agent.accentTone?.toLowerCase()] || '#1eba98'
   const validatorScore = agent.validatorScore || 0
   const capabilities = agent.capabilities || []
@@ -57,176 +103,109 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
         ]}
       />
 
-      <section className="overflow-hidden rounded-[38px] border border-[var(--border)] bg-[var(--surface-strong)] shadow-[var(--shadow-lg)]">
-        <div
-          className="border-b border-[var(--border)] px-6 py-8 md:px-8 md:py-10"
-          style={{
-            background: `linear-gradient(135deg, ${accentColor}20, rgba(9,18,27,0.94) 48%, rgba(5,12,18,0.98) 100%)`,
-          }}
-        >
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1.25fr)_320px]">
-            <div className="space-y-6">
-              <div className="flex flex-wrap items-center gap-2">
-                {agent.rank && <Badge tone="accent">Rank #{agent.rank}</Badge>}
-                {agent.score && <Badge tone="soft">Score {agent.score.toFixed(1)}</Badge>}
-                <Badge tone="soft">Validator {validatorScore.toFixed(2)}</Badge>
-                {agent.minerName && <Badge tone="soft">{agent.minerName}</Badge>}
-              </div>
-
-              <div className="flex items-start gap-5">
-                <div
-                  className="flex h-20 w-20 items-center justify-center rounded-[26px] border text-2xl font-semibold text-[var(--text)]"
-                  style={{ borderColor: `${accentColor}55`, backgroundColor: `${accentColor}14` }}
-                >
-                  {agent.logoMark}
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">
-                    Validator-ranked runtime
-                  </p>
-                  <h1 className="mt-3 font-serif text-5xl leading-none text-[var(--text)] md:text-6xl">
-                    {agent.name}
-                  </h1>
-                  <p className="mt-4 max-w-3xl text-lg leading-8 text-[var(--text-soft)]">{agent.headline}</p>
-                </div>
-              </div>
-
-              <div className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.8)] p-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Operating thesis</p>
-                <p className="mt-4 text-xl leading-9 text-[var(--text)]">{agent.summary}</p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {capabilities.slice(0, 4).map((capability) => (
-                  <Badge key={capability} tone="soft">
-                    {capability}
-                  </Badge>
-                ))}
-              </div>
+      <section className="content-auto contain-paint border-b border-[var(--border)] pb-8">
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+          <div className="flex min-w-0 items-start gap-5">
+            <div
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[18px] border text-xl font-extrabold text-[var(--text)]"
+              style={{ borderColor: `${accentColor}55`, backgroundColor: `${accentColor}14` }}
+            >
+              {agent.logoMark}
             </div>
 
-            <aside className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.8)] p-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Benchmark deck</p>
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <div className="rounded-[22px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Rank</p>
-                  <p className="mt-2 text-2xl font-semibold text-[var(--text)]">#{agent.rank || '-'}</p>
-                </div>
-                <div className="rounded-[22px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Score</p>
-                  <p className="mt-2 text-2xl font-semibold text-[var(--text)]">{agent.score?.toFixed(1) || '0.0'}</p>
-                </div>
-                <div className="rounded-[22px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Validator</p>
-                  <p className="mt-2 text-2xl font-semibold text-[var(--text)]">{validatorScore.toFixed(2)}</p>
-                </div>
-                <div className="rounded-[22px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Bounties</p>
-                  <p className="mt-2 text-2xl font-semibold text-[var(--text)]">{linkedPrograms.length}</p>
-                </div>
+            <div className="min-w-0">
+              <p className="text-sm text-[var(--text-soft)]">{agent.minerName || 'Validator-ranked runtime'}</p>
+              <h1 className="mt-2 text-[clamp(2rem,4vw,3.7rem)] font-semibold leading-none tracking-tight text-[var(--text)]">
+                {agent.name}
+              </h1>
+              <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-soft)] md:text-lg">{agent.headline}</p>
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                {agent.rank && (
+                  <Badge tone="accent" className="!rounded-full !px-3 !py-1 !text-[10px] !tracking-[0.18em]">
+                    RANK #{agent.rank}
+                  </Badge>
+                )}
+                <Badge tone="success" className="!rounded-full !px-3 !py-1 !text-[10px] !tracking-[0.18em]">
+                  SCORE {agent.score?.toFixed(1) || '0.0'}
+                </Badge>
+                <Badge tone="soft" className="!rounded-full !px-3 !py-1 !text-[10px] !tracking-[0.18em]">
+                  VALIDATOR {validatorScore.toFixed(2)}
+                </Badge>
               </div>
+            </div>
+          </div>
 
-              <div className="mt-5 rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-                <div className="flex items-center justify-between gap-4 text-sm">
-                  <span className="text-[var(--text-muted)]">Validator confidence</span>
-                  <span className="text-[var(--text)]">{Math.round(validatorScore * 100)}%</span>
-                </div>
-                <div className="mt-3 h-2 rounded-full bg-[var(--border)]">
-                  <div className="h-full rounded-full" style={{ width: `${validatorScore * 100}%`, backgroundColor: accentColor }} />
-                </div>
+          <div className="content-auto contain-paint border-t border-[var(--border)] pt-4 xl:border-t-0 xl:text-right">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Benchmark position</p>
+            <div className="mt-3 space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-4 xl:justify-end">
+                <span className="text-[var(--text-soft)]">Global rank</span>
+                <span className="font-medium text-[var(--text)]">#{agent.rank || '-'}</span>
               </div>
-
-              <Button variant="outline" size="lg" className="mt-6 w-full" onClick={() => setActivePanel('workbench')}>
-                Open workbench
-              </Button>
-            </aside>
+              <div className="flex items-center justify-between gap-4 xl:justify-end">
+                <span className="text-[var(--text-soft)]">Bounty footprint</span>
+                <span className="font-medium text-[var(--text)]">{linkedPrograms.length} programs</span>
+              </div>
+              <div className="flex items-center justify-between gap-4 xl:justify-end">
+                <span className="text-[var(--text-soft)]">Trust score</span>
+                <span className="font-medium text-[var(--text)]">{Math.round(validatorScore * 100)}%</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <nav className="sticky top-24 z-20 rounded-[28px] border border-[var(--border)] bg-[rgba(7,14,20,0.9)] p-2 shadow-[var(--shadow-md)] backdrop-blur-xl">
-        <div className="flex flex-wrap gap-2">
-          {panelMeta.map((panel) => {
-            const isActive = activePanel === panel.id
+      <nav className="border-b border-[var(--border)]">
+        <div className="flex gap-6 overflow-x-auto">
+          {tabMeta.map((tab) => {
+            const isActive = activeTab === tab.id
 
             return (
               <button
-                key={panel.id}
-                onClick={() => setActivePanel(panel.id)}
-                className={`rounded-[22px] border px-4 py-3 text-left transition ${isActive ? 'border-[rgba(56,217,178,0.28)] bg-[linear-gradient(135deg,rgba(30,186,152,1),rgba(7,79,70,0.94))] text-[#021614]' : 'border-transparent text-[var(--text-soft)] hover:bg-[rgba(13,26,37,0.94)] hover:text-[var(--text)]'}`}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={[
+                  'border-b-2 px-1 pb-3 text-sm font-semibold transition-colors',
+                  isActive
+                    ? 'border-[var(--accent)] text-[var(--text)]'
+                    : 'border-transparent text-[var(--text-soft)] hover:text-[var(--text)]',
+                ].join(' ')}
               >
-                <span className="block text-[11px] font-semibold uppercase tracking-[0.22em]">{panel.label}</span>
-                <span className={`mt-1 block text-sm ${isActive ? 'text-[#021614]/70' : 'text-[var(--text-muted)]'}`}>{panel.hint}</span>
+                {tab.label}
               </button>
             )
           })}
         </div>
       </nav>
 
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-8">
-          {activePanel === 'workbench' && (
-            <AgentWorkbench agent={agent} linkedPrograms={linkedPrograms} />
-          )}
+          {activeTab === 'introduction' ? (
+            <>
+              <DetailSection title="Operating Thesis" subtitle="The core security logic and reasoning model behind this agent's runtime.">
+                <div className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.4)] p-6 md:p-8">
+                  <p className="text-xl leading-9 text-[var(--text)]">{agent.summary}</p>
+                </div>
+              </DetailSection>
 
-          {activePanel === 'overview' && (
-            <div className="space-y-8">
-              <section className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Core capabilities</p>
-                  <div className="mt-6 grid gap-4 md:grid-cols-2">
-                    {capabilities.map((capability) => (
-                      <div key={capability} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                        <p className="text-lg font-semibold text-[var(--text)]">{capability}</p>
-                        <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">
-                          Built to support repeatable security work rather than one-off interface automation.
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-
-                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Linked bounties</p>
-                  <div className="mt-6 space-y-4">
-                    {linkedPrograms.map(({ program, link }) => (
-                      <article key={program.id} className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <h4 className="text-xl font-semibold text-[var(--text)]">{program.name}</h4>
-                            <p className="mt-1 text-sm text-[var(--text-soft)]">
-                              {program.company} · {formatEnum(program.kind)}
-                            </p>
-                          </div>
-                          <Badge tone="soft">{formatEnum(program.platforms[0] || 'OFFCHAIN')}</Badge>
-                        </div>
-                        <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">{link.purpose}</p>
-                        <div className="mt-4 rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4 text-sm leading-7 text-[var(--text-soft)]">
-                          {link.trigger}
-                        </div>
-                      </article>
-                    ))}
-                    {linkedPrograms.length === 0 && (
-                      <div className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5 text-sm leading-7 text-[var(--text-soft)]">
-                        No linked bounties were found for this agent in the database yet.
-                      </div>
-                    )}
-                  </div>
-                </article>
-              </section>
+              <DetailSection title="Core Capabilities" subtitle="Security surfaces where this agent provides the most reliable coverage.">
+                <div className="grid gap-4 md:grid-cols-2">
+                  {capabilities.map((capability) => (
+                    <div key={capability} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                      <p className="text-lg font-semibold text-[var(--text)]">{capability}</p>
+                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">
+                        Specialized module designed for high-fidelity signal extraction and repeated validation.
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </DetailSection>
 
               {(supportedSurfaces.length > 0 || supportedTechnologies.length > 0) && (
-                <section className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                  <div className="flex flex-wrap items-end justify-between gap-4">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Coverage map</p>
-                      <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">What this agent handles best.</h3>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 grid gap-6 md:grid-cols-2">
+                <DetailSection title="Coverage Map" subtitle="Inferred targets and technology stacks most suitable for this agent.">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <article className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Supported surfaces</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Surfaces</p>
                       <div className="mt-4 flex flex-wrap gap-2">
                         {supportedSurfaces.map((surface) => (
                           <Badge key={surface} tone="soft">
@@ -235,7 +214,6 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                         ))}
                       </div>
                     </article>
-
                     <article className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Technologies</p>
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -247,18 +225,11 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                       </div>
                     </article>
                   </div>
-                </section>
+                </DetailSection>
               )}
 
-              <section className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Execution modules</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Tooling behind the runtime.</h3>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <DetailSection title="Execution Modules" subtitle="The deep tooling and internal signals used during the analysis phase.">
+                <div className="grid gap-4 md:grid-cols-2">
                   {tools.map((tool) => (
                     <article key={tool.name} className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                       <p className="text-lg font-semibold text-[var(--text)]">{tool.name}</p>
@@ -267,15 +238,10 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                     </article>
                   ))}
                 </div>
-              </section>
-            </div>
-          )}
+              </DetailSection>
 
-          {activePanel === 'runtime' && (
-            <div className="space-y-8">
-              <section className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Runtime flow</p>
-                <div className="mt-6 grid gap-4">
+              <DetailSection title="Runtime Flow" subtitle="Step-by-step progression as the agent moves from intake to finalized report.">
+                <div className="grid gap-4">
                   {runtimeFlow.map((stage, index) => (
                     <article key={stage.title} className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-muted)] p-6">
                       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -291,7 +257,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                             <h3 className="mt-2 text-2xl font-semibold text-[var(--text)]">{stage.title}</h3>
                           </div>
                         </div>
-                        <Badge tone="soft">{stage.outputs.length} outputs</Badge>
+                        <Badge tone="soft">{stage.outputs.length} signals</Badge>
                       </div>
                       <p className="mt-5 text-sm leading-7 text-[var(--text-soft)]">{stage.description}</p>
                       <div className="mt-5 flex flex-wrap gap-2">
@@ -301,98 +267,61 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                           </Badge>
                         ))}
                       </div>
-                      {stage.humanGate && (
-                        <div className="mt-5 rounded-[20px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-4">
-                          <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Human gate</p>
-                          <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{stage.humanGate}</p>
-                        </div>
-                      )}
                     </article>
                   ))}
                 </div>
-              </section>
+              </DetailSection>
 
-              <section className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-strong)] p-5 shadow-[var(--shadow-md)]">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Active stages</p>
-                  <p className="mt-3 text-4xl font-semibold text-[var(--text)]">{runtimeFlow.length}</p>
-                </div>
-                <div className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-strong)] p-5 shadow-[var(--shadow-md)]">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Output signals</p>
-                  <p className="mt-3 text-4xl font-semibold text-[var(--text)]">
-                    {runtimeFlow.reduce((total, stage) => total + stage.outputs.length, 0)}
-                  </p>
-                </div>
-                <div className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-strong)] p-5 shadow-[var(--shadow-md)]">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Recent runs</p>
-                  <p className="mt-3 text-4xl font-semibold text-[var(--text)]">{recentExecutions.length}</p>
-                </div>
-              </section>
-            </div>
-          )}
-
-          {activePanel === 'activity' && (
-            <div className="space-y-8">
-              <section className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Execution feed</p>
-                    <h3 className="mt-4 font-serif text-4xl text-[var(--text)]">Recent agent activity.</h3>
-                  </div>
-                </div>
-
-                <div className="mt-6 space-y-4">
+              <DetailSection title="Recent Activity" subtitle="Benchmark history and latest confirmed signals across the marketplace.">
+                <div className="space-y-4">
                   {recentExecutions.map((execution) => (
                     <article key={`${execution.title}-${execution.timestamp}`} className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
                       <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div className="max-w-3xl">
+                        <div className="max-w-xl">
                           <h4 className="text-xl font-semibold text-[var(--text)]">{execution.title}</h4>
                           <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{execution.summary}</p>
                         </div>
                         <div className="text-right">
-                          <Badge tone="accent">{execution.status || 'Successful run'}</Badge>
+                          <Badge tone="accent">{execution.status || 'Success'}</Badge>
                           <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">{execution.timestamp.toString()}</p>
                         </div>
                       </div>
                     </article>
                   ))}
                 </div>
-              </section>
-
-              <section className="grid gap-6 md:grid-cols-2">
-                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Bounty footprint</p>
-                  <p className="mt-4 text-4xl font-semibold text-[var(--text)]">{linkedPrograms.length}</p>
-                  <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">
-                    Bounties currently depend on this agent for routing, provenance, or dispute handling.
-                  </p>
-                </article>
-                <article className="rounded-[32px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)] md:p-8">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Benchmark position</p>
-                  <p className="mt-4 text-4xl font-semibold text-[var(--text)]">#{agent.rank || '-'}</p>
-                  <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">
-                    This rank comes directly from the validator benchmark view.
-                  </p>
-                </article>
-              </section>
-            </div>
+              </DetailSection>
+            </>
+          ) : (
+            <AgentWorkbench agent={agent} linkedPrograms={linkedPrograms} />
           )}
         </div>
 
-        <aside className="space-y-6 xl:sticky xl:top-28 xl:self-start">
-          <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Performance metrics</p>
-            <div className="mt-4 grid gap-4">
+        <aside className="space-y-8 xl:sticky xl:top-28 xl:self-start">
+          <section className="content-auto contain-paint border-t border-[var(--border)] pt-8 xl:border-l xl:border-t-0 xl:pl-8 xl:pt-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Technical performance</p>
+            <div className="mt-6 space-y-4">
               {metrics.map((metric) => (
                 <MetricCard key={metric.label} label={metric.label} value={metric.value} note={metric.note} accent={accentColor} />
               ))}
             </div>
+
+            <div className="mt-8 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+              <MetricRow label="Ranked position" value={`#${agent.rank || '-'}`} />
+              <MetricRow label="Validator confidence" value={`${Math.round(validatorScore * 100)}%`} />
+              <MetricRow label="Active connections" value={linkedPrograms.length} />
+            </div>
+
+            <div className="mt-8">
+              <Button variant="outline" size="lg" className="w-full" onClick={() => setActiveTab('workbench')}>
+                Open workbench
+              </Button>
+            </div>
           </section>
 
-          <section className="rounded-[30px] border border-[var(--border)] bg-[var(--surface-strong)] p-6 shadow-[var(--shadow-md)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Operator note</p>
+          <section className="content-auto contain-paint border-t border-[var(--border)] pt-8 xl:border-l xl:pl-8 xl:pt-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Operator note</p>
             <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">
-              The agent leaderboard stays secondary to the bounty marketplace, but the detail pages still feel intentional and useful.
+              The agent overview consolidates the runtime, benchmarks, and latest signals into a unified documentation view.
             </p>
           </section>
         </aside>

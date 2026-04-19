@@ -371,7 +371,7 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--text-muted)]">Agent intake</p>
             <h2 className="mt-4 font-serif text-4xl text-[var(--text)] md:text-5xl">
-              Send a GitHub target into {agent.name}.
+              Send a GitHub target request into {agent.name}.
             </h2>
             <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-soft)]">
               Paste a GitHub profile or repository link, then click the categories you care about. The workbench will parse the link, infer likely surfaces, and prepare a vulnerability-oriented brief.
@@ -491,6 +491,13 @@ export function AgentWorkbench({ agent, linkedPrograms }: AgentWorkbenchProps) {
                 {(agent.supportedSurfaces || []).map((surface) => (
                   <Badge key={surface} tone="soft">
                     {formatEnum(surface)}
+                  </Badge>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {(agent.capabilities || []).map((capability) => (
+                  <Badge key={capability} tone="soft">
+                    {capability}
                   </Badge>
                 ))}
               </div>
