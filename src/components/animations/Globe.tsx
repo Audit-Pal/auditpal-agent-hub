@@ -3,6 +3,8 @@
 import { useEffect, useRef, memo } from "react";
 import { motion } from "framer-motion";
 
+const CANVAS_SIZE = 420;
+
 export const Globe = memo(function Globe() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -10,88 +12,99 @@ export const Globe = memo(function Globe() {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (prefersReducedMotion) return;
+
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        let width = canvas.width = 600;
-        let height = canvas.height = 600;
+        const width = canvas.width = CANVAS_SIZE;
+        const height = canvas.height = CANVAS_SIZE;
+        const globeRadius = 160;
+        const dotRadius = 1.15;
+        const dotCount = window.innerWidth >= 1280 ? 520 : 360;
+        const rotationSpeed = 0.0016;
 
-        // Globe parameters
-        const GLOBE_RADIUS = 240;
-        const DOT_RADIUS = 1.5;
-        const DOT_COUNT = 800;
-        const ROTATION_SPEED = 0.002;
-
-        // Generate points on a sphere (Fibonacci Sphere)
         const points: { x: number; y: number; z: number }[] = [];
-        const phi = Math.PI * (3 - Math.sqrt(5)); // Golden angle
+        const phi = Math.PI * (3 - Math.sqrt(5));
 
-        for (let i = 0; i < DOT_COUNT; i++) {
-            const y = 1 - (i / (DOT_COUNT - 1)) * 2; // y goes from 1 to -1
-            const radius = Math.sqrt(1 - y * y); // radius at y
-
-            const theta = phi * i; // golden angle increment
-
+        for (let index = 0; index < dotCount; index += 1) {
+            const y = 1 - (index / (dotCount - 1)) * 2;
+            const radius = Math.sqrt(1 - y * y);
+            const theta = phi * index;
             const x = Math.cos(theta) * radius;
             const z = Math.sin(theta) * radius;
 
-            points.push({ x: x * GLOBE_RADIUS, y: y * GLOBE_RADIUS, z: z * GLOBE_RADIUS });
+            points.push({ x: x * globeRadius, y: y * globeRadius, z: z * globeRadius });
         }
 
+        let animationFrameId = 0;
+        let isRunning = !document.hidden;
         let rotation = 0;
 
         const render = () => {
-            if (!ctx) return;
+            if (!isRunning) return;
+
             ctx.clearRect(0, 0, width, height);
+            rotation += rotationSpeed;
 
-            // Rotate points
-            rotation += ROTATION_SPEED;
+            const rotatedPoints = points
+                .map((point) => {
+                    const x = point.x * Math.cos(rotation) - point.z * Math.sin(rotation);
+                    const z = point.x * Math.sin(rotation) + point.z * Math.cos(rotation);
+                    return { x, y: point.y, z };
+                })
+                .sort((left, right) => left.z - right.z);
 
-            // Sort points by Z depth so simple occlusion works roughly
-            const rotatedPoints = points.map(p => {
-                // Rotate around Y axis
-                const x = p.x * Math.cos(rotation) - p.z * Math.sin(rotation);
-                const z = p.x * Math.sin(rotation) + p.z * Math.cos(rotation);
-                return { x, y: p.y, z, originalY: p.y };
-            }).sort((a, b) => a.z - b.z);
+            for (const point of rotatedPoints) {
+                const fov = 780;
+                const scale = fov / (fov - point.z);
+                const px = width / 2 + point.x * scale;
+                const py = height / 2 + point.y * scale;
+                const alpha = (point.z + globeRadius) / (2 * globeRadius);
+                const opacity = Math.max(0.08, Math.min(0.85, alpha * 0.72));
 
-            rotatedPoints.forEach(p => {
-                // Perspective projection
-                const fov = 1000;
-                const scale = fov / (fov - p.z);
-
-                const px = width / 2 + p.x * scale;
-                const py = height / 2 + p.y * scale;
-
-                // Fade out dots in back
-                const alpha = (p.z + GLOBE_RADIUS) / (2 * GLOBE_RADIUS); // 0 to 1 based on z
-                const opacity = Math.max(0.1, Math.min(1, alpha * 0.8));
-
-                // Draw dot
                 ctx.beginPath();
-                ctx.arc(px, py, DOT_RADIUS * scale, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(0, 212, 168, ${opacity})`; // var(--accent)
+                ctx.arc(px, py, dotRadius * scale, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 212, 168, ${opacity})`;
                 ctx.fill();
-            });
+            }
 
-            requestAnimationFrame(render);
+            animationFrameId = requestAnimationFrame(render);
         };
 
-        const animationId = requestAnimationFrame(render);
+        const handleVisibilityChange = () => {
+            isRunning = !document.hidden;
 
-        return () => cancelAnimationFrame(animationId);
+            if (isRunning) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = requestAnimationFrame(render);
+                return;
+            }
+
+            cancelAnimationFrame(animationFrameId);
+        };
+
+        animationFrameId = requestAnimationFrame(render);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+            isRunning = false;
+            cancelAnimationFrame(animationFrameId);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
     }, []);
 
     return (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
             <motion.canvas
                 ref={canvasRef}
-                width={600}
-                height={600}
-                initial={{ opacity: 0, scale: 0.8 }}
+                width={CANVAS_SIZE}
+                height={CANVAS_SIZE}
+                initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1.5 }}
-                className="w-full h-full object-contain opacity-60"
+                transition={{ duration: 0.5 }}
+                className="h-full w-full object-contain opacity-55"
             />
         </div>
     );

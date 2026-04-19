@@ -10,7 +10,6 @@ interface ProgramsDirectoryPageProps {
   selectedKind: string
   selectedCategory: string
   selectedPlatform: string
-
   clearFilters: () => void
   setSearchQuery: (query: string) => void
   setSelectedCategory: (cat: string) => void
@@ -43,7 +42,6 @@ export function ProgramsDirectoryPage({
   selectedKind,
   selectedCategory,
   selectedPlatform,
-
   clearFilters,
   setSearchQuery,
   setSelectedCategory,
@@ -60,25 +58,19 @@ export function ProgramsDirectoryPage({
 
   return (
     <motion.div variants={stagger.container} initial="hidden" animate="show" className="space-y-6">
-      <motion.section variants={stagger.item} className="hero-card rounded-3xl p-7 md:p-10">
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr)_300px]">
+      <motion.section variants={stagger.item} className="surface-card-strong rounded-[32px] p-6 md:p-8">
+        <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
-            <p className="section-kicker">Directory</p>
-            <h1 className="mt-2 font-serif text-[clamp(2rem,4vw,3.8rem)] leading-tight text-[var(--text)]">
-              Bounty programs.
-            </h1>
-            <p className="section-copy mt-4 max-w-2xl">
-              Filter by platform, kind, and reward band.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <span className="summary-chip">{filteredPrograms.length} programs</span>
-              <span className="summary-chip">{totalRewardSurface} total</span>
-            </div>
+            <p className="section-kicker">Bounties</p>
+            <h1 className="mt-2 font-serif text-[clamp(2rem,4vw,3.6rem)] leading-tight text-[var(--text)]">Find a bounty.</h1>
+            <p className="section-copy mt-4 max-w-2xl">Search by project, chain, or stack.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="summary-chip">{filteredPrograms.length} live</span>
+            <span className="summary-chip">{totalRewardSurface} max rewards</span>
           </div>
         </div>
       </motion.section>
-
-
 
       <motion.div variants={stagger.item}>
         <FilterBar
@@ -102,22 +94,20 @@ export function ProgramsDirectoryPage({
 
       {filteredPrograms.length === 0 ? (
         <motion.section variants={stagger.item} className="surface-card-strong rounded-3xl p-12 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--accent-soft)] border border-[rgba(0,212,168,0.2)] mx-auto mb-5">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[rgba(0,212,168,0.2)] bg-[var(--accent-soft)]">
             <svg className="h-7 w-7 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <circle cx="11" cy="11" r="8" />
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35" />
             </svg>
           </div>
-          <h2 className="font-serif text-3xl text-[var(--text)]">No matches.</h2>
-          <p className="mx-auto mt-3 max-w-md text-[13px] leading-relaxed text-[var(--text-soft)]">
-            Clear filters and widen your search.
-          </p>
+          <h2 className="text-3xl font-semibold text-[var(--text)]">No matches.</h2>
+          <p className="mx-auto mt-3 max-w-md text-[13px] leading-relaxed text-[var(--text-soft)]">Clear filters and widen your search.</p>
           <Button variant="outline" size="md" className="mt-6" onClick={clearFilters}>
             Clear filters
           </Button>
         </motion.section>
       ) : (
-        <motion.div variants={stagger.container} className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <motion.div variants={stagger.container} className="space-y-4">
           {filteredPrograms.map((program) => (
             <motion.div key={program.id} variants={stagger.item}>
               <ProgramCard program={program} onClick={() => navigate('/bounty/' + program.id)} />

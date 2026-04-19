@@ -51,8 +51,8 @@ export function RoleSelectionModal({ isOpen, onSelectRole, onClose }: RoleSelect
   ]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,38,0.5)] p-4 backdrop-blur-md animate-fade-in">
-      <div className="surface-card-strong w-full max-w-6xl overflow-hidden rounded-[34px] p-8 md:p-10 animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,38,0.72)] p-4 animate-fade-in">
+      <div className="surface-card-strong w-full max-w-6xl overflow-hidden rounded-[34px] p-8 md:p-10">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <p className="section-kicker">Welcome to AuditPal</p>

@@ -10,21 +10,14 @@ export function MetricCard({ label, value, note, accent, className = '' }: Metri
   return (
     <div
       className={[
-        'relative overflow-hidden rounded-[32px] border border-[var(--border)] bg-[rgba(10,20,30,0.6)] p-6 backdrop-blur-md transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] group',
-        accent ? 'border-[rgba(0,212,168,0.2)]' : '',
+        'content-auto contain-paint border border-[var(--border)] bg-transparent p-5 transition-colors duration-150',
+        accent ? 'border-l-2 border-l-[var(--accent)]' : '',
         className,
       ].join(' ')}
     >
-      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-        <div className="h-8 w-8 rounded-full border border-dashed border-[var(--text-muted)] group-hover:animate-spin" />
-      </div>
-      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--text-muted)] mb-4">{label}</p>
-      <h3 className="text-4xl font-extrabold tracking-tighter text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">{value}</h3>
-      {note && (
-        <p className="mt-4 text-xs font-medium leading-relaxed text-[var(--text-soft)] italic opacity-60 border-l border-[var(--border)] pl-4">
-          {note}
-        </p>
-      )}
+      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-muted)]">{label}</p>
+      <h3 className="mt-3 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{value}</h3>
+      {note ? <p className="mt-3 text-xs leading-relaxed text-[var(--text-soft)]">{note}</p> : null}
     </div>
   )
 }

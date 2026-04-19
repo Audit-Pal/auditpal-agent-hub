@@ -34,18 +34,8 @@ export function FilterBar({
   resultCount,
 }: FilterBarProps) {
   return (
-    <section className="surface-card-strong rounded-[34px] p-5 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="max-w-2xl">
-          <p className="section-kicker">Search and refine</p>
-          <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">
-            Search by protocol, company, technology, or target surface, then narrow the list with kind, category, platform, and sort order.
-          </p>
-        </div>
-        <div className="summary-chip">{resultCount} matching programs</div>
-      </div>
-
-      <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_repeat(4,minmax(0,180px))]">
+    <section className="surface-card-strong rounded-[28px] p-4 md:p-5">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_repeat(4,minmax(0,180px))]">
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-[var(--text-muted)]">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +44,7 @@ export function FilterBar({
           </div>
           <input
             type="text"
-            placeholder="Search protocols, companies, or technologies"
+            placeholder="Search opportunities"
             className="field !rounded-[22px] !pl-11"
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
@@ -97,9 +87,7 @@ export function FilterBar({
       </div>
 
       <div className="subtle-divider mt-4 flex flex-wrap items-center justify-between gap-3 pt-4">
-        <p className="text-sm text-[var(--text-soft)]">
-          Cleaner filters are part of the onboarding pass, so researchers can find a worthwhile program with fewer dead ends.
-        </p>
+        <p className="text-sm text-[var(--text-soft)]">{resultCount} bounties</p>
         <button
           onClick={onClear}
           className="rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.78)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[rgba(56,217,178,0.32)] hover:bg-[rgba(13,26,37,0.94)] hover:text-[var(--accent-strong)]"

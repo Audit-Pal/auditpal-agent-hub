@@ -29,6 +29,13 @@ interface FindingCardProps {
   canRemove: boolean
 }
 
+const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
+  CRITICAL: { color: '#ff6b6b', bg: 'rgba(255,80,80,0.1)', label: 'Critical' },
+  HIGH: { color: '#ffb347', bg: 'rgba(255,165,60,0.1)', label: 'High' },
+  MEDIUM: { color: '#ffd487', bg: 'rgba(255,211,125,0.1)', label: 'Medium' },
+  LOW: { color: '#7eefc0', bg: 'rgba(60,210,140,0.1)', label: 'Low' },
+}
+
 const FindingCardBase: React.FC<FindingCardProps> = ({
   vuln,
   index,
@@ -37,6 +44,7 @@ const FindingCardBase: React.FC<FindingCardProps> = ({
   onRemove,
   canRemove,
 }) => {
+
   // Local state for high-frequency text fields to prevent lagginess
   const [localSummary, setLocalSummary] = useState(vuln.summary)
   const [localImpact, setLocalImpact] = useState(vuln.impact)
@@ -89,133 +97,150 @@ const FindingCardBase: React.FC<FindingCardProps> = ({
     setLocalSnippet(vuln.codeSnippet)
   }, [vuln.codeSnippet])
 
+  const severityConfig = SEVERITY_CONFIG[vuln.severity] || SEVERITY_CONFIG.MEDIUM
+
   return (
-    <section className="surface-card rounded-[32px] border border-[rgba(80,120,130,0.18)] p-6 md:p-8 animate-fade-up relative">
-      <div className="flex items-center justify-between gap-4 mb-2">
+    <section className="finding-card">
+      <div className="finding-card__header">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-soft)] border border-[rgba(0,212,168,0.2)] text-[11px] font-bold text-[var(--accent)]">
-            {String(index + 1).padStart(2, '0')}
+          <div
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
+            style={{ background: severityConfig.bg, color: severityConfig.color, border: `1px solid ${severityConfig.color}25` }}
+          >
+            {index + 1}
           </div>
-          <h4 className="text-xl font-bold text-[var(--text)]">Finding details</h4>
+          <span className="text-sm font-bold text-[var(--text)]">Finding #{index + 1}</span>
+          <span
+            className="rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+            style={{ background: severityConfig.bg, color: severityConfig.color }}
+          >
+            {severityConfig.label}
+          </span>
         </div>
+
         {canRemove && (
           <button
             type="button"
             onClick={() => onRemove(vuln.id)}
-            className="p-2 text-[var(--text-muted)] hover:text-[var(--critical-text)] transition-colors hover:bg-[var(--critical-soft)] rounded-xl"
-            title="Remove this finding"
+            className="text-[var(--text-muted)] hover:text-[var(--critical-text)] transition-colors p-1"
+            title="Remove finding"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
         )}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_240px] mt-8">
-        <label className="space-y-2">
-          <span className="field-label">Finding title</span>
-          <input
-            type="text"
-            value={vuln.title}
-            onChange={(e) => onUpdate(vuln.id, 'title', e.target.value)}
-            placeholder="Brief description of the finding"
-            className="field"
-          />
-        </label>
+      <div className="finding-card__body space-y-6">
+        <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_180px]">
+          <label className="space-y-2">
+            <span className="field-label">Finding title *</span>
+            <input
+              type="text"
+              value={vuln.title}
+              onChange={(e) => onUpdate(vuln.id, 'title', e.target.value)}
+              placeholder="e.g., Re-entrancy in withdraw function"
+              className="field"
+            />
+          </label>
 
-        <label className="space-y-2">
-          <span className="field-label">Severity</span>
-          <select
-            value={vuln.severity}
-            onChange={(e) => onUpdate(vuln.id, 'severity', e.target.value as Severity)}
-            className="field-select"
-          >
-            <option value="CRITICAL">Critical</option>
-            <option value="HIGH">High</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="LOW">Low</option>
-          </select>
-        </label>
-      </div>
+            <label className="space-y-2">
+              <span className="field-label">Severity</span>
+              <select
+                value={vuln.severity}
+                onChange={(e) => onUpdate(vuln.id, 'severity', e.target.value as Severity)}
+                className="field-select"
+              >
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </label>
+          </div>
 
-      <label className="block space-y-2 mt-6">
-        <span className="field-label">Target component</span>
-        <select
-          value={vuln.targetId}
-          onChange={(event) => onUpdate(vuln.id, 'targetId', event.target.value)}
-          disabled={availableTargets.length === 0}
-          className="field-select"
-        >
-          {availableTargets.length === 0 ? (
-            <option value="">No scoped targets available</option>
-          ) : (
-            availableTargets.map((target) => (
-              <option key={target.id} value={target.id}>
-                {getScopeTargetSelectionLabel(target)}
-              </option>
-            ))
-          )}
-        </select>
-      </label>
+          <label className="block space-y-2 mt-5">
+            <span className="field-label">Target component</span>
+            <select
+              value={vuln.targetId}
+              onChange={(event) => onUpdate(vuln.id, 'targetId', event.target.value)}
+              disabled={availableTargets.length === 0}
+              className="field-select"
+            >
+              {availableTargets.length === 0 ? (
+                <option value="">No scoped targets available</option>
+              ) : (
+                availableTargets.map((target) => (
+                  <option key={target.id} value={target.id}>
+                    {getScopeTargetSelectionLabel(target)}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
 
-      <div className="space-y-6 mt-8">
-        <label className="block space-y-2">
-          <p className="field-label">Summary</p>
-          <textarea
-            rows={3}
-            value={localSummary}
-            onChange={(e) => setLocalSummary(e.target.value)}
-            onBlur={() => onUpdate(vuln.id, 'summary', localSummary)}
-            className="field-area"
-          />
-        </label>
+          <div className="space-y-6">
+            <label className="block space-y-2">
+              <p className="field-label">Summary *</p>
+              <textarea
+                rows={3}
+                value={localSummary}
+                onChange={(e) => setLocalSummary(e.target.value)}
+                onBlur={() => onUpdate(vuln.id, 'summary', localSummary)}
+                placeholder="How does this vulnerability work?"
+                className="field-area"
+              />
+            </label>
 
-        <label className="block space-y-2">
-          <p className="field-label">Impact</p>
-          <textarea
-            rows={3}
-            value={localImpact}
-            onChange={(e) => setLocalImpact(e.target.value)}
-            onBlur={() => onUpdate(vuln.id, 'impact', localImpact)}
-            className="field-area"
-          />
-        </label>
+            <label className="block space-y-2">
+              <p className="field-label">Impact</p>
+              <textarea
+                rows={3}
+                value={localImpact}
+                onChange={(e) => setLocalImpact(e.target.value)}
+                onBlur={() => onUpdate(vuln.id, 'impact', localImpact)}
+                placeholder="What's the real-world impact of this vulnerability?"
+                className="field-area"
+              />
+            </label>
 
-        <label className="block space-y-2">
-          <p className="field-label">Proof of concept</p>
-          <textarea
-            rows={4}
-            value={localProof}
-            onChange={(e) => setLocalProof(e.target.value)}
-            onBlur={() => onUpdate(vuln.id, 'proof', localProof)}
-            className="field-area"
-          />
-        </label>
-      </div>
+            <label className="block space-y-2">
+              <p className="field-label">Proof of concept</p>
+              <textarea
+                rows={4}
+                value={localProof}
+                onChange={(e) => setLocalProof(e.target.value)}
+                onBlur={() => onUpdate(vuln.id, 'proof', localProof)}
+                placeholder="Step-by-step instructions to reproduce the issue..."
+                className="field-area"
+              />
+            </label>
+          </div>
 
-      <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)] mt-8 pt-8 border-t border-[rgba(80,120,130,0.12)]">
-        <label className="space-y-2">
-          <span className="field-label">Error location</span>
-          <input
-            type="text"
-            value={vuln.errorLocation}
-            onChange={(e) => onUpdate(vuln.id, 'errorLocation', e.target.value)}
-            placeholder="File.sol:123"
-            className="field"
-          />
-        </label>
-        <label className="space-y-2">
-          <span className="field-label">Vulnerable snippet</span>
-          <textarea
-            rows={6}
-            value={localSnippet}
-            onChange={(e) => setLocalSnippet(e.target.value)}
-            onBlur={() => onUpdate(vuln.id, 'codeSnippet', localSnippet)}
-            placeholder="// Paste the vulnerable code snippet here"
-            className="field-area bg-[rgba(3,8,12,0.4)] font-mono text-[13px] border-[rgba(80,120,130,0.3)] placeholder:opacity-30"
-          />
-        </label>
+          <div className="grid gap-5 md:grid-cols-[180px_minmax(0,1fr)]">
+            <label className="space-y-2">
+              <span className="field-label">Location</span>
+              <input
+                type="text"
+                value={vuln.errorLocation}
+                onChange={(e) => onUpdate(vuln.id, 'errorLocation', e.target.value)}
+                placeholder="File.sol:123"
+                className="field"
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="field-label">Vulnerable Code</span>
+              <textarea
+                rows={4}
+                value={localSnippet}
+                onChange={(e) => setLocalSnippet(e.target.value)}
+                onBlur={() => onUpdate(vuln.id, 'codeSnippet', localSnippet)}
+                placeholder="// Paste the code here"
+                className="field-area bg-[rgba(3,8,12,0.4)] font-mono text-xs border-[rgba(80,120,130,0.25)] placeholder:opacity-30"
+              />
+            </label>
+          </div>
       </div>
     </section>
   )

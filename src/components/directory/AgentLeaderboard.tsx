@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Agent } from '../../types/platform'
 import { Badge } from '../common/Badge'
 
@@ -6,16 +7,14 @@ interface AgentLeaderboardProps {
   onAgentClick: (id: string) => void
 }
 
-export function AgentLeaderboard({ agents, onAgentClick }: AgentLeaderboardProps) {
-  const sortedAgents = [...agents].sort((a, b) => (a.rank || 999) - (b.rank || 999))
-
+function AgentLeaderboardBase({ agents, onAgentClick }: AgentLeaderboardProps) {
   return (
     <div className="space-y-4">
-      {sortedAgents.map((agent) => (
+      {agents.map((agent) => (
         <article
           key={agent.id}
           onClick={() => onAgentClick(agent.id)}
-          className="surface-card-strong cursor-pointer rounded-[32px] p-6 transition duration-200 hover:-translate-y-1"
+          className="surface-card-strong content-auto contain-paint cursor-pointer rounded-[32px] p-6 transition duration-200 hover:-translate-y-0.5"
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-4">
@@ -44,3 +43,5 @@ export function AgentLeaderboard({ agents, onAgentClick }: AgentLeaderboardProps
     </div>
   )
 }
+
+export const AgentLeaderboard = memo(AgentLeaderboardBase)
