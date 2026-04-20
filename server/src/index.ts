@@ -7,12 +7,19 @@ import { v1 } from './routes/v1'
 const app = new Hono()
 
 // ── Global middleware ──────────────────────────────────────────────────────────
+const isProduction = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test'
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    process.env.CORS_ORIGIN,
+].filter(Boolean) as string[]
+
 app.use('*', logger())
 app.use('*', prettyJSON())
 app.use(
     '*',
     cors({
-        origin: ['http://localhost:5173', 'http://localhost:3000'],
+        origin: allowedOrigins,
         allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
         allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
         credentials: true,
@@ -37,8 +44,13 @@ app.onError((err, c) => {
 })
 
 const port = Number(process.env.PORT ?? 3001)
+const mode = process.env.NODE_ENV ?? 'development'
 
-console.log(`🚀 AuditPal API running on http://localhost:${port}`)
+console.log(`🚀 AuditPal API running in [${mode}] mode`)
+console.log(`   Local: http://localhost:${port}`)
+if (process.env.CORS_ORIGIN) {
+    console.log(`   Allowed Origin: ${process.env.CORS_ORIGIN}`)
+}
 console.log(`   API: http://localhost:${port}/api/v1`)
 console.log(`   Health: http://localhost:${port}/health`)
 

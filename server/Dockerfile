@@ -14,4 +14,5 @@ RUN bunx prisma generate
 
 EXPOSE 3001
 
-CMD ["bun", "run", "start"]
+# The 'deploy' script runs migrations and seeding before starting the server
+CMD ["bun", "run", "deploy"]

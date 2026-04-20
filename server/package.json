@@ -12,7 +12,9 @@
         "db:push": "prisma db push",
         "db:seed": "bun run src/db/seed.ts",
         "db:studio": "prisma studio",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "deploy": "chmod +x ./scripts/deploy.sh && ./scripts/deploy.sh",
+        "start:test": "NODE_ENV=test bun run src/index.ts"
     },
     "dependencies": {
         "@hono/zod-validator": "^0.4.3",
