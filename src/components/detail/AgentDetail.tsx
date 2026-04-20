@@ -65,7 +65,6 @@ function MetricRow({ label, value }: { label: string; value: React.ReactNode }) 
   )
 }
 
-
 export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps) {
   const [activeTab, setActiveTab] = useState<AgentTab>('introduction')
   const accentColor = accentColorMap[agent.accentTone?.toLowerCase()] || '#1eba98'
