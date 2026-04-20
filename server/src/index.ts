@@ -58,3 +58,22 @@ export default {
     port,
     fetch: app.fetch,
 }
+
+// ── Keep-alive (Self-ping) ───────────────────────────────────────────────────
+// This prevents Render's Free Tier from spinning down after 15 mins of inactivity.
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL
+if (mode === 'production' && RENDER_URL) {
+    const url = RENDER_URL.endsWith('/') ? RENDER_URL.slice(0, -1) : RENDER_URL
+    
+    // Ping every 10 minutes
+    setInterval(async () => {
+        try {
+            const res = await fetch(`${url}/health`)
+            if (res.ok) {
+                console.log(`[Keep-Alive] Self-ping successful: ${new Date().toISOString()}`)
+            }
+        } catch (error) {
+            console.error('[Keep-Alive] Self-ping failed:', error)
+        }
+    }, 10 * 60 * 1000)
+}
