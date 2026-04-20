@@ -10,10 +10,10 @@ echo "🚀 Starting deployment flow..."
 echo "📡 Generating Prisma client..."
 bunx prisma generate
 
-# 2. Run Database Migrations
-# Note: 'migrate deploy' is for production; it applies pending migrations without reset.
-echo "🗄️  Running database migrations..."
-bunx prisma migrate deploy
+# 2. Sync Database Schema
+# Note: 'db push' is used to force-sync the schema regardless of migration history.
+echo "🗄️  Syncing database schema..."
+bunx prisma db push --accept-data-loss --skip-generate
 
 # 3. Seed the Database
 # The seed script uses upsert, so it's safe to run multiple times.
