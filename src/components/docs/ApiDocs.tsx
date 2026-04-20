@@ -79,7 +79,8 @@ export function ApiDocs() {
     }
     setIsLoadingBounties(true)
     try {
-      const res = await fetch('http://localhost:3001/api/v1/programs', {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'
+      const res = await fetch(`${baseUrl}/programs`, {
         headers: {
           'X-API-Key': apiKey,
         },
@@ -115,7 +116,8 @@ export function ApiDocs() {
         return
       }
 
-      const res = await fetch('http://localhost:3001/api/v1/reports/submit', {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'
+      const res = await fetch(`${baseUrl}/reports/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
