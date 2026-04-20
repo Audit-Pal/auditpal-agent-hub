@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Render Deployment Script
 # This script is called by the 'deploy' script in package.json
 
