@@ -126,21 +126,21 @@ export function ReportCenter({
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="surface-card rounded-[28px] p-5">
+      <section className="flex flex-wrap gap-12 border-b border-[rgba(255,255,255,0.06)] pb-8 mb-8">
+        <div>
           <p className="section-kicker !tracking-[0.18em]">Total reports</p>
-          <p className="mt-4 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{reports.length}</p>
-          <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">All visible application records in this workspace.</p>
+          <p className="mt-3 text-4xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{reports.length}</p>
+          <p className="mt-2 text-xs text-[var(--text-soft)]">Visible records</p>
         </div>
-        <div className="surface-card rounded-[28px] p-5">
+        <div>
           <p className="section-kicker !tracking-[0.18em]">Needs action</p>
-          <p className="mt-4 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{actionableCount}</p>
-          <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">Reports still moving through AI or human review.</p>
+          <p className="mt-3 text-4xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{actionableCount}</p>
+          <p className="mt-2 text-xs text-[var(--text-soft)]">In review</p>
         </div>
-        <div className="surface-card rounded-[28px] p-5">
+        <div>
           <p className="section-kicker !tracking-[0.18em]">Accepted or resolved</p>
-          <p className="mt-4 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{acceptedCount}</p>
-          <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">Confirmed signal that has reached a positive outcome.</p>
+          <p className="mt-3 text-4xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{acceptedCount}</p>
+          <p className="mt-2 text-xs text-[var(--text-soft)]">Confirmed</p>
         </div>
       </section>
 
@@ -188,69 +188,69 @@ export function ReportCenter({
                   )}
                 </div>
 
-                <div className="surface-card-muted min-w-[250px] rounded-[26px] p-4">
+                <div className="border-l-2 border-[var(--accent)] pl-5 min-w-[250px]">
                   <p className="section-kicker !tracking-[0.18em]">Next action</p>
-                  <p className="mt-3 text-sm leading-7 text-[var(--text)]">{report.nextAction || 'Awaiting the next queue update.'}</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--text)]">{report.nextAction || 'Awaiting the next queue update.'}</p>
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-5">
-                <div className="surface-card-muted rounded-[22px] p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Primary target</p>
-                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{primaryVulnerability?.target || 'Unknown'}</p>
+              <div className="mt-8 flex flex-wrap gap-8 border-y border-[rgba(255,255,255,0.06)] py-6">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Primary target</p>
+                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{primaryVulnerability?.target || 'Unknown'}</p>
                 </div>
-                <div className="surface-card-muted rounded-[22px] p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Route</p>
-                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{report.route}</p>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Route</p>
+                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{report.route}</p>
                 </div>
-                <div className="surface-card-muted rounded-[22px] p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Submitted</p>
-                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{formatDate(report.submittedAt)}</p>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Submitted</p>
+                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{formatDate(report.submittedAt)}</p>
                 </div>
-                <div className="surface-card-muted rounded-[22px] p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Response SLA</p>
-                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{report.responseSla || 'Pending bounty SLA'}</p>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Response SLA</p>
+                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{report.responseSla || 'Pending bounty SLA'}</p>
                 </div>
-                <div className="surface-card-muted rounded-[22px] p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">AI score</p>
-                  <p className="mt-2 text-sm font-semibold text-[var(--text)]">{report.aiScore !== null && report.aiScore !== undefined ? report.aiScore.toFixed(1) : 'Not scored'}</p>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">AI score</p>
+                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{report.aiScore !== null && report.aiScore !== undefined ? report.aiScore.toFixed(1) : 'Not scored'}</p>
                 </div>
               </div>
 
               {(report.aiSummary || report.note) && (
-                <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                <div className="mt-8 space-y-6">
                   {report.aiSummary && (
-                    <div className="surface-card-muted rounded-[26px] p-4">
+                    <div>
                       <p className="section-kicker !tracking-[0.18em]">AI triage</p>
-                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{report.aiSummary}</p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{report.aiSummary}</p>
                     </div>
                   )}
                   {report.note && (
-                    <div className="surface-card-muted rounded-[26px] p-4">
+                    <div>
                       <p className="section-kicker !tracking-[0.18em]">
                         {report.status === 'LOW_EFFORT' ? 'Automated filter' : 'Human decision'}
                       </p>
-                      <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{report.note}</p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{report.note}</p>
                     </div>
                   )}
                 </div>
               )}
 
               {primaryVulnerability && (
-                <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                  <div className="surface-card-muted rounded-[26px] p-4">
+                <div className="mt-8 space-y-6">
+                  <div>
                     <p className="section-kicker !tracking-[0.18em]">Impact</p>
-                    <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{primaryVulnerability.impact}</p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{primaryVulnerability.impact}</p>
                   </div>
-                  <div className="surface-card-muted rounded-[26px] p-4">
+                  <div>
                     <p className="section-kicker !tracking-[0.18em]">Proof</p>
-                    <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{primaryVulnerability.proof}</p>
+                    <p className="mt-2 text-sm leading-7 text-[var(--text-soft)] whitespace-pre-line">{primaryVulnerability.proof}</p>
                   </div>
                 </div>
               )}
 
               {(graphChips.length > 0 || graphContext) && (
-                <div className="surface-card-muted mt-5 rounded-[26px] p-4">
+                <div className="mt-8 border-t border-[rgba(255,255,255,0.06)] pt-6">
                   <p className="section-kicker !tracking-[0.18em]">Graph seed context</p>
                   {graphChips.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -261,31 +261,31 @@ export function ReportCenter({
                       ))}
                     </div>
                   )}
-                  <div className="mt-4 grid gap-3 md:grid-cols-3">
-                    <div className="rounded-[22px] border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.8)] p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Attack vector</p>
-                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.attackVector || 'Not provided'}</p>
+                  <div className="mt-6 flex flex-wrap gap-8">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Attack vector</p>
+                      <p className="mt-1.5 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.attackVector || 'Not provided'}</p>
                     </div>
-                    <div className="rounded-[22px] border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.8)] p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Root cause</p>
-                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.rootCause || 'Not provided'}</p>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Root cause</p>
+                      <p className="mt-1.5 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.rootCause || 'Not provided'}</p>
                     </div>
-                    <div className="rounded-[22px] border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.8)] p-4">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Prerequisites</p>
-                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.prerequisites || 'None listed'}</p>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Prerequisites</p>
+                      <p className="mt-1.5 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.prerequisites || 'None listed'}</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {primaryVulnerability && (primaryVulnerability.errorLocation || primaryVulnerability.codeSnippet) && (
-                <div className="surface-card-muted mt-5 rounded-[26px] p-4">
+                <div className="mt-8">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="section-kicker !tracking-[0.18em]">Primary code context</p>
                     {primaryVulnerability.errorLocation && <Badge tone="soft">{primaryVulnerability.errorLocation}</Badge>}
                   </div>
                   {primaryVulnerability.codeSnippet && (
-                    <pre className="mt-3 overflow-x-auto rounded-[20px] border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.88)] p-4 text-sm leading-6 text-[var(--text)]">
+                    <pre className="mt-3 overflow-x-auto border-l-2 border-[rgba(255,255,255,0.1)] bg-[rgba(9,18,27,0.4)] px-4 py-3 text-sm leading-6 text-[var(--text)]">
                       <code>{primaryVulnerability.codeSnippet}</code>
                     </pre>
                   )}
@@ -293,12 +293,12 @@ export function ReportCenter({
               )}
 
               {awaitingValidation && onValidate && (
-                <div className="mt-5 rounded-[26px] border border-[rgba(15,118,110,0.12)] bg-[rgba(30,186,152,0.12)] p-4">
-                  <p className="section-kicker !tracking-[0.18em]">Human validator action</p>
+                <div className="mt-8 border-t border-[rgba(15,202,138,0.2)] pt-6">
+                  <p className="section-kicker !tracking-[0.18em] text-[#0fca8a]">Human validator action</p>
 
-                  <div className="mt-4 space-y-4">
+                  <div className="mt-4 space-y-6">
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Final criticality</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Final criticality</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((severity) => {
                           const isSelected = currentSeverity === severity
@@ -308,10 +308,10 @@ export function ReportCenter({
                               type="button"
                               onClick={() => setValidationSeverity((current) => ({ ...current, [report.id]: severity }))}
                               className={[
-                                'rounded-full px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition',
+                                'border-b-2 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors',
                                 isSelected
-                                  ? 'bg-[linear-gradient(135deg,rgba(30,186,152,1),rgba(7,79,70,0.94))] text-[#021614]'
-                                  : 'border border-[rgba(15,23,38,0.1)] bg-[rgba(9,18,27,0.8)] text-[var(--text-soft)] hover:border-[rgba(15,118,110,0.22)] hover:text-[var(--accent-strong)]',
+                                  ? 'border-[var(--accent)] text-[var(--accent)] bg-[rgba(15,202,138,0.03)]'
+                                  : 'border-transparent text-[var(--text-soft)] hover:bg-[rgba(255,255,255,0.02)] hover:text-[var(--text)]'
                               ].join(' ')}
                             >
                               {severity}
@@ -326,7 +326,7 @@ export function ReportCenter({
                       <textarea
                         value={validationNotes[report.id] || ''}
                         onChange={(event) => setValidationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
-                        className="field-area !min-h-[116px]"
+                        className="field-area !min-h-[90px]"
                         placeholder="Add guidance, payout rationale, or next-step details for the reporter."
                       />
                     </div>
@@ -338,7 +338,7 @@ export function ReportCenter({
                       <Button variant="outline" size="sm" onClick={() => handleValidation(report.id, 'ESCALATE')} disabled={activeValidationId === report.id}>
                         Escalate
                       </Button>
-                      <Button variant="ghost" size="sm" className="border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.78)]" onClick={() => handleValidation(report.id, 'REJECT')} disabled={activeValidationId === report.id}>
+                      <Button variant="destructive" size="sm" onClick={() => handleValidation(report.id, 'REJECT')} disabled={activeValidationId === report.id}>
                         Reject
                       </Button>
                     </div>

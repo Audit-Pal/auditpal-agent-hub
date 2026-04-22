@@ -101,13 +101,15 @@ export function ReportsPage({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full lg:w-auto">
-            <div className="flex-1 lg:flex-none border border-[rgba(255,255,255,0.06)] bg-[#0a0d12] rounded-[16px] p-5 lg:min-w-[160px]">
-              <p className="text-[10px] uppercase tracking-[0.12em] text-[#7f8896] font-bold mb-1">Open Items</p>
-              <p className="text-2xl font-bold tracking-tight text-[#eef1f6]">{openCount}</p>
-            </div>
-            <div className="flex-1 lg:flex-none border border-[rgba(255,255,255,0.06)] bg-[#0a0d12] rounded-[16px] p-5 lg:min-w-[140px]">
-              <p className="text-[10px] uppercase tracking-[0.12em] text-[#7f8896] font-bold mb-1">Closed Items</p>
-              <p className="text-2xl font-bold tracking-tight text-[#12f4a6]">{closedCount}</p>
+            <div className="flex flex-col sm:flex-row gap-8 relative z-10 w-full lg:w-auto lg:items-end">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)] font-bold mb-1">Open Items</p>
+                <p className="text-2xl font-bold tracking-tight text-[var(--text)]">{openCount}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)] font-bold mb-1">Closed Items</p>
+                <p className="text-2xl font-bold tracking-tight text-[var(--text)]">{closedCount}</p>
+              </div>
             </div>
           </div>
         </div>
