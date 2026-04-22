@@ -109,7 +109,7 @@ export function ReportCenter({
 
   if (reports.length === 0) {
     return (
-      <section className="surface-card-strong rounded-[34px] p-8 text-center md:p-12">
+      <section className="p-8 text-center md:p-12 border-b border-[rgba(255,255,255,0.06)] pb-12 mb-4">
         <p className="section-kicker">Application center</p>
         <h2 className="mt-4 font-serif text-4xl text-[var(--text)]">No submissions are showing up yet.</h2>
         <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-[var(--text-soft)]">
@@ -153,7 +153,7 @@ export function ReportCenter({
           const awaitingValidation = canValidate && ['AI_TRIAGED', 'TRIAGED', 'ESCALATED', 'SUBMITTED', 'LOW_EFFORT', 'NEEDS_INFO'].includes(report.status)
 
           return (
-            <article key={report.id} className="surface-card-strong content-auto contain-paint rounded-[32px] p-6 md:p-7">
+            <article key={report.id} className="group relative cursor-pointer border-b border-[rgba(255,255,255,0.04)] last:border-b-0 py-6 transition duration-300 hover:bg-[rgba(255,255,255,0.015)] px-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-3xl">
                   <div className="flex flex-wrap items-center gap-2">

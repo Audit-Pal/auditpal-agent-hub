@@ -1,27 +1,29 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Space+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-serif: "DM Serif Display", ui-serif, Georgia, serif;
+  --font-sans: "Space Grotesk", sans-serif;
+  --font-serif: "Fraunces", serif;
+  --font-mono: "IBM Plex Mono", monospace;
 }
 
 :root {
   color-scheme: dark;
-  --bg: #030608;
-  --bg-deep: #060d12;
-  --bg-layer: #0b1820;
-  --surface: rgba(8, 16, 24, 0.72);
-  --surface-strong: rgba(10, 20, 30, 0.92);
-  --surface-muted: rgba(12, 24, 34, 0.76);
-  --surface-soft: rgba(14, 28, 40, 0.86);
-  --text: #e8f4f2;
-  --text-soft: #94b4bc;
+  --bg: #06080b;
+  --bg-deep: #030406;
+  --bg-layer: #0b0e13;
+  --surface: #0d1118;
+  --surface-strong: #10141a;
+  --surface-muted: rgba(13, 17, 24, 0.76);
+  --surface-soft: rgba(15, 20, 26, 0.86);
+  --text: #eef1f6;
+  --text-soft: #7f8896;
   --text-muted: #526870;
-  --border: rgba(80, 120, 130, 0.18);
-  --border-strong: rgba(120, 180, 185, 0.2);
-  --accent: #00d4a8;
-  --accent-strong: #1fffc4;
-  --accent-soft: rgba(0, 212, 168, 0.12);
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.11);
+  --accent: #0fca8a;
+  --accent-strong: #12f4a6;
+  --accent-soft: rgba(15, 202, 138, 0.12);
   --accent-ink: #011210;
   --warning-soft: rgba(255, 165, 60, 0.12);
   --warning-text: #ffb347;

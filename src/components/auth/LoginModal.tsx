@@ -111,52 +111,59 @@ export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRol
   const features = isOrgRole ? organizationFeatures : researcherFeatures
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(15,23,38,0.74)] px-4 py-6 animate-fade-in">
-      <div className="mx-auto flex min-h-full max-w-5xl items-center justify-center">
-        <div className="surface-card-strong grid w-full overflow-hidden rounded-[34px] lg:grid-cols-[420px_minmax(0,1fr)]">
-          <aside className="bg-[linear-gradient(160deg,rgba(30,186,152,0.16),rgba(9,18,27,0.98))] p-8 md:p-10">
-            <p className="section-kicker">{isOrgRole ? 'Organization' : 'Security Researcher'} Workspace</p>
-            <h2 className="mt-4 font-serif text-5xl text-[var(--text)]">
+    <div className="fixed inset-0 z-[250] overflow-y-auto bg-[#06080b]/98 backdrop-blur-3xl animate-fade-in font-['Space_Grotesk',sans-serif]">
+      <div className="min-h-screen w-full flex flex-col lg:flex-row relative">
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-6 lg:top-10 lg:right-10 z-[260] flex items-center justify-center h-12 w-12 rounded-full border border-[rgba(255,255,255,0.08)] bg-[#0a0d12] text-[#7f8896] transition duration-300 hover:border-[#0fca8a] hover:text-[#0fca8a]"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+
+        <aside className="w-full lg:w-5/12 flex-shrink-0 flex flex-col justify-center p-8 lg:p-16 xl:p-24 relative overflow-hidden bg-[rgba(15,202,138,0.02)] border-b lg:border-b-0 lg:border-r border-[rgba(255,255,255,0.04)]">
+          <div className="absolute -top-[20%] -left-[20%] w-[140%] h-[140%] bg-[radial-gradient(ellipse_at_center,rgba(15,202,138,0.1)_0%,transparent_70%)] pointer-events-none" />
+          <div className="relative z-10 w-full max-w-md mx-auto lg:mx-0">
+            <p className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />
+              {isOrgRole ? 'Organization' : 'Security Researcher'}
+            </p>
+            <h2 className="font-['Fraunces',serif] text-4xl lg:text-5xl tracking-tight text-[#eef1f6] leading-[1.1]">
               {isOrgRole ? 'Launch and manage your security programs.' : 'Find vulnerabilities, earn rewards.'}
             </h2>
-            <p className="mt-5 text-sm leading-8 text-[var(--text-soft)]">
+            <p className="mt-5 text-[15px] leading-7 text-[#7f8896]">
               {isOrgRole
                 ? 'Create bug bounty programs, configure reward tiers, manage scope, and review security submissions from researchers worldwide.'
                 : 'Browse active bounty programs, submit security findings, track triage status, and earn rewards for valid vulnerabilities.'}
             </p>
 
-            <div className="mt-8 space-y-3">
+            <div className="mt-10 space-y-4">
               {features.map((item, index) => (
                 <div
                   key={item}
-                  className="rounded-[22px] border border-[rgba(15,23,38,0.08)] bg-[rgba(9,18,27,0.82)] p-4"
+                  className="rounded-none border-l-2 border-[#0fca8a]/40 bg-transparent pl-5 py-1"
                 >
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Feature {index + 1}</p>
-                  <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{item}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0fca8a]">Feature 0{index + 1}</p>
+                  <p className="mt-1.5 text-[14px] leading-relaxed text-[#7f8896]">{item}</p>
                 </div>
               ))}
             </div>
-          </aside>
+          </div>
+        </aside>
 
-          <div className="p-8 md:p-10">
-            <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="w-full lg:w-7/12 flex flex-col justify-center p-8 lg:p-16 xl:p-24 relative">
+          <div className="w-full max-w-md mx-auto lg:ml-12">
+            <div className="mb-8 flex items-start justify-between gap-4">
               <div>
-                <p className="section-kicker">{mode === 'login' ? 'Sign in' : 'Create account'}</p>
-                <h3 className="mt-3 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">
-                  {mode === 'login' ? 'Access your workspace' : 'Choose your role and get started'}
+                <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-2">{mode === 'login' ? 'Sign in' : 'Create account'}</p>
+                <h3 className="text-3xl font-semibold text-[#eef1f6]">
+                  {mode === 'login' ? 'Access your workspace' : 'Choose your role'}
                 </h3>
-                <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">
+                <p className="mt-2 text-sm leading-7 text-[#7f8896]">
                   {mode === 'login'
                     ? 'Use one of the demo roles below or your own credentials.'
                     : 'Create either a bounty hunter or organization account without leaving the frontend.'}
                 </p>
               </div>
-              <button
-                onClick={onClose}
-                className="rounded-full p-2 text-[var(--text-muted)] transition hover:bg-[rgba(13,26,37,0.94)] hover:text-[var(--text)]"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
             </div>
 
             <div className="mb-6 flex gap-2 rounded-full bg-[rgba(7,15,22,0.8)] p-1">

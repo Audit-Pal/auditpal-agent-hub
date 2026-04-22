@@ -35,9 +35,9 @@ export function ProgramCard({ program, onClick }: ProgramCardProps) {
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
-      className="surface-card-strong group relative cursor-pointer overflow-hidden rounded-[28px] transition duration-200 hover:-translate-y-0.5 hover:border-[rgba(56,217,178,0.24)]"
+      className="group relative cursor-pointer border-b border-[rgba(255,255,255,0.04)] last:border-b-0 transition duration-300 hover:bg-[rgba(255,255,255,0.015)]"
     >
-      <div className="flex flex-wrap items-start justify-between gap-6 px-5 py-5 md:px-6 md:py-6">
+      <div className="flex flex-wrap items-start justify-between gap-6 px-3 py-6 md:px-4 md:py-8">
         <div className="flex min-w-0 items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[rgba(56,217,178,0.2)] bg-[linear-gradient(135deg,rgba(30,186,152,1),rgba(7,79,70,0.94))] text-lg font-extrabold text-[#021614] shadow-[0_14px_28px_rgba(30,186,152,0.18)]">
             {program.logoMark}
@@ -56,7 +56,7 @@ export function ProgramCard({ program, onClick }: ProgramCardProps) {
         </div>
       </div>
 
-      <div className="subtle-divider flex flex-wrap items-center justify-between gap-3 px-5 py-4 md:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-4 md:px-4 mt-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[rgba(16,31,43,0.72)] px-3 py-1 text-xs font-medium text-[var(--text)]">
             {formatEnum(program.kind)}

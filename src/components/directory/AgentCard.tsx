@@ -15,7 +15,7 @@ export function AgentCard({ agent, onClick }: AgentCardProps) {
   return (
     <article
       onClick={onClick}
-      className="surface-card-strong cursor-pointer rounded-[32px] p-6 transition duration-200 hover:-translate-y-1"
+      className="group relative cursor-pointer border-b border-[rgba(255,255,255,0.04)] last:border-b-0 py-6 transition duration-300 hover:bg-[rgba(255,255,255,0.015)] px-4"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,#0f766e,#0b5f61)] text-lg font-extrabold text-white shadow-[0_18px_34px_rgba(15,118,110,0.24)]">
@@ -40,7 +40,7 @@ export function AgentCard({ agent, onClick }: AgentCardProps) {
         ))}
       </div>
 
-      <div className="subtle-divider mt-6 grid gap-3 pt-5 md:grid-cols-2">
+      <div className="mt-8 grid gap-3 md:grid-cols-2">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Operator</p>
           <p className="mt-2 text-sm font-semibold text-[var(--text)]">{agent.minerName || 'Anonymous'}</p>

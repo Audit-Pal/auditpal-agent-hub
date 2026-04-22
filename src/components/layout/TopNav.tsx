@@ -129,87 +129,60 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8 xl:px-10">
-      <div className="mx-auto max-w-[1400px]">
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="surface-card-strong relative rounded-2xl px-4 py-3 md:px-5 shadow-[0_8px_32px_rgba(0,3,6,0.36)]"
-        >
-          {/* Shimmer effect layer - constrained with overflow: hidden */}
-          <div className="absolute inset-0 signal-card rounded-2xl pointer-events-none overflow-hidden" />
-          
-          <div className="relative z-10 flex items-center justify-between gap-4 overflow-visible">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 shrink-0 group">
-              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl overflow-hidden transition-all duration-300">
-                <img src="/audipal.png" alt="AuditPal" className="h-10 w-10 object-contain invert mix-blend-screen brightness-125 contrast-125" />
-              </div>
-              <span className="hidden sm:block text-[15px] font-bold tracking-[-0.02em] text-[var(--text)] transition-colors group-hover:text-[var(--accent-strong)]">
-                AuditPal
-              </span>
+    <nav className="fixed top-0 left-0 right-0 z-[200] h-[60px] flex items-center justify-between px-5 md:px-[2.5rem] bg-[rgba(6,8,11,0.8)] backdrop-blur-[20px] border-b border-[rgba(255,255,255,0.06)]" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>
+      {/* Logo */}
+      <Link to="/" className="flex items-center gap-[9px] text-[1rem] font-semibold tracking-[0.04em] text-[#eef1f6] transition-opacity hover:opacity-80 decoration-none">
+        <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] bg-[#0fca8a]">
+          <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[14px] w-[14px]">
+            <path d="M7 1L12 4V10L7 13L2 10V4L7 1Z" stroke="#06080b" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M4.5 7L6.5 9L9.5 5" stroke="#06080b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+        AuditPal
+      </Link>
+
+      {/* Desktop Nav */}
+      <div className="hidden lg:flex items-center gap-[2rem]">
+        {visibleNavItems.map((item) => {
+          const isActive = item.active(pathname)
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`text-[0.82rem] font-[400] transition-colors duration-200 decoration-none relative ${isActive ? 'text-[#eef1f6]' : 'text-[#7f8896] hover:text-[#eef1f6]'}`}
+            >
+              {item.label}
+              {item.path === '/reports' && reportCount > 0 && (
+                <span className="ml-[6px] rounded-full bg-[rgba(15,202,138,0.15)] px-[6px] py-[2px] text-[9px] font-bold text-[#0fca8a]">
+                  {reportCount}
+                </span>
+              )}
             </Link>
+          )
+        })}
+      </div>
 
-            {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {visibleNavItems.map((item) => {
-                const isActive = item.active(pathname)
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={[
-                      'relative px-4 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200',
-                      isActive
-                        ? 'text-[var(--accent-ink)] nav-pill-active'
-                        : 'text-[var(--text-soft)] hover:text-[var(--text)] hover:bg-[rgba(255,255,255,0.05)]',
-                    ].join(' ')}
-                  >
-                    {item.label}
-                    {item.path === '/reports' && reportCount > 0 && (
-                      <span className={[
-                        'ml-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold',
-                        isActive ? 'bg-black/20 text-[var(--accent-ink)]' : 'bg-[var(--accent-soft)] text-[var(--accent-strong)]',
-                      ].join(' ')}>
-                        {reportCount}
-                      </span>
-                    )}
-                  </Link>
-                )
-              })}
-            </nav>
-
-            {/* Right side */}
-            <div className="flex items-center gap-2">
-              {/* Status chip */}
-              <div className="hidden md:flex items-center gap-1.5 rounded-full border border-[rgba(0,212,168,0.16)] bg-[rgba(0,212,168,0.06)] px-3 py-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">Live</span>
-              </div>
+      {/* Right side */}
+      <div className="flex items-center gap-[12px]">
 
               {user ? (
                 <>
                   
-                  <div className="relative" ref={profileRef}>
-                  <button
-                    onClick={() => setIsProfileOpen((v) => !v)}
-                    className="flex items-center gap-2.5 rounded-xl border border-[var(--border)] bg-[rgba(8,16,24,0.8)] px-3 py-2 transition-all duration-200 hover:border-[rgba(0,212,168,0.3)] hover:bg-[rgba(12,24,34,0.95)] hover:shadow-[0_0_20px_rgba(0,212,168,0.15)]"
-                    title="Click to view profile and logout"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[linear-gradient(135deg,var(--accent),rgba(0,160,128,0.9))] text-[11px] font-bold uppercase text-[var(--accent-ink)] shadow-[0_0_12px_rgba(0,212,168,0.3)]">
-                      {user.name.substring(0, 2)}
-                    </div>
-                    <div className="hidden sm:block text-left">
-                      <p className="text-[13px] font-semibold text-[var(--text)] leading-none">
-                        {user.role === 'ORGANIZATION' ? 'New Organisation' : user.role === 'BOUNTY_HUNTER' ? 'New Agent' : user.name}
-                      </p>
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] mt-0.5">{formatRole(user.role)}</p>
-                    </div>
-                    <svg className={`h-3.5 w-3.5 text-[var(--accent)] transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
+          <div className="relative" ref={profileRef}>
+            <button
+              onClick={() => setIsProfileOpen((v) => !v)}
+              className="flex items-center gap-[8px] rounded-[5px] border border-[rgba(255,255,255,0.11)] bg-transparent px-[14px] py-[6px] transition-all duration-200 hover:border-[rgba(255,255,255,0.18)]"
+              title="Click to view profile and logout"
+            >
+              <div className="flex h-[20px] w-[20px] items-center justify-center rounded-[4px] bg-[#0fca8a] text-[9px] font-bold uppercase text-[#06080b]">
+                {user.name.substring(0, 2)}
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-[0.8rem] font-[500] text-[#7f8896] hover:text-[#eef1f6] transition-colors leading-none">
+                  {user.role === 'ORGANIZATION' ? 'New Organisation' : user.role === 'BOUNTY_HUNTER' ? 'New Agent' : user.name}
+                </p>
+              </div>
+            </button>
 
                   <AnimatePresence>
                     {isProfileOpen && (
@@ -381,66 +354,58 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                   </AnimatePresence>
                   </div>
                 </>
-              ) : (
-                <Button variant="primary" size="sm" onClick={onLogin}>
-                  Sign in
-                </Button>
-              )}
+        ) : (
+          <>
+            <button className="hidden sm:block text-[0.8rem] font-[500] text-[#7f8896] bg-transparent border border-[rgba(255,255,255,0.11)] px-[18px] py-[7px] rounded-[5px] cursor-pointer transition-colors duration-200 hover:text-[#eef1f6] hover:border-[rgba(255,255,255,0.18)]" onClick={onLogin}>Sign In</button>
+            <button className="text-[0.8rem] font-[600] text-[#06080b] bg-[#0fca8a] border-none px-[18px] py-[7px] rounded-[5px] cursor-pointer transition-opacity hover:opacity-[0.88]" onClick={onLogin}>Get Access</button>
+          </>
+        )}
 
-              {/* Mobile menu toggle */}
-              <button
-                onClick={() => setIsMobileMenuOpen((v) => !v)}
-                className="lg:hidden flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[rgba(8,16,24,0.8)] text-[var(--text-soft)] transition hover:text-[var(--text)]"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  {isMobileMenuOpen
-                    ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />}
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile nav */}
-          <AnimatePresence>
-            {isMobileMenuOpen && (
-              <motion.nav
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="overflow-hidden lg:hidden"
-              >
-                <div className="accent-line mt-3 mb-3" />
-                <div className="flex flex-wrap gap-2 pb-1">
-                  {visibleNavItems.map((item) => {
-                    const isActive = item.active(pathname)
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={[
-                          'rounded-xl px-4 py-2 text-[13px] font-semibold transition-all duration-200',
-                          isActive
-                            ? 'nav-pill-active'
-                            : 'border border-[var(--border)] bg-[rgba(8,16,24,0.7)] text-[var(--text-soft)] hover:text-[var(--text)]',
-                        ].join(' ')}
-                      >
-                        {item.label}
-                        {item.path === '/reports' && reportCount > 0 && (
-                          <span className="ml-1.5 rounded-full bg-[var(--accent-soft)] px-1.5 py-0.5 text-[9px] font-bold text-[var(--accent-strong)]">
-                            {reportCount}
-                          </span>
-                        )}
-                      </Link>
-                    )
-                  })}
-                </div>
-              </motion.nav>
-            )}
-          </AnimatePresence>
-        </motion.div>
+        {/* Mobile menu toggle */}
+        <button
+          onClick={() => setIsMobileMenuOpen((v) => !v)}
+          className="lg:hidden flex h-9 w-9 items-center justify-center rounded-[5px] border border-[rgba(255,255,255,0.11)] text-[#7f8896] transition hover:text-[#eef1f6]"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {isMobileMenuOpen
+              ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />}
+          </svg>
+        </button>
       </div>
-    </header>
+
+      {/* Mobile nav */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.nav
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute top-[60px] left-0 right-0 bg-[#06080b] border-b border-[rgba(255,255,255,0.06)] px-5 py-4 overflow-hidden lg:hidden"
+          >
+            <div className="flex flex-col gap-4">
+              {visibleNavItems.map((item) => {
+                const isActive = item.active(pathname)
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`text-[0.9rem] font-[500] text-[#eef1f6] flex items-center justify-between ${isActive ? 'text-[#0fca8a]' : ''}`}
+                  >
+                    {item.label}
+                    {item.path === '/reports' && reportCount > 0 && (
+                      <span className="rounded-full bg-[rgba(15,202,138,0.15)] px-[6px] py-[2px] text-[10px] font-bold text-[#0fca8a]">
+                        {reportCount}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+    </nav>
   )
 }

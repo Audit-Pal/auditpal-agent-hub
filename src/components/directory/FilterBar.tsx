@@ -34,65 +34,73 @@ export function FilterBar({
   resultCount,
 }: FilterBarProps) {
   return (
-    <section className="surface-card-strong rounded-[28px] p-4 md:p-5">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_repeat(4,minmax(0,180px))]">
+    <section className="py-2 lg:pr-8 border-b lg:border-b-0 lg:border-r border-[rgba(255,255,255,0.06)] lg:min-h-[600px]">
+      <div className="flex flex-col gap-6">
         <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-[var(--text-muted)]">
+          <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-[#7f8896]">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
           <input
             type="text"
-            placeholder="Search opportunities"
-            className="field !rounded-[22px] !pl-11"
+            placeholder="Search programs..."
+            className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] pl-11 pr-4 py-3 text-[14px] text-[#eef1f6] transition hover:border-[rgba(15,202,138,0.32)] focus:border-[#0fca8a] focus:outline-none"
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
           />
         </div>
 
-        <select value={kind} onChange={(event) => onKindChange(event.target.value)} className="field-select !rounded-[22px]">
-          <option value="All kinds">All kinds</option>
-          {kinds.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#7f8896] mb-2">Kind</label>
+            <select value={kind} onChange={(event) => onKindChange(event.target.value)} className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
+              <option value="All kinds">All kinds</option>
+              {kinds.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
 
-        <select value={category} onChange={(event) => onCategoryChange(event.target.value)} className="field-select !rounded-[22px]">
-          <option value="All categories">All categories</option>
-          {categories.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#7f8896] mb-2">Category</label>
+            <select value={category} onChange={(event) => onCategoryChange(event.target.value)} className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
+              <option value="All categories">All categories</option>
+              {categories.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
 
-        <select value={platform} onChange={(event) => onPlatformChange(event.target.value)} className="field-select !rounded-[22px]">
-          <option value="All platforms">All platforms</option>
-          {platforms.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#7f8896] mb-2">Platform</label>
+            <select value={platform} onChange={(event) => onPlatformChange(event.target.value)} className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
+              <option value="All platforms">All platforms</option>
+              {platforms.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
 
-        <select value={sortBy} onChange={(event) => onSortChange(event.target.value)} className="field-select !rounded-[22px]">
-          <option value="recent">Most recently updated</option>
-          <option value="bounty">Highest reward</option>
-          <option value="reviews">Most reviewed</option>
-          <option value="name">Alphabetical</option>
-        </select>
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#7f8896] mb-2">Sort By</label>
+            <select value={sortBy} onChange={(event) => onSortChange(event.target.value)} className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
+              <option value="recent">Most recently updated</option>
+              <option value="bounty">Highest reward</option>
+              <option value="reviews">Most reviewed</option>
+              <option value="name">Alphabetical</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      <div className="subtle-divider mt-4 flex flex-wrap items-center justify-between gap-3 pt-4">
-        <p className="text-sm text-[var(--text-soft)]">{resultCount} bounties</p>
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-8 pt-4 border-t border-[rgba(255,255,255,0.06)]">
+        <p className="text-[13px] text-[#7f8896]">{resultCount} bounties</p>
         <button
           onClick={onClear}
-          className="rounded-full border border-[var(--border)] bg-[rgba(9,18,27,0.78)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[rgba(56,217,178,0.32)] hover:bg-[rgba(13,26,37,0.94)] hover:text-[var(--accent-strong)]"
+          className="text-[12px] font-bold uppercase tracking-[0.06em] text-[#0fca8a] hover:opacity-80 transition"
         >
-          Clear filters
+          Reset Filters
         </button>
       </div>
     </section>
