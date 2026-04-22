@@ -59,7 +59,7 @@ export function ProgramsDirectoryPage({
   return (
     <motion.div variants={stagger.container} initial="hidden" animate="show" className="space-y-2 lg:space-y-4">
       <motion.section variants={stagger.item} className="pb-4 mb-4 border-b border-[rgba(255,255,255,0.06)] relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-10 pb-4 lg:pt-20 lg:pb-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-2 pb-4 lg:pt-4 lg:pb-8">
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
               <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />

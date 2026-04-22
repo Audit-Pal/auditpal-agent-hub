@@ -11,7 +11,7 @@ export function Shell({ children, navigation }: ShellProps) {
   const isHome = location.pathname === '/'
 
   return (
-    <div className="min-h-screen font-sans text-[#eef1f6] antialiased selection:bg-[rgba(15,202,138,0.2)] selection:text-[#0fca8a] relative bg-[#06080b]">
+    <div className="min-h-screen font-sans text-[#eef1f6] antialiased selection:bg-[rgba(15,202,138,0.2)] selection:text-[#0fca8a] relative bg-[#06080b]" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>
       {!isHome && (
         <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -24,7 +24,7 @@ export function Shell({ children, navigation }: ShellProps) {
         {isHome ? (
           <main className="flex-1 w-full pb-24">{children}</main>
         ) : (
-          <main className="flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-8 xl:px-10">
+          <main className="flex-1 px-4 pb-24 pt-[84px] sm:px-6 lg:px-8 xl:px-10">
             <div className="mx-auto w-full max-w-[1400px]">{children}</div>
           </main>
         )}

@@ -6,13 +6,13 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { api } from '../../lib/api'
 
-const navItems: { label: string; path: string; active: (pathname: string) => boolean }[] = [
-  { label: 'Home',             path: '/',                  active: (p) => p === '/' },
-  { label: 'Bounties',         path: '/bounties',          active: (p) => p.startsWith('/bounties') || p.startsWith('/bounty/') || p.startsWith('/programs') || p.startsWith('/program/') },
-  { label: 'Submissions',     path: '/reports',           active: (p) => p === '/reports' },
-  { label: 'Agents',           path: '/agents/leaderboard',active: (p) => p.startsWith('/agent') },
-  { label: 'API',              path: '/docs',              active: (p) => p.startsWith('/docs') },
-  { label: 'Org Workspace',    path: '/org/dashboard',     active: (p) => p.startsWith('/org/') },
+const navItems: { label: string; path: string; active: (pathname: string) => boolean; isExternal?: boolean }[] = [
+  { label: 'Home', path: '/', active: (p) => p === '/' },
+  { label: 'Bounties', path: '/bounties', active: (p) => p.startsWith('/bounties') || p.startsWith('/bounty/') || p.startsWith('/programs') || p.startsWith('/program/') },
+  { label: 'Submissions', path: '/reports', active: (p) => p === '/reports' },
+  { label: 'Agents', path: '/agents/leaderboard', active: (p) => p.startsWith('/agent') },
+  { label: 'Docs ↗', path: '/docs.html', active: () => false, isExternal: true },
+  { label: 'Org Workspace', path: '/org/dashboard', active: (p) => p.startsWith('/org/') },
 ]
 
 interface TopNavProps {
@@ -35,10 +35,10 @@ function formatDate(value?: string) {
 function getRoleMessage(role?: string) {
   switch (role) {
     case 'ORGANIZATION': return 'Launch programs, fund them, and manage applications.'
-    case 'ADMIN':        return 'Oversee researcher, validator, and platform operations.'
-    case 'GATEKEEPER':   return 'Review findings and escalate signal to the validator queue.'
-    case 'VALIDATOR':    return 'Finalize criticality, pay valid findings, keep trust high.'
-    default:             return 'Browse live bounty programs, submit findings, track triage.'
+    case 'ADMIN': return 'Oversee researcher, validator, and platform operations.'
+    case 'GATEKEEPER': return 'Review findings and escalate signal to the validator queue.'
+    case 'VALIDATOR': return 'Finalize criticality, pay valid findings, keep trust high.'
+    default: return 'Browse live bounty programs, submit findings, track triage.'
   }
 }
 
@@ -62,9 +62,9 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
   const canGenerateApiKey = user?.role === 'BOUNTY_HUNTER' || user?.role === 'ADMIN'
 
   const visibleNavItems = navItems.filter((item) => {
-    if (item.label === 'Bounties'      && user?.role === 'ORGANIZATION') return false
-    if (item.label === 'Agents'        && user?.role === 'ORGANIZATION') return false
-    if (item.label === 'API'           && user?.role === 'ORGANIZATION') return false
+    if (item.label === 'Bounties' && user?.role === 'ORGANIZATION') return false
+    if (item.label === 'Agents' && user?.role === 'ORGANIZATION') return false
+    if (item.label === 'Docs ↗' && user?.role === 'ORGANIZATION') return false
     if (item.label === 'Org Workspace') return user?.role === 'ORGANIZATION'
     return true
   })
@@ -132,12 +132,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
     <nav className="fixed top-0 left-0 right-0 z-[200] h-[60px] flex items-center justify-between px-5 md:px-[2.5rem] bg-[rgba(6,8,11,0.8)] backdrop-blur-[20px] border-b border-[rgba(255,255,255,0.06)]" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>
       {/* Logo */}
       <Link to="/" className="flex items-center gap-[9px] text-[1rem] font-semibold tracking-[0.04em] text-[#eef1f6] transition-opacity hover:opacity-80 decoration-none">
-        <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[6px] bg-[#0fca8a]">
-          <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[14px] w-[14px]">
-            <path d="M7 1L12 4V10L7 13L2 10V4L7 1Z" stroke="#06080b" strokeWidth="1.5" strokeLinejoin="round"/>
-            <path d="M4.5 7L6.5 9L9.5 5" stroke="#06080b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </span>
+        <img src="/audipal_transparent.png" alt="AuditPal Logo" className="h-[28px] w-auto object-contain" />
         AuditPal
       </Link>
 
@@ -145,6 +140,19 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
       <div className="hidden lg:flex items-center gap-[2rem]">
         {visibleNavItems.map((item) => {
           const isActive = item.active(pathname)
+          if (item.isExternal) {
+            return (
+              <a
+                key={item.path}
+                href={item.path}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[0.82rem] font-[400] transition-colors duration-200 decoration-none relative text-[#7f8896] hover:text-[#eef1f6]"
+              >
+                {item.label}
+              </a>
+            )
+          }
           return (
             <Link
               key={item.path}
@@ -165,195 +173,195 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
       {/* Right side */}
       <div className="flex items-center gap-[12px]">
 
-              {user ? (
-                <>
-                  
-          <div className="relative" ref={profileRef}>
-            <button
-              onClick={() => setIsProfileOpen((v) => !v)}
-              className="flex items-center gap-[8px] rounded-[5px] border border-[rgba(255,255,255,0.11)] bg-transparent px-[14px] py-[6px] transition-all duration-200 hover:border-[rgba(255,255,255,0.18)]"
-              title="Click to view profile and logout"
-            >
-              <div className="flex h-[20px] w-[20px] items-center justify-center rounded-[4px] bg-[#0fca8a] text-[9px] font-bold uppercase text-[#06080b]">
-                {user.name.substring(0, 2)}
-              </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-[0.8rem] font-[500] text-[#7f8896] hover:text-[#eef1f6] transition-colors leading-none">
-                  {user.role === 'ORGANIZATION' ? 'New Organisation' : user.role === 'BOUNTY_HUNTER' ? 'New Agent' : user.name}
-                </p>
-              </div>
-            </button>
+        {user ? (
+          <>
 
-                  <AnimatePresence>
-                    {isProfileOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                        className="surface-card-strong absolute right-0 top-[calc(100%+14px)] z-[100] w-[min(94vw,420px)] rounded-2xl p-4 shadow-[0_32px_80px_rgba(0,3,6,0.9)] border-2 border-[rgba(0,212,168,0.2)]"
-                      >
-                        {/* Profile tabs */}
-                        <div className="mb-4 flex gap-1 rounded-xl border border-[rgba(80,120,130,0.1)] bg-[rgba(6,12,18,0.8)] p-1">
-                          {[
-                            { id: 'profile', label: 'Profile' },
-                            ...(user.role !== 'ORGANIZATION' ? [{ id: 'api-key', label: 'API Key' }, { id: 'agents', label: 'Agents' }] : []),
-                          ].map((tab) => (
-                            <button
-                              key={tab.id}
-                              onClick={() => setActiveProfileTab(tab.id as any)}
-                              className={[
-                                'flex-1 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all duration-200',
-                                activeProfileTab === tab.id
-                                  ? 'nav-pill-active'
-                                  : 'text-[var(--text-muted)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text)]',
-                              ].join(' ')}
-                            >
-                              {tab.label}
-                            </button>
-                          ))}
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => setIsProfileOpen((v) => !v)}
+                className="flex items-center gap-[8px] rounded-[5px] border border-[rgba(255,255,255,0.11)] bg-transparent px-[14px] py-[6px] transition-all duration-200 hover:border-[rgba(255,255,255,0.18)]"
+                title="Click to view profile and logout"
+              >
+                <div className="flex h-[20px] w-[20px] items-center justify-center rounded-[4px] bg-[#0fca8a] text-[9px] font-bold uppercase text-[#06080b]">
+                  {user.name.substring(0, 2)}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-[0.8rem] font-[500] text-[#7f8896] hover:text-[#eef1f6] transition-colors leading-none">
+                    {user.role === 'ORGANIZATION' ? 'New Organisation' : user.role === 'BOUNTY_HUNTER' ? 'New Agent' : user.name}
+                  </p>
+                </div>
+              </button>
+
+              <AnimatePresence>
+                {isProfileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="surface-card-strong absolute right-0 top-[calc(100%+14px)] z-[100] w-[min(94vw,420px)] rounded-2xl p-4 shadow-[0_32px_80px_rgba(0,3,6,0.9)] border-2 border-[rgba(0,212,168,0.2)]"
+                  >
+                    {/* Profile tabs */}
+                    <div className="mb-4 flex gap-1 rounded-xl border border-[rgba(80,120,130,0.1)] bg-[rgba(6,12,18,0.8)] p-1">
+                      {[
+                        { id: 'profile', label: 'Profile' },
+                        ...(user.role !== 'ORGANIZATION' ? [{ id: 'api-key', label: 'API Key' }, { id: 'agents', label: 'Agents' }] : []),
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveProfileTab(tab.id as any)}
+                          className={[
+                            'flex-1 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all duration-200',
+                            activeProfileTab === tab.id
+                              ? 'nav-pill-active'
+                              : 'text-[var(--text-muted)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text)]',
+                          ].join(' ')}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-0.5">
+                      {activeProfileTab === 'profile' && (
+                        <div className="space-y-3">
+                          <div className="surface-card-muted rounded-xl p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--accent),rgba(0,160,128,0.9))] text-sm font-bold text-[var(--accent-ink)]">
+                                {user.name.substring(0, 2)}
+                              </div>
+                              <div>
+                                <p className="font-bold text-[var(--text)]">{user.name}</p>
+                                <p className="text-[12px] text-[var(--text-soft)]">{user.email}</p>
+                              </div>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              <span className="summary-chip">{formatRole(user.role)}</span>
+                              {user.organizationName && <span className="summary-chip">{user.organizationName}</span>}
+                              <span className="summary-chip">Since {formatDate(user.createdAt)}</span>
+                            </div>
+                          </div>
+                          <div className="surface-card-muted rounded-xl p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Workspace</p>
+                            <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">{getRoleMessage(user.role)}</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-center border-[rgba(255,80,80,0.3)] bg-[rgba(255,80,80,0.08)] text-[#ff8080] hover:bg-[rgba(255,80,80,0.15)] hover:border-[rgba(255,80,80,0.4)]"
+                            onClick={logout}
+                          >
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Sign out
+                          </Button>
                         </div>
+                      )}
 
-                        <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-0.5">
-                          {activeProfileTab === 'profile' && (
-                            <div className="space-y-3">
-                              <div className="surface-card-muted rounded-xl p-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--accent),rgba(0,160,128,0.9))] text-sm font-bold text-[var(--accent-ink)]">
-                                    {user.name.substring(0, 2)}
-                                  </div>
-                                  <div>
-                                    <p className="font-bold text-[var(--text)]">{user.name}</p>
-                                    <p className="text-[12px] text-[var(--text-soft)]">{user.email}</p>
-                                  </div>
-                                </div>
-                                <div className="mt-3 flex flex-wrap gap-1.5">
-                                  <span className="summary-chip">{formatRole(user.role)}</span>
-                                  {user.organizationName && <span className="summary-chip">{user.organizationName}</span>}
-                                  <span className="summary-chip">Since {formatDate(user.createdAt)}</span>
-                                </div>
-                              </div>
-                              <div className="surface-card-muted rounded-xl p-4">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Workspace</p>
-                                <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">{getRoleMessage(user.role)}</p>
-                              </div>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full justify-center border-[rgba(255,80,80,0.3)] bg-[rgba(255,80,80,0.08)] text-[#ff8080] hover:bg-[rgba(255,80,80,0.15)] hover:border-[rgba(255,80,80,0.4)]" 
-                                onClick={logout}
-                              >
-                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                Sign out
-                              </Button>
-                            </div>
-                          )}
-
-                          {activeProfileTab === 'api-key' && (
-                            <div className="space-y-3">
-                              <div className="surface-card-muted rounded-xl p-4">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Submission API</p>
-                                <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">
-                                  Use the <code className="text-[var(--accent)]">X-API-Key</code> header when posting to <code className="text-[var(--accent)]">/api/v1/reports/submit</code>.
-                                </p>
-                              </div>
-                              {canGenerateApiKey ? (
-                                <>
-                                  <div className="surface-card-muted rounded-xl p-4 text-[13px] text-[var(--text-soft)] space-y-2.5">
-                                    {[
-                                      ['Current key', user.apiKeyPreview ?? 'Not generated yet'],
-                                      ['Generated',   formatDate(user.apiKeyCreatedAt)],
-                                      ['Last used',   formatDate(user.apiKeyLastUsedAt)],
-                                    ].map(([label, val]) => (
-                                      <div key={label} className="flex items-center justify-between gap-4 border-b border-[rgba(80,120,130,0.1)] pb-2 last:border-0 last:pb-0">
-                                        <span>{label}</span>
-                                        <span className="font-semibold text-[var(--text)]">{val}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    <Button variant="primary" size="sm" onClick={handleGenerateApiKey} disabled={isGeneratingKey}>
-                                      {isGeneratingKey ? 'Generating…' : user.hasApiKey ? 'Regenerate' : 'Generate key'}
-                                    </Button>
-                                    {generatedApiKey && (
-                                      <Button variant="outline" size="sm" onClick={handleCopyApiKey}>
-                                        {copyState === 'copied' ? '✓ Copied' : copyState === 'failed' ? 'Failed' : 'Copy key'}
-                                      </Button>
-                                    )}
-                                  </div>
-                                  {generatedApiKey && (
-                                    <div className="rounded-xl border border-[rgba(0,212,168,0.2)] bg-[rgba(0,212,168,0.08)] p-3">
-                                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-2">New key — copy now</p>
-                                      <code className="block overflow-x-auto break-all rounded-lg bg-[rgba(6,12,18,0.9)] px-3 py-2.5 text-[12px] text-[var(--accent-strong)]">
-                                        {generatedApiKey}
-                                      </code>
-                                    </div>
-                                  )}
-                                </>
-                              ) : (
-                                <div className="surface-card-muted rounded-xl p-4 text-[13px] leading-relaxed text-[var(--text-soft)]">
-                                  API keys are available for bounty hunters and admins.
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {activeProfileTab === 'agents' && (
-                            <div className="space-y-3">
-                              <form onSubmit={handleRegisterAgent} className="surface-card-muted rounded-xl p-4 space-y-3">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Register agent</p>
+                      {activeProfileTab === 'api-key' && (
+                        <div className="space-y-3">
+                          <div className="surface-card-muted rounded-xl p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Submission API</p>
+                            <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">
+                              Use the <code className="text-[var(--accent)]">X-API-Key</code> header when posting to <code className="text-[var(--accent)]">/api/v1/reports/submit</code>.
+                            </p>
+                          </div>
+                          {canGenerateApiKey ? (
+                            <>
+                              <div className="surface-card-muted rounded-xl p-4 text-[13px] text-[var(--text-soft)] space-y-2.5">
                                 {[
-                                  { key: 'name',         label: 'Agent name',   placeholder: 'Sentinel Delta' },
-                                  { key: 'headline',     label: 'Headline',     placeholder: 'Repo-native triage for smart contract queues' },
-                                  { key: 'capabilities', label: 'Capabilities', placeholder: 'replay analysis, invariant review' },
-                                ].map(({ key, label, placeholder }) => (
-                                  <div key={key}>
-                                    <label className="field-label">{label}</label>
-                                    <input
-                                      value={(agentForm as any)[key]}
-                                      onChange={(e) => setAgentForm((c) => ({ ...c, [key]: e.target.value }))}
-                                      className="field"
-                                      placeholder={placeholder}
-                                    />
+                                  ['Current key', user.apiKeyPreview ?? 'Not generated yet'],
+                                  ['Generated', formatDate(user.apiKeyCreatedAt)],
+                                  ['Last used', formatDate(user.apiKeyLastUsedAt)],
+                                ].map(([label, val]) => (
+                                  <div key={label} className="flex items-center justify-between gap-4 border-b border-[rgba(80,120,130,0.1)] pb-2 last:border-0 last:pb-0">
+                                    <span>{label}</span>
+                                    <span className="font-semibold text-[var(--text)]">{val}</span>
                                   </div>
                                 ))}
-                                <div>
-                                  <label className="field-label">Summary</label>
-                                  <textarea
-                                    value={agentForm.summary}
-                                    onChange={(e) => setAgentForm((c) => ({ ...c, summary: e.target.value }))}
-                                    className="field-area"
-                                    placeholder="Describe what the agent specializes in…"
-                                    style={{ minHeight: 80 }}
-                                  />
-                                </div>
-                                {agentError   && <p className="rounded-lg bg-[var(--critical-soft)] px-3 py-2 text-[12px] text-[var(--critical-text)]">{agentError}</p>}
-                                {agentSuccess && <p className="rounded-lg bg-[var(--success-soft)] px-3 py-2 text-[12px] text-[var(--success-text)]">{agentSuccess}</p>}
-                                <Button variant="primary" size="sm" className="w-full" disabled={isRegisteringAgent}>
-                                  {isRegisteringAgent ? 'Publishing…' : 'Register agent'}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Button variant="primary" size="sm" onClick={handleGenerateApiKey} disabled={isGeneratingKey}>
+                                  {isGeneratingKey ? 'Generating…' : user.hasApiKey ? 'Regenerate' : 'Generate key'}
                                 </Button>
-                              </form>
-
-                              <div className="space-y-2">
-                                {myAgents.length > 0 ? myAgents.map((agent) => (
-                                  <div key={agent.id} className="surface-card-muted rounded-xl p-3">
-                                    <p className="font-semibold text-[var(--text)] text-[13px]">{agent.name}</p>
-                                    <p className="text-[12px] text-[var(--text-soft)] mt-0.5">{agent.headline}</p>
-                                  </div>
-                                )) : (
-                                  <p className="text-[13px] text-[var(--text-soft)] text-center py-4">No agents registered yet.</p>
+                                {generatedApiKey && (
+                                  <Button variant="outline" size="sm" onClick={handleCopyApiKey}>
+                                    {copyState === 'copied' ? '✓ Copied' : copyState === 'failed' ? 'Failed' : 'Copy key'}
+                                  </Button>
                                 )}
                               </div>
+                              {generatedApiKey && (
+                                <div className="rounded-xl border border-[rgba(0,212,168,0.2)] bg-[rgba(0,212,168,0.08)] p-3">
+                                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-2">New key — copy now</p>
+                                  <code className="block overflow-x-auto break-all rounded-lg bg-[rgba(6,12,18,0.9)] px-3 py-2.5 text-[12px] text-[var(--accent-strong)]">
+                                    {generatedApiKey}
+                                  </code>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="surface-card-muted rounded-xl p-4 text-[13px] leading-relaxed text-[var(--text-soft)]">
+                              API keys are available for bounty hunters and admins.
                             </div>
                           )}
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  </div>
-                </>
+                      )}
+
+                      {activeProfileTab === 'agents' && (
+                        <div className="space-y-3">
+                          <form onSubmit={handleRegisterAgent} className="surface-card-muted rounded-xl p-4 space-y-3">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Register agent</p>
+                            {[
+                              { key: 'name', label: 'Agent name', placeholder: 'Sentinel Delta' },
+                              { key: 'headline', label: 'Headline', placeholder: 'Repo-native triage for smart contract queues' },
+                              { key: 'capabilities', label: 'Capabilities', placeholder: 'replay analysis, invariant review' },
+                            ].map(({ key, label, placeholder }) => (
+                              <div key={key}>
+                                <label className="field-label">{label}</label>
+                                <input
+                                  value={(agentForm as any)[key]}
+                                  onChange={(e) => setAgentForm((c) => ({ ...c, [key]: e.target.value }))}
+                                  className="field"
+                                  placeholder={placeholder}
+                                />
+                              </div>
+                            ))}
+                            <div>
+                              <label className="field-label">Summary</label>
+                              <textarea
+                                value={agentForm.summary}
+                                onChange={(e) => setAgentForm((c) => ({ ...c, summary: e.target.value }))}
+                                className="field-area"
+                                placeholder="Describe what the agent specializes in…"
+                                style={{ minHeight: 80 }}
+                              />
+                            </div>
+                            {agentError && <p className="rounded-lg bg-[var(--critical-soft)] px-3 py-2 text-[12px] text-[var(--critical-text)]">{agentError}</p>}
+                            {agentSuccess && <p className="rounded-lg bg-[var(--success-soft)] px-3 py-2 text-[12px] text-[var(--success-text)]">{agentSuccess}</p>}
+                            <Button variant="primary" size="sm" className="w-full" disabled={isRegisteringAgent}>
+                              {isRegisteringAgent ? 'Publishing…' : 'Register agent'}
+                            </Button>
+                          </form>
+
+                          <div className="space-y-2">
+                            {myAgents.length > 0 ? myAgents.map((agent) => (
+                              <div key={agent.id} className="surface-card-muted rounded-xl p-3">
+                                <p className="font-semibold text-[var(--text)] text-[13px]">{agent.name}</p>
+                                <p className="text-[12px] text-[var(--text-soft)] mt-0.5">{agent.headline}</p>
+                              </div>
+                            )) : (
+                              <p className="text-[13px] text-[var(--text-soft)] text-center py-4">No agents registered yet.</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </>
         ) : (
           <>
             <button className="hidden sm:block text-[0.8rem] font-[500] text-[#7f8896] bg-transparent border border-[rgba(255,255,255,0.11)] px-[18px] py-[7px] rounded-[5px] cursor-pointer transition-colors duration-200 hover:text-[#eef1f6] hover:border-[rgba(255,255,255,0.18)]" onClick={onLogin}>Sign In</button>
@@ -387,6 +395,19 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
             <div className="flex flex-col gap-4">
               {visibleNavItems.map((item) => {
                 const isActive = item.active(pathname)
+                if (item.isExternal) {
+                  return (
+                    <a
+                      key={item.path}
+                      href={item.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[0.9rem] font-[500] text-[#eef1f6] flex items-center justify-between"
+                    >
+                      {item.label}
+                    </a>
+                  )
+                }
                 return (
                   <Link
                     key={item.path}
