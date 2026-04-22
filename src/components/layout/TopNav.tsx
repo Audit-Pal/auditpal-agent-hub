@@ -58,6 +58,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
   const [agentSuccess, setAgentSuccess] = useState<string | null>(null)
   const [myAgents, setMyAgents] = useState<Agent[]>([])
   const [agentForm, setAgentForm] = useState({ name: '', headline: '', summary: '', capabilities: '' })
+  const [openAgentSection, setOpenAgentSection] = useState<'register' | 'list' | 'none'>('list')
   const profileRef = useRef<HTMLDivElement | null>(null)
 
   const canGenerateApiKey = user?.role === 'BOUNTY_HUNTER' || user?.role === 'ADMIN'
@@ -203,7 +204,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                     className="absolute right-0 top-[calc(100%+14px)] z-[100] w-[min(94vw,420px)] bg-[#030608] border border-[rgba(255,255,255,0.06)] p-0 shadow-2xl"
                   >
                     {/* Profile tabs */}
-                    <div className="flex gap-1 border-b border-[rgba(255,255,255,0.06)] bg-[#06080b] p-2 px-4">
+                    <div className="flex bg-[#06080b]">
                       {[
                         { id: 'profile', label: 'Profile' },
                         ...(user.role !== 'ORGANIZATION' ? [{ id: 'api-key', label: 'API Key' }, { id: 'agents', label: 'Agents' }] : []),
@@ -212,10 +213,10 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                           key={tab.id}
                           onClick={() => setActiveProfileTab(tab.id as 'profile' | 'api-key' | 'agents')}
                           className={[
-                            'flex-1 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all duration-200',
+                            'flex-1 py-[14px] text-[11px] font-bold uppercase tracking-[0.12em] transition-colors',
                             activeProfileTab === tab.id
-                              ? 'nav-pill-active'
-                              : 'text-[var(--text-muted)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text)]',
+                              ? 'border-b-2 border-[#0fca8a] text-[var(--text)] bg-[rgba(255,255,255,0.02)]'
+                              : 'border-b-2 border-[rgba(255,255,255,0.06)] text-[var(--text-muted)] hover:bg-[rgba(255,255,255,0.02)] hover:text-[var(--text)]',
                           ].join(' ')}
                         >
                           {tab.label}
@@ -228,7 +229,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                         <div className="flex flex-col">
                           <div className="p-5 border-b border-[rgba(255,255,255,0.04)]">
                             <div className="flex items-center gap-3">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--accent),rgba(0,160,128,0.9))] text-sm font-bold text-[var(--accent-ink)]">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-[6px] bg-[#0fca8a] text-sm font-bold text-[#06080b]">
                                 {user.name.substring(0, 2)}
                               </div>
                               <div>
@@ -313,49 +314,91 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
 
                       {activeProfileTab === 'agents' && (
                         <div className="flex flex-col">
-                          <form onSubmit={handleRegisterAgent} className="p-5 border-b border-[rgba(255,255,255,0.04)] space-y-4">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Register agent</p>
-                            {[
-                              { key: 'name', label: 'Agent name', placeholder: 'Sentinel Delta' },
-                              { key: 'headline', label: 'Headline', placeholder: 'Repo-native triage for smart contract queues' },
-                              { key: 'capabilities', label: 'Capabilities', placeholder: 'replay analysis, invariant review' },
-                            ].map(({ key, label, placeholder }) => (
-                              <div key={key}>
-                                <label className="field-label">{label}</label>
-                                <input
-                                  value={agentForm[key as keyof typeof agentForm]}
-                                  onChange={(e) => setAgentForm((c) => ({ ...c, [key]: e.target.value }))}
-                                  className="field"
-                                  placeholder={placeholder}
-                                />
-                              </div>
-                            ))}
-                            <div>
-                              <label className="field-label">Summary</label>
-                              <textarea
-                                value={agentForm.summary}
-                                onChange={(e) => setAgentForm((c) => ({ ...c, summary: e.target.value }))}
-                                className="field-area"
-                                placeholder="Describe what the agent specializes in…"
-                                style={{ minHeight: 80 }}
-                              />
-                            </div>
-                            {agentError && <p className="rounded-lg bg-[var(--critical-soft)] px-3 py-2 text-[12px] text-[var(--critical-text)]">{agentError}</p>}
-                            {agentSuccess && <p className="rounded-lg bg-[var(--success-soft)] px-3 py-2 text-[12px] text-[var(--success-text)]">{agentSuccess}</p>}
-                            <Button variant="primary" size="sm" className="w-full mt-2" disabled={isRegisteringAgent}>
-                              {isRegisteringAgent ? 'Publishing…' : 'Register agent'}
-                            </Button>
-                          </form>
+                          {/* Register Agent Accordion */}
+                          <div className="border-b border-[rgba(255,255,255,0.04)]">
+                            <button
+                              onClick={() => setOpenAgentSection(v => v === 'register' ? 'none' : 'register')}
+                              className="w-full flex items-center justify-between p-5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+                            >
+                              Register agent
+                              <svg className={`h-4 w-4 transition-transform duration-200 ${openAgentSection === 'register' ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <AnimatePresence>
+                              {openAgentSection === 'register' && (
+                                <motion.form
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                                  onSubmit={handleRegisterAgent}
+                                >
+                                  <div className="px-5 pb-5 space-y-4">
+                                    {[
+                                      { key: 'name', label: 'Agent name', placeholder: 'Sentinel Delta' },
+                                      { key: 'headline', label: 'Headline', placeholder: 'Repo-native triage for smart contract queues' },
+                                      { key: 'capabilities', label: 'Capabilities', placeholder: 'replay analysis, invariant review' },
+                                    ].map(({ key, label, placeholder }) => (
+                                      <div key={key}>
+                                        <label className="field-label">{label}</label>
+                                        <input
+                                          value={agentForm[key as keyof typeof agentForm]}
+                                          onChange={(e) => setAgentForm((c) => ({ ...c, [key]: e.target.value }))}
+                                          className="field"
+                                          placeholder={placeholder}
+                                        />
+                                      </div>
+                                    ))}
+                                    <div>
+                                      <label className="field-label">Summary</label>
+                                      <textarea
+                                        value={agentForm.summary}
+                                        onChange={(e) => setAgentForm((c) => ({ ...c, summary: e.target.value }))}
+                                        className="field-area"
+                                        placeholder="Describe what the agent specializes in…"
+                                        style={{ minHeight: 80 }}
+                                      />
+                                    </div>
+                                    {agentError && <p className="border-l-2 border-[var(--critical)] bg-[var(--critical-soft)] px-3 py-2 text-[12px] text-[var(--critical-text)]">{agentError}</p>}
+                                    {agentSuccess && <p className="border-l-2 border-[#0fca8a] bg-[rgba(15,202,138,0.08)] px-3 py-2 text-[12px] text-[#0fca8a]">{agentSuccess}</p>}
+                                    <Button variant="primary" size="sm" className="w-full mt-2" disabled={isRegisteringAgent}>
+                                      {isRegisteringAgent ? 'Publishing…' : 'Register agent'}
+                                    </Button>
+                                  </div>
+                                </motion.form>
+                              )}
+                            </AnimatePresence>
+                          </div>
 
-                          <div className="p-5 pt-4">
-                            {myAgents.length > 0 ? myAgents.map((agent) => (
-                              <div key={agent.id} className="py-3 border-b border-[rgba(255,255,255,0.04)] last:border-0">
-                                <p className="font-semibold text-[var(--text)] text-[13px]">{agent.name}</p>
-                                <p className="text-[12px] text-[var(--text-soft)] mt-0.5">{agent.headline}</p>
-                              </div>
-                            )) : (
-                              <p className="text-[13px] text-[var(--text-soft)] text-center py-4">No agents registered yet.</p>
-                            )}
+                          {/* Your Agents Accordion */}
+                          <div>
+                            <button
+                              onClick={() => setOpenAgentSection(v => v === 'list' ? 'none' : 'list')}
+                              className="w-full flex items-center justify-between p-5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+                            >
+                              Your agents ({myAgents.length})
+                              <svg className={`h-4 w-4 transition-transform duration-200 ${openAgentSection === 'list' ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <AnimatePresence>
+                              {openAgentSection === 'list' && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="px-5 pb-5">
+                                    {myAgents.length > 0 ? myAgents.map((agent) => (
+                                      <div key={agent.id} className="py-3 border-b border-[rgba(255,255,255,0.04)] last:border-0 first:pt-0">
+                                        <p className="font-semibold text-[var(--text)] text-[13px]">{agent.name}</p>
+                                        <p className="text-[12px] text-[var(--text-soft)] mt-0.5">{agent.headline}</p>
+                                      </div>
+                                    )) : (
+                                      <p className="text-[13px] text-[var(--text-soft)] text-center py-4">No agents registered yet.</p>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         </div>
                       )}

@@ -87,12 +87,12 @@ export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRol
       mode === 'login'
         ? await login(email, password)
         : await register({
-            email,
-            password,
-            name,
-            role,
-            organizationName: role === 'ORGANIZATION' ? organizationName || name : undefined,
-          })
+          email,
+          password,
+          name,
+          role,
+          organizationName: role === 'ORGANIZATION' ? organizationName || name : undefined,
+        })
 
     setLoading(false)
 
@@ -111,7 +111,7 @@ export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRol
   const features = isOrgRole ? organizationFeatures : researcherFeatures
 
   return (
-    <div className="fixed inset-0 z-[250] overflow-y-auto bg-[#06080b]/98 backdrop-blur-3xl animate-fade-in font-['Space_Grotesk',sans-serif]">
+    <div className="fixed inset-0 z-[250] overflow-y-auto bg-[#06080b] animate-fade-in font-['Space_Grotesk',sans-serif]">
       <div className="min-h-screen w-full flex flex-col lg:flex-row relative">
         <button
           onClick={onClose}

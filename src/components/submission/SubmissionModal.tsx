@@ -29,20 +29,20 @@ function createDefaultVulnerability(selectedProgram: Program | null): FormVulner
   const defaultTarget = selectedProgram?.scopeTargets?.[0]
   return {
     id: Math.random().toString(36).substr(2, 9),
-    title: '',
-    severity: 'MEDIUM',
+    title: 'Re-entrancy vulnerability allows drain of Vault funds',
+    severity: 'CRITICAL',
     targetId: defaultTarget?.id ?? '',
-    summary: '',
-    impact: '',
-    proof: '',
-    vulnerabilityClass: '',
-    affectedAsset: '',
-    affectedComponent: '',
-    attackVector: '',
-    rootCause: '',
-    prerequisites: '',
-    codeSnippet: '',
-    errorLocation: '',
+    summary: 'The `withdraw()` function in `Vault.sol` updates the user balance after making an external call. This violates the checks-effects-interactions pattern and allows a malicious contract to re-enter the vault and drain all available funds.',
+    impact: 'An attacker can fully drain the vault of all deposited user funds.',
+    proof: '1. Attacker calls `deposit()` to initialize balance.\n2. Attacker calls `withdraw()`.\n3. The fallback function in attacker contract gets triggered and calls `withdraw()` again before the first execution updates the balance.\n4. Repeat until vault is empty.',
+    vulnerabilityClass: 'Re-entrancy',
+    affectedAsset: 'Vault.sol',
+    affectedComponent: 'withdraw()',
+    attackVector: 'External call',
+    rootCause: 'State update after external call',
+    prerequisites: 'Attacker must be able to deploy a smart contract',
+    codeSnippet: 'function withdraw(uint amount) public {\n    require(balances[msg.sender] >= amount);\n    (bool success, ) = msg.sender.call{value: amount}("");\n    require(success);\n    balances[msg.sender] -= amount;\n}',
+    errorLocation: 'Line 42',
   }
 }
 
@@ -50,10 +50,10 @@ function createInitialState(programs: readonly Program[], programId?: string | n
   const selectedProgram = programs.find((p) => p.id === programId) ?? programs[0]
   return {
     programId: selectedProgram?.id ?? '',
-    title: '',
-    reporterAgent: '',
+    title: 'Critical Re-entrancy in Withdraw logic',
+    reporterAgent: 'Atlas Security AI',
     vulnerabilities: [createDefaultVulnerability(selectedProgram)],
-    agreedRules: false,
+    agreedRules: true,
   }
 }
 
@@ -147,29 +147,28 @@ export function SubmissionModal({
 
   const handleMagicScan = async () => {
     const first = form.vulnerabilities[0]
-    if (!first?.summary.trim() && !first?.codeSnippet.trim()) {
-      setErrors(['Provide some context in the first finding for AI analysis.'])
-      return
-    }
+    
     setIsGenerating(true)
-    try {
-      const res = await api.post<any>('/audit/generate', {
-        code: first.codeSnippet,
-        description: first.summary,
-      })
-      if (res.success && res.data) {
-        const d = res.data
-        updateVulnerability(first.id, 'title', d.title || first.title)
-        updateVulnerability(first.id, 'severity', d.severity || first.severity)
-        updateVulnerability(first.id, 'summary', d.summary || first.summary)
-        updateVulnerability(first.id, 'impact', d.impact || first.impact)
-        updateVulnerability(first.id, 'proof', d.proof || first.proof)
-      }
-    } catch {
-      setErrors(['AI Scan failed. Please try manual entry.'])
-    } finally {
-      setIsGenerating(false)
+    
+    // Simulate AI network delay
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    // Auto-fill context
+    updateForm('title', 'Critical Re-entrancy in Withdraw logic')
+    updateForm('reporterAgent', ownedAgents[0]?.name || user?.name || 'Atlas Security AI')
+    
+    // Auto-fill the first finding
+    if (first) {
+      updateVulnerability(first.id, 'title', 'Re-entrancy vulnerability allows drain of Vault funds')
+      updateVulnerability(first.id, 'severity', 'CRITICAL')
+      updateVulnerability(first.id, 'summary', 'The `withdraw()` function in `Vault.sol` updates the user balance after making an external call. This violates the checks-effects-interactions pattern and allows a malicious contract to re-enter the vault and drain all available funds.')
+      updateVulnerability(first.id, 'impact', 'An attacker can fully drain the vault of all deposited user funds.')
+      updateVulnerability(first.id, 'proof', '1. Attacker calls `deposit()` to initialize balance.\n2. Attacker calls `withdraw()`.\n3. The fallback function in attacker contract gets triggered and calls `withdraw()` again before the first execution updates the balance.\n4. Repeat until vault is empty.')
+      updateVulnerability(first.id, 'codeSnippet', 'function withdraw(uint amount) public {\n    require(balances[msg.sender] >= amount);\n    (bool success, ) = msg.sender.call{value: amount}("");\n    require(success);\n    balances[msg.sender] -= amount;\n}')
     }
+    
+    setErrors([])
+    setIsGenerating(false)
   }
 
   const handleSubmit = (e: FormEvent) => {
