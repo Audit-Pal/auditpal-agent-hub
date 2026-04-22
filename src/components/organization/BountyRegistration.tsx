@@ -198,7 +198,7 @@ export function BountyRegistration() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <section className="hero-card rounded-[40px] p-8 md:p-10 xl:p-12">
+      <section className="py-10 mb-8 border-b border-[rgba(255,255,255,0.06)]">
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div>
             <p className="section-kicker">Organization onboarding</p>
@@ -210,7 +210,7 @@ export function BountyRegistration() {
             </p>
           </div>
 
-          <aside className="surface-card-muted rounded-[30px] p-6">
+          <aside className="border-l border-[rgba(255,255,255,0.06)] pl-6 lg:pl-10">
             <p className="section-kicker">Setup path</p>
             <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--text-soft)]">
               <p>1. Define the program identity and researcher-facing summary.</p>
@@ -222,7 +222,7 @@ export function BountyRegistration() {
       </section>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <section className="surface-card-strong rounded-[34px] p-6 md:p-8">
+        <section className="py-8 border-b border-[rgba(255,255,255,0.06)]">
           <p className="section-kicker">1. Program identity</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div>
@@ -255,7 +255,7 @@ export function BountyRegistration() {
           </div>
         </section>
 
-        <section className="surface-card-strong rounded-[34px] p-6 md:p-8">
+        <section className="py-8 border-b border-[rgba(255,255,255,0.06)]">
           <p className="section-kicker">2. Core scope references</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div>
@@ -269,7 +269,7 @@ export function BountyRegistration() {
           </div>
         </section>
 
-        <section className="surface-card-strong rounded-[34px] p-6 md:p-8">
+        <section className="py-8 border-b border-[rgba(255,255,255,0.06)]">
           <p className="section-kicker">3. Coverage and technology</p>
           <div className="mt-6 space-y-6">
             {renderSelectionGroup('Categories', 'categories', ALL_CATEGORIES)}
@@ -278,7 +278,7 @@ export function BountyRegistration() {
           </div>
         </section>
 
-        <section className="surface-card-strong rounded-[34px] p-6 md:p-8">
+        <section className="py-8 border-b border-[rgba(255,255,255,0.06)]">
           <p className="section-kicker">4. Reward tiers</p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[
@@ -287,7 +287,7 @@ export function BountyRegistration() {
               { key: 'mediumReward', label: 'Medium max', accent: 'text-[#8d6b11]' },
               { key: 'lowReward', label: 'Low max', accent: 'text-[var(--success-text)]' },
             ].map((item) => (
-              <div key={item.key} className="surface-card-muted rounded-[22px] p-4">
+              <div key={item.key} className="border-b border-[rgba(255,255,255,0.06)] pb-4">
                 <label className={`field-label ${item.accent}`}>{item.label}</label>
                 <input
                   type="number"
@@ -300,7 +300,7 @@ export function BountyRegistration() {
           </div>
         </section>
 
-        <section className="surface-card-strong rounded-[34px] p-6 md:p-8">
+        <section className="py-8 border-b border-[rgba(255,255,255,0.06)]">
           <p className="section-kicker">5. Researcher guidance</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div>
@@ -314,7 +314,7 @@ export function BountyRegistration() {
           </div>
         </section>
 
-        <section className="surface-card-strong rounded-[34px] p-6 md:p-8">
+        <section className="py-8 border-b border-[rgba(255,255,255,0.06)]">
           <p className="section-kicker">6. Go-live schedule</p>
           <div className="mt-6 max-w-md">
             <label className="field-label">Target publish date</label>
@@ -323,7 +323,7 @@ export function BountyRegistration() {
         </section>
 
         {!isEditing && (
-          <section className="surface-card-strong rounded-[34px] p-6 md:p-8">
+          <section className="py-8 border-b border-[rgba(255,255,255,0.06)]">
             <p className="section-kicker">7. Reviewer setup</p>
             <div className="mt-6 grid gap-6 lg:grid-cols-2">
               <div className="space-y-4">
@@ -363,7 +363,7 @@ export function BountyRegistration() {
           </section>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 py-8">
           <p className="text-sm leading-7 text-[var(--text-soft)]">
             {isEditing ? 'Save your updates and return to the organization workspace.' : 'Submit the design now, then fund the program from the organization dashboard to activate it.'}
           </p>

@@ -169,7 +169,7 @@ export function OrgDashboard() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="surface-card-strong flex flex-col items-center justify-center rounded-[34px] py-20 text-center"
+        className="flex flex-col items-center justify-center py-20 text-center"
       >
         <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--critical-soft)] border border-[rgba(181,69,52,0.2)] mb-6">
           <svg className="h-10 w-10 text-[var(--critical-text)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -196,9 +196,7 @@ export function OrgDashboard() {
     >
       <motion.section 
         variants={stagger.item}
-        whileHover={{ scale: 1.005 }}
-        transition={{ duration: 0.3 }}
-        className="hero-card rounded-[40px] p-8 md:p-10 xl:p-12"
+        className="py-10 mb-8 border-b border-[rgba(255,255,255,0.06)]"
       >
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
           <div>
@@ -237,12 +235,12 @@ export function OrgDashboard() {
 
       <motion.div variants={stagger.item} className="grid gap-6">
         {loading ? (
-          <div className="surface-card-strong rounded-[32px] p-12 text-center">
+          <div className="py-12 text-center">
             <div className="inline-flex h-12 w-12 animate-spin items-center justify-center rounded-full border-4 border-[var(--border)] border-t-[var(--accent)]" />
             <p className="mt-4 text-sm text-[var(--text-soft)]">Loading programs...</p>
           </div>
         ) : programs.length === 0 ? (
-          <div className="surface-card-strong rounded-[32px] p-12 text-center">
+          <div className="py-12 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--accent-soft)] border border-[rgba(0,212,168,0.2)] mx-auto mb-6">
               <svg className="h-10 w-10 text-[var(--accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -269,9 +267,7 @@ export function OrgDashboard() {
               <motion.article
                 key={program.id}
                 variants={stagger.item}
-                whileHover={{ scale: 1.01, y: -3 }}
-                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                className="surface-card-strong rounded-[32px] p-6 md:p-8"
+                className="py-8 border-b border-[rgba(255,255,255,0.06)] last:border-b-0"
               >
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex items-start gap-4 flex-1">
@@ -301,7 +297,7 @@ export function OrgDashboard() {
 
                   <div className="flex flex-col gap-3 lg:w-[420px]">
                     {program.status !== 'ACTIVE' && program.status !== 'CLOSED' && (
-                      <div className="surface-card-muted rounded-[24px] p-4">
+                      <div className="pt-4 border-t border-[rgba(255,255,255,0.06)] mb-2">
                         <label className="field-label">Fund to activate</label>
                         <div className="flex flex-wrap items-center gap-3 mt-2">
                           <div className="relative min-w-[160px] flex-1">
@@ -331,7 +327,7 @@ export function OrgDashboard() {
 
                     <div className="flex flex-wrap items-center gap-2">
                       <Link to={`/reports?programId=${program.id}`} className="flex-1 min-w-[140px]">
-                        <Button variant="outline" size="md" className="w-full border-[rgba(30,186,152,0.3)] bg-[rgba(30,186,152,0.08)] text-[var(--accent)] hover:bg-[rgba(30,186,152,0.15)] hover:border-[rgba(30,186,152,0.4)]">
+                        <Button variant="primary" size="md" className="w-full">
                           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
                           </svg>
@@ -339,7 +335,7 @@ export function OrgDashboard() {
                         </Button>
                       </Link>
                       <Link to={`/org/edit-bounty/${program.id}`}>
-                        <Button variant="ghost" size="md" className="border border-[rgba(168,85,247,0.3)] bg-[rgba(168,85,247,0.08)] text-[#c084fc] hover:bg-[rgba(168,85,247,0.15)] hover:border-[rgba(168,85,247,0.4)]" disabled={isProcessing}>
+                        <Button variant="primary" size="md" disabled={isProcessing}>
                           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
@@ -348,9 +344,8 @@ export function OrgDashboard() {
                       </Link>
                       {program.status !== 'CLOSED' && (
                         <Button
-                          variant="ghost"
+                          variant="primary"
                           size="md"
-                          className="border border-[rgba(255,165,60,0.3)] bg-[rgba(255,165,60,0.08)] text-[#ffb347] hover:bg-[rgba(255,165,60,0.15)] hover:border-[rgba(255,165,60,0.4)]"
                           onClick={() => handleArchive(program.id)}
                           disabled={isProcessing}
                         >
@@ -361,9 +356,8 @@ export function OrgDashboard() {
                         </Button>
                       )}
                       <Button
-                        variant="ghost"
+                        variant="destructive"
                         size="md"
-                        className="border border-[rgba(255,80,80,0.3)] bg-[rgba(255,80,80,0.08)] text-[#ff8080] hover:bg-[rgba(255,80,80,0.15)] hover:border-[rgba(255,80,80,0.4)]"
                         onClick={() => handleDelete(program.id)}
                         disabled={isProcessing}
                       >

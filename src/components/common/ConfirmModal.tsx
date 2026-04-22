@@ -39,7 +39,7 @@ export function ConfirmModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-[rgba(0,212,168,0.22)] bg-[rgba(9,18,27,0.96)] p-8 shadow-[0_32px_120px_rgba(0,0,0,0.8)]"
+            className="relative w-full max-w-md overflow-hidden rounded-[6px] border border-[rgba(255,255,255,0.06)] bg-[#0A0D12] p-8 shadow-2xl"
           >
             <div className="flex flex-col items-center text-center">
               {isDestructive && (
@@ -57,9 +57,8 @@ export function ConfirmModal({
               
               <div className="mt-8 flex w-full flex-col gap-3">
                 <Button
-                  variant={isDestructive ? 'primary' : 'primary'}
+                  variant={isDestructive ? 'destructive' : 'primary'}
                   size="lg"
-                  className={isDestructive ? 'bg-[var(--critical)] text-white hover:bg-[var(--critical-strong)]' : ''}
                   onClick={() => {
                     onConfirm()
                     onClose()

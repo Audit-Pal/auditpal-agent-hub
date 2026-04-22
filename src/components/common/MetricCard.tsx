@@ -10,8 +10,8 @@ export function MetricCard({ label, value, note, accent, className = '' }: Metri
   return (
     <div
       className={[
-        'content-auto contain-paint border border-[var(--border)] bg-transparent p-5 transition-colors duration-150',
-        accent ? 'border-l-2 border-l-[var(--accent)]' : '',
+        'content-auto contain-paint py-5 border-b border-[rgba(255,255,255,0.06)] last:border-0',
+        accent ? 'pl-3 border-l-2 border-l-[var(--accent)]' : '',
         className,
       ].join(' ')}
     >

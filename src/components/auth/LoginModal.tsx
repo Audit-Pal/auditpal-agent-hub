@@ -180,7 +180,7 @@ export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRol
                   }}
                   className={[
                     'flex-1 rounded-full px-4 py-2.5 text-sm font-bold uppercase tracking-[0.12em] transition-colors duration-150',
-                    mode === item.id ? 'bg-[linear-gradient(135deg,rgba(30,186,152,1),rgba(7,79,70,0.94))] text-[#021614]' : 'text-[var(--text-muted)] hover:bg-[rgba(13,26,37,0.94)]',
+                    mode === item.id ? 'bg-[#0fca8a] text-[#06080b]' : 'text-[var(--text-muted)] hover:bg-[rgba(13,26,37,0.94)]',
                   ].join(' ')}
                 >
                   {item.label}

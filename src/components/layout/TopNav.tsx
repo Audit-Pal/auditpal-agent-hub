@@ -5,6 +5,7 @@ import { Button } from '../common/Button'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { api } from '../../lib/api'
+import type { Agent } from '../../types/platform'
 
 const navItems: { label: string; path: string; active: (pathname: string) => boolean; isExternal?: boolean }[] = [
   { label: 'Home', path: '/', active: (p) => p === '/' },
@@ -55,7 +56,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
   const [isRegisteringAgent, setIsRegisteringAgent] = useState(false)
   const [agentError, setAgentError] = useState<string | null>(null)
   const [agentSuccess, setAgentSuccess] = useState<string | null>(null)
-  const [myAgents, setMyAgents] = useState<any[]>([])
+  const [myAgents, setMyAgents] = useState<Agent[]>([])
   const [agentForm, setAgentForm] = useState({ name: '', headline: '', summary: '', capabilities: '' })
   const profileRef = useRef<HTMLDivElement | null>(null)
 
@@ -74,7 +75,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
 
   useEffect(() => {
     if (activeProfileTab !== 'agents' || !user || user.role === 'ORGANIZATION') return
-    api.get<any[]>('/agents/mine').then((res) => { if (res.success) setMyAgents(res.data) })
+    api.get<Agent[]>('/agents/mine').then((res) => { if (res.success) setMyAgents(res.data) })
   }, [activeProfileTab, user])
 
   useEffect(() => {
@@ -119,7 +120,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
     try {
       const res = await api.post('/agents', { ...agentForm, capabilities })
       if (res.success) {
-        const refreshed = await api.get<any[]>('/agents/mine')
+        const refreshed = await api.get<Agent[]>('/agents/mine')
         if (refreshed.success) setMyAgents(refreshed.data)
         setAgentForm({ name: '', headline: '', summary: '', capabilities: '' })
         setAgentSuccess('Agent registered successfully.')
@@ -199,17 +200,17 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.97 }}
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="surface-card-strong absolute right-0 top-[calc(100%+14px)] z-[100] w-[min(94vw,420px)] rounded-2xl p-4 shadow-[0_32px_80px_rgba(0,3,6,0.9)] border-2 border-[rgba(0,212,168,0.2)]"
+                    className="absolute right-0 top-[calc(100%+14px)] z-[100] w-[min(94vw,420px)] bg-[#030608] border border-[rgba(255,255,255,0.06)] p-0 shadow-2xl"
                   >
                     {/* Profile tabs */}
-                    <div className="mb-4 flex gap-1 rounded-xl border border-[rgba(80,120,130,0.1)] bg-[rgba(6,12,18,0.8)] p-1">
+                    <div className="flex gap-1 border-b border-[rgba(255,255,255,0.06)] bg-[#06080b] p-2 px-4">
                       {[
                         { id: 'profile', label: 'Profile' },
                         ...(user.role !== 'ORGANIZATION' ? [{ id: 'api-key', label: 'API Key' }, { id: 'agents', label: 'Agents' }] : []),
                       ].map((tab) => (
                         <button
                           key={tab.id}
-                          onClick={() => setActiveProfileTab(tab.id as any)}
+                          onClick={() => setActiveProfileTab(tab.id as 'profile' | 'api-key' | 'agents')}
                           className={[
                             'flex-1 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-all duration-200',
                             activeProfileTab === tab.id
@@ -222,10 +223,10 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                       ))}
                     </div>
 
-                    <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-0.5">
+                    <div className="max-h-[60vh] overflow-y-auto">
                       {activeProfileTab === 'profile' && (
-                        <div className="space-y-3">
-                          <div className="surface-card-muted rounded-xl p-4">
+                        <div className="flex flex-col">
+                          <div className="p-5 border-b border-[rgba(255,255,255,0.04)]">
                             <div className="flex items-center gap-3">
                               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--accent),rgba(0,160,128,0.9))] text-sm font-bold text-[var(--accent-ink)]">
                                 {user.name.substring(0, 2)}
@@ -241,35 +242,37 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                               <span className="summary-chip">Since {formatDate(user.createdAt)}</span>
                             </div>
                           </div>
-                          <div className="surface-card-muted rounded-xl p-4">
+                          <div className="p-5 border-b border-[rgba(255,255,255,0.04)] mb-4">
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Workspace</p>
                             <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">{getRoleMessage(user.role)}</p>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full justify-center border-[rgba(255,80,80,0.3)] bg-[rgba(255,80,80,0.08)] text-[#ff8080] hover:bg-[rgba(255,80,80,0.15)] hover:border-[rgba(255,80,80,0.4)]"
-                            onClick={logout}
-                          >
-                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <div className="px-5 pb-5">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="w-full justify-center"
+                              onClick={logout}
+                            >
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
                             Sign out
-                          </Button>
+                            </Button>
+                          </div>
                         </div>
                       )}
 
                       {activeProfileTab === 'api-key' && (
-                        <div className="space-y-3">
-                          <div className="surface-card-muted rounded-xl p-4">
+                        <div className="flex flex-col">
+                          <div className="p-5 border-b border-[rgba(255,255,255,0.04)]">
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Submission API</p>
                             <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">
                               Use the <code className="text-[var(--accent)]">X-API-Key</code> header when posting to <code className="text-[var(--accent)]">/api/v1/reports/submit</code>.
                             </p>
                           </div>
                           {canGenerateApiKey ? (
-                            <>
-                              <div className="surface-card-muted rounded-xl p-4 text-[13px] text-[var(--text-soft)] space-y-2.5">
+                            <div className="p-5 flex flex-col gap-5">
+                              <div className="text-[13px] text-[var(--text-soft)] space-y-2.5">
                                 {[
                                   ['Current key', user.apiKeyPreview ?? 'Not generated yet'],
                                   ['Generated', formatDate(user.apiKeyCreatedAt)],
@@ -292,16 +295,16 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                                 )}
                               </div>
                               {generatedApiKey && (
-                                <div className="rounded-xl border border-[rgba(0,212,168,0.2)] bg-[rgba(0,212,168,0.08)] p-3">
+                                <div className="border border-[rgba(0,212,168,0.2)] bg-[rgba(0,212,168,0.08)] p-4 rounded-none">
                                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent)] mb-2">New key — copy now</p>
                                   <code className="block overflow-x-auto break-all rounded-lg bg-[rgba(6,12,18,0.9)] px-3 py-2.5 text-[12px] text-[var(--accent-strong)]">
                                     {generatedApiKey}
                                   </code>
                                 </div>
                               )}
-                            </>
+                            </div>
                           ) : (
-                            <div className="surface-card-muted rounded-xl p-4 text-[13px] leading-relaxed text-[var(--text-soft)]">
+                            <div className="p-5 text-[13px] leading-relaxed text-[var(--text-soft)]">
                               API keys are available for bounty hunters and admins.
                             </div>
                           )}
@@ -309,8 +312,8 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                       )}
 
                       {activeProfileTab === 'agents' && (
-                        <div className="space-y-3">
-                          <form onSubmit={handleRegisterAgent} className="surface-card-muted rounded-xl p-4 space-y-3">
+                        <div className="flex flex-col">
+                          <form onSubmit={handleRegisterAgent} className="p-5 border-b border-[rgba(255,255,255,0.04)] space-y-4">
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Register agent</p>
                             {[
                               { key: 'name', label: 'Agent name', placeholder: 'Sentinel Delta' },
@@ -320,7 +323,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                               <div key={key}>
                                 <label className="field-label">{label}</label>
                                 <input
-                                  value={(agentForm as any)[key]}
+                                  value={agentForm[key as keyof typeof agentForm]}
                                   onChange={(e) => setAgentForm((c) => ({ ...c, [key]: e.target.value }))}
                                   className="field"
                                   placeholder={placeholder}
@@ -339,14 +342,14 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                             </div>
                             {agentError && <p className="rounded-lg bg-[var(--critical-soft)] px-3 py-2 text-[12px] text-[var(--critical-text)]">{agentError}</p>}
                             {agentSuccess && <p className="rounded-lg bg-[var(--success-soft)] px-3 py-2 text-[12px] text-[var(--success-text)]">{agentSuccess}</p>}
-                            <Button variant="primary" size="sm" className="w-full" disabled={isRegisteringAgent}>
+                            <Button variant="primary" size="sm" className="w-full mt-2" disabled={isRegisteringAgent}>
                               {isRegisteringAgent ? 'Publishing…' : 'Register agent'}
                             </Button>
                           </form>
 
-                          <div className="space-y-2">
+                          <div className="p-5 pt-4">
                             {myAgents.length > 0 ? myAgents.map((agent) => (
-                              <div key={agent.id} className="surface-card-muted rounded-xl p-3">
+                              <div key={agent.id} className="py-3 border-b border-[rgba(255,255,255,0.04)] last:border-0">
                                 <p className="font-semibold text-[var(--text)] text-[13px]">{agent.name}</p>
                                 <p className="text-[12px] text-[var(--text-soft)] mt-0.5">{agent.headline}</p>
                               </div>
