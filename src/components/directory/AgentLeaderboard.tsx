@@ -14,7 +14,7 @@ function AgentLeaderboardBase({ agents, onAgentClick }: AgentLeaderboardProps) {
         <article
           key={agent.id}
           onClick={() => onAgentClick(agent.id)}
-          className="surface-card-strong content-auto contain-paint cursor-pointer rounded-[32px] p-6 transition duration-200 hover:-translate-y-0.5"
+          className="group relative cursor-pointer border-b border-[rgba(255,255,255,0.04)] last:border-b-0 py-6 transition duration-300 hover:bg-[rgba(255,255,255,0.015)] px-4"
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-4">
@@ -31,11 +31,11 @@ function AgentLeaderboardBase({ agents, onAgentClick }: AgentLeaderboardProps) {
               </div>
             </div>
 
-            <div className="surface-card-muted min-w-[220px] rounded-[24px] p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Operator</p>
-              <p className="mt-2 text-sm font-semibold text-[var(--text)]">{agent.minerName || 'Anonymous Miner'}</p>
-              <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Score</p>
-              <p className="mt-2 text-2xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{agent.score?.toFixed(1) || '0.0'}</p>
+            <div className="min-w-[180px] p-2 text-left md:text-right">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7f8896]">Operator</p>
+              <p className="mt-1 text-sm font-semibold text-[#eef1f6]">{agent.minerName || 'Anonymous Miner'}</p>
+              <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[#7f8896]">Total Score</p>
+              <p className="mt-1 text-2xl font-extrabold tracking-[-0.04em] text-[#12f4a6]">{agent.score?.toFixed(1) || '0.0'}</p>
             </div>
           </div>
         </article>

@@ -35,12 +35,21 @@ export function ReportsPage({
   if (user?.role === 'GATEKEEPER') {
     return (
       <div className="space-y-8 animate-fade-in">
-        <section className="hero-card rounded-[36px] p-8 md:p-10">
-          <p className="section-kicker">Triage</p>
-          <h1 className="mt-4 font-serif text-5xl text-[var(--text)]">Review signal.</h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-[var(--text-soft)]">
-            Escalate high-confidence findings.
-          </p>
+        <section className="pb-4 mb-4 border-b border-[rgba(255,255,255,0.06)] relative overflow-hidden">
+          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-10 pb-4 lg:pt-20 lg:pb-8">
+            <div className="relative z-10 max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />
+                Intelligence Hub
+              </div>
+              <h1 className="font-['Fraunces',serif] text-5xl lg:text-7xl tracking-tight text-[#eef1f6] leading-[1.1]">
+                Review Signal
+              </h1>
+              <p className="mt-4 text-[15px] lg:text-[16px] leading-[1.6] text-[#7f8896] max-w-xl">
+                Escalate high-confidence findings and manage early-stage triage pipelines.
+              </p>
+            </div>
+          </div>
         </section>
         <GatekeeperDashboard
           reports={filteredReports}
@@ -54,12 +63,21 @@ export function ReportsPage({
   if (user?.role === 'VALIDATOR') {
     return (
       <div className="space-y-8 animate-fade-in">
-        <section className="hero-card rounded-[36px] p-8 md:p-10">
-          <p className="section-kicker">Validation</p>
-          <h1 className="mt-4 font-serif text-5xl text-[var(--text)]">Finalize reports.</h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-[var(--text-soft)]">
-            Confirm criticality and ship outcomes.
-          </p>
+        <section className="pb-4 mb-4 border-b border-[rgba(255,255,255,0.06)] relative overflow-hidden">
+          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-10 pb-4 lg:pt-20 lg:pb-8">
+            <div className="relative z-10 max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />
+                Intelligence Hub
+              </div>
+              <h1 className="font-['Fraunces',serif] text-5xl lg:text-7xl tracking-tight text-[#eef1f6] leading-[1.1]">
+                Finalize Reports
+              </h1>
+              <p className="mt-4 text-[15px] lg:text-[16px] leading-[1.6] text-[#7f8896] max-w-xl">
+                Confirm criticality, assign severity metrics, and ship outcomes downstream.
+              </p>
+            </div>
+          </div>
         </section>
         <ValidatorDashboard reports={filteredReports} onValidate={(v, a, n, r) => handleValidateVulnerability(v.id, a, n, r)} />
       </div>
@@ -68,20 +86,31 @@ export function ReportsPage({
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <section className="hero-card rounded-[38px] p-8 md:p-10 xl:p-12">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div>
-            <p className="section-kicker">Applications</p>
-            <h1 className="section-title mt-4 max-w-4xl">Track submissions and next actions.</h1>
-            <p className="section-copy mt-5 max-w-3xl text-lg">
-              Status, notes, and context.
+      <section className="pb-4 mb-4 border-b border-[rgba(255,255,255,0.06)] relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-10 pb-4 lg:pt-20 lg:pb-8">
+          <div className="relative z-10 max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />
+              Intelligence Hub
+            </div>
+            <h1 className="font-['Fraunces',serif] text-5xl lg:text-7xl tracking-tight text-[#eef1f6] leading-[1.1]">
+              Applications
+            </h1>
+            <p className="mt-4 text-[15px] lg:text-[16px] leading-[1.6] text-[#7f8896] max-w-xl">
+              Track submissions, active applications, and actionable next steps.
             </p>
           </div>
 
-          <aside className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-            <MetricCard label="Open items" value={openCount} note="Reports still moving through triage or decision stages" />
-            <MetricCard label="Closed items" value={closedCount} note="Resolved, rejected, duplicate, or completed reports" />
-          </aside>
+          <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full lg:w-auto">
+            <div className="flex-1 lg:flex-none border border-[rgba(255,255,255,0.06)] bg-[#0a0d12] rounded-[16px] p-5 lg:min-w-[160px]">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-[#7f8896] font-bold mb-1">Open Items</p>
+              <p className="text-2xl font-bold tracking-tight text-[#eef1f6]">{openCount}</p>
+            </div>
+            <div className="flex-1 lg:flex-none border border-[rgba(255,255,255,0.06)] bg-[#0a0d12] rounded-[16px] p-5 lg:min-w-[140px]">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-[#7f8896] font-bold mb-1">Closed Items</p>
+              <p className="text-2xl font-bold tracking-tight text-[#12f4a6]">{closedCount}</p>
+            </div>
+          </div>
         </div>
       </section>
 
