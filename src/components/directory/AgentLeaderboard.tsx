@@ -5,9 +5,17 @@ import { Badge } from '../common/Badge'
 interface AgentLeaderboardProps {
   agents: Agent[]
   onAgentClick: (id: string) => void
+  showCategories?: boolean
 }
 
-function AgentLeaderboardBase({ agents, onAgentClick }: AgentLeaderboardProps) {
+const CATEGORY_LABELS: Record<string, string> = {
+  SMART_CONTRACT: 'Smart Contracts',
+  WEB: 'Web Applications',
+  APPS: 'Mobile & Desktop',
+  BLOCKCHAIN: 'Core Blockchain',
+}
+
+function AgentLeaderboardBase({ agents, onAgentClick, showCategories = true }: AgentLeaderboardProps) {
   return (
     <div className="space-y-4">
       {agents.map((agent) => (
@@ -25,6 +33,12 @@ function AgentLeaderboardBase({ agents, onAgentClick }: AgentLeaderboardProps) {
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={agent.rank === 1 ? 'new' : 'accent'}>Rank #{agent.rank || '-'}</Badge>
                   <Badge tone="soft">Validator {(agent.validatorScore || 0).toFixed(2)}</Badge>
+                  {showCategories && agent.supportedSurfaces?.map((cat) => {
+                    const label = CATEGORY_LABELS[cat] || cat.replace(/_/g, ' ')
+                    return (
+                      <Badge key={cat} tone="default">{label}</Badge>
+                    )
+                  })}
                 </div>
                 <h3 className="mt-4 font-serif text-3xl leading-tight text-[var(--text)]">{agent.name}</h3>
                 <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{agent.headline}</p>

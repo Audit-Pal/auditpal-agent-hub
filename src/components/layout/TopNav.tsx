@@ -139,7 +139,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
       </Link>
 
       {/* Desktop Nav */}
-      <div className="hidden lg:flex items-center gap-[2rem]">
+      <div className="hidden lg:flex items-center gap-[0.5rem]">
         {visibleNavItems.map((item) => {
           const isActive = item.active(pathname)
           if (item.isExternal) {
@@ -149,7 +149,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                 href={item.path}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[0.82rem] font-[400] transition-colors duration-200 decoration-none relative text-[#7f8896] hover:text-[#eef1f6]"
+                className="px-[12px] py-[6px] rounded-[6px] text-[0.82rem] font-[400] transition-colors duration-200 decoration-none relative text-[#7f8896] hover:text-[#eef1f6]"
               >
                 {item.label}
               </a>
@@ -159,11 +159,19 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
             <Link
               key={item.path}
               to={item.path}
-              className={`text-[0.82rem] font-[400] transition-colors duration-200 decoration-none relative ${isActive ? 'text-[#eef1f6]' : 'text-[#7f8896] hover:text-[#eef1f6]'}`}
+              className={`px-[12px] py-[6px] rounded-[6px] text-[0.82rem] font-[400] transition-colors duration-200 decoration-none relative ${isActive ? 'text-[#0fca8a]' : 'text-[#7f8896] hover:text-[#eef1f6]'}`}
             >
-              {item.label}
+              {isActive && (
+                <motion.div
+                  layoutId="topnavTabBadge"
+                  className="absolute inset-0 border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] rounded-[6px] z-[-1]"
+                  initial={false}
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <span className="relative z-10">{item.label}</span>
               {item.path === '/reports' && reportCount > 0 && (
-                <span className="ml-[6px] rounded-full bg-[rgba(15,202,138,0.15)] px-[6px] py-[2px] text-[9px] font-bold text-[#0fca8a]">
+                <span className="relative z-10 ml-[6px] rounded-full bg-[rgba(15,202,138,0.15)] px-[6px] py-[2px] text-[9px] font-bold text-[#0fca8a]">
                   {reportCount}
                 </span>
               )}

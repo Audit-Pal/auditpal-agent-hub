@@ -91,7 +91,11 @@ export function AgentLeaderboardPage({ topRankedAgent, leaderboardAgents, openAg
 
         <div className="flex-1 w-full">
           {filteredAgents.length > 0 ? (
-            <AgentLeaderboard agents={filteredAgents} onAgentClick={(id: string) => openAgent(id, '/agents/leaderboard')} />
+            <AgentLeaderboard 
+              agents={filteredAgents} 
+              onAgentClick={(id: string) => openAgent(id, '/agents/leaderboard')} 
+              showCategories={activeCategory === 'ALL'} 
+            />
           ) : (
             <div className="py-16 border-t border-[rgba(255,255,255,0.06)] text-center w-full">
               <p className="text-[13px] text-[var(--text-soft)]">No agents found for this category.</p>

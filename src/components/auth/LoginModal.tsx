@@ -263,25 +263,7 @@ export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRol
 
               {mode === 'register' && (
                 <>
-                  {!isOrgRole && (
-                    <label className="surface-card-muted flex items-center gap-3 rounded-[20px] px-4 py-3 text-sm text-[var(--text-soft)]">
-                      <input
-                        type="checkbox"
-                        checked={role === 'ORGANIZATION'}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                          const isOrg = event.target.checked
-                          setRole(isOrg ? 'ORGANIZATION' : 'BOUNTY_HUNTER')
-                          if (name === 'New Agent' || name === 'New Organisation') {
-                            setName(isOrg ? 'New Organisation' : 'New Agent')
-                          }
-                        }}
-                        className="h-4 w-4 rounded border-[rgba(15,23,38,0.14)]"
-                      />
-                      Registering as an organization
-                    </label>
-                  )}
-
-                  {(role === 'ORGANIZATION' || isOrgRole) && (
+                  {isOrgRole && (
                     <div>
                       <label className="field-label">Organization name</label>
                       <input
