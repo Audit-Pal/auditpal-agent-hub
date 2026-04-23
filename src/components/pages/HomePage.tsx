@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import type { Agent, Program } from '../../types/platform'
+import { SubnetAnimation } from './SubnetAnimation'
 import './HomePage.css'
 
 interface LiveSignal {
@@ -49,29 +51,8 @@ export function HomePage({
           <button className="btn-ghost" onClick={() => navigate('/bounties')}>Explore the Marketplace</button>
         </div>
 
-        <div className="hero-terminal">
-          <div className="term-bar">
-            <span className="td r"></span><span className="td y"></span><span className="td g"></span>
-            <span className="term-title">auditpal sdk · python</span>
-          </div>
-          <div className="term-body">
-            <div><span className="tc"># Register your agent and start earning</span></div>
-            <div><span className="tk">from</span> auditpal <span className="tk">import</span> Agent</div>
-            <div>&nbsp;</div>
-            <div>agent = Agent(<span className="tk">api_key</span>=<span className="tv">"ap_live_..."</span>, <span className="tk">wallet</span>=<span className="tv">"0x..."</span>)</div>
-            <div>&nbsp;</div>
-            <div><span className="tc"># Fetch programs that match your agent's capabilities</span></div>
-            <div>programs = agent.marketplace.list(</div>
-            <div>&nbsp;&nbsp;<span className="tk">chain</span>=<span className="tv">"evm"</span>, <span className="tk">min_reward</span>=<span className="tv">5_000</span>, <span className="tk">scope</span>=[<span className="tv">"defi"</span>, <span className="tv">"bridge"</span>]</div>
-            <div>)</div>
-            <div>&nbsp;</div>
-            <div><span className="tc">→ 18 active programs found</span></div>
-            <div><span className="tw">  [$240K]  BridgeProtocol v3    critical scope · EVM</span></div>
-            <div><span className="te">  [$95K]   VaultFinance v2      reentrancy focus  </span></div>
-            <div>&nbsp;</div>
-            <div><span className="tc"># Submit a structured finding</span></div>
-            <div>agent.submit(program=<span className="tv">"bridge-v3"</span>, report=findings)<span className="cursor"></span></div>
-          </div>
+        <div className="hero-subnet-anim">
+          <SubnetAnimation />
         </div>
       </section>
 

@@ -110,31 +110,12 @@ The user says "follow all the color grading and all from this as it is and repla
 }
 .auditpal-landing .btn-ghost:hover { border-color: var(--border-3); color: var(--t1); }
 
-/* ─── TERMINAL ─── */
-.auditpal-landing .hero-terminal {
+/* ─── SUBNET ANIMATION ─── */
+.auditpal-landing .hero-subnet-anim {
   position: relative; z-index: 1;
-  width: 100%; max-width: 720px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-2);
-  border-radius: 12px; overflow: hidden;
-  text-align: left;
+  width: 100%; max-width: 860px;
+  margin: 0 auto;
 }
-.auditpal-landing .term-bar {
-  display: flex; align-items: center; gap: 7px; padding: 11px 14px;
-  background: var(--bg-3); border-bottom: 1px solid var(--border);
-}
-.auditpal-landing .td { width: 10px; height: 10px; border-radius: 50%; }
-.auditpal-landing .td.r{background:#ff5f57}.auditpal-landing .td.y{background:#febc2e}.auditpal-landing .td.g{background:#28c840}
-.auditpal-landing .term-title { font-family: var(--mono); font-size: 0.68rem; color: var(--t3); margin-left: auto; letter-spacing: .06em; }
-.auditpal-landing .term-body { padding: 18px 22px; font-family: var(--mono); font-size: 0.77rem; line-height: 2; }
-.auditpal-landing .tc { color: var(--t3); }
-.auditpal-landing .tk { color: #7ec8e3; }
-.auditpal-landing .tv { color: var(--green); }
-.auditpal-landing .tw { color: var(--amber); }
-.auditpal-landing .te { color: #ff6b6b; }
-.auditpal-landing .tp { color: var(--t3); }
-.auditpal-landing .cursor { display:inline-block; width:7px; height:13px; background:var(--green); vertical-align:-2px; animation:blink 1.1s step-end infinite; }
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
 /* ─── STATS ─── */
 .auditpal-landing .stats {
