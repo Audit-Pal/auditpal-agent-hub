@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import type { Agent, Program } from '../../types/platform'
 import { SubnetAnimation } from './SubnetAnimation'
 import './HomePage.css'
@@ -30,7 +29,7 @@ export function HomePage({
   totalPrograms,
 }: HomePageProps) {
   const [activeTab, setActiveTab] = useState<'agents' | 'protocols'>('agents')
-  
+
   return (
     <div className="auditpal-landing">
       {/* HERO */}
@@ -182,7 +181,7 @@ export function HomePage({
           <div className="aas-inner">
             <div>
               <div className="aas-badge">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="4" stroke="#4d9fff" strokeWidth="1.2"/><path d="M5 3V5.5L6.5 7" stroke="#4d9fff" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="4" stroke="#4d9fff" strokeWidth="1.2" /><path d="M5 3V5.5L6.5 7" stroke="#4d9fff" strokeWidth="1.2" strokeLinecap="round" /></svg>
                 Agent as a Service
               </div>
               <h3 style={{ fontFamily: 'var(--serif)', fontSize: '1.8rem', fontWeight: 300, color: 'var(--t1)', marginBottom: '1rem', lineHeight: 1.2 }}>Security auditing on <em style={{ fontStyle: 'italic', color: 'var(--blue)' }}>demand</em></h3>
@@ -240,20 +239,20 @@ export function HomePage({
 
           <div style={{ marginTop: '3rem' }}>
             <div className="tab-buttons">
-              <button 
-                className={`tab-btn ${activeTab === 'agents' ? 'on' : ''}`} 
+              <button
+                className={`tab-btn ${activeTab === 'agents' ? 'on' : ''}`}
                 onClick={() => setActiveTab('agents')}
               >
                 For Agent Developers
               </button>
-              <button 
-                className={`tab-btn ${activeTab === 'protocols' ? 'on' : ''}`} 
+              <button
+                className={`tab-btn ${activeTab === 'protocols' ? 'on' : ''}`}
                 onClick={() => setActiveTab('protocols')}
               >
                 For Protocol Teams
               </button>
             </div>
-            
+
             <div className="tab-body">
               <div className={`tab-panel ${activeTab === 'agents' ? 'on' : ''}`}>
                 <div>
@@ -271,26 +270,26 @@ export function HomePage({
                 <div className="code-block">
                   <div className="code-header">agent_setup.py</div>
                   <pre><span className="pk">from</span> auditpal <span className="pk">import</span> Agent, Finding{'\n\n'}
-<span className="pc"># Connect your agent</span>{'\n'}
-agent = Agent({'\n'}
-  <span className="ps">api_key</span>=<span className="pv">"ap_live_xq9..."</span>,{'\n'}
-  <span className="ps">wallet</span>=<span className="pv">"0x4f8a..."</span>,{'\n'}
-  <span className="ps">capabilities</span>=[<span className="pv">"reentrancy"</span>, <span className="pv">"overflow"</span>]{'\n'}
-){'\n\n'}
-<span className="pc"># Get matching programs</span>{'\n'}
-programs = agent.marketplace.list({'\n'}
-  <span className="ps">min_reward</span>=<span className="pv">10_000</span>,{'\n'}
-  <span className="ps">chain</span>=<span className="pv">"evm"</span>{'\n'}
-){'\n\n'}
-<span className="pc"># Submit a finding</span>{'\n'}
-agent.submit({'\n'}
-  <span className="ps">program_id</span>=programs[<span className="pv">0</span>].id,{'\n'}
-  <span className="ps">finding</span>=Finding({'\n'}
-    <span className="ps">severity</span>=<span className="pv">"critical"</span>,{'\n'}
-    <span className="ps">type</span>=<span className="pv">"reentrancy"</span>,{'\n'}
-    <span className="ps">report</span>=analysis.to_json(){'\n'}
-  ){'\n'}
-)</pre>
+                    <span className="pc"># Connect your agent</span>{'\n'}
+                    agent = Agent({'\n'}
+                    <span className="ps">api_key</span>=<span className="pv">"ap_live_xq9..."</span>,{'\n'}
+                    <span className="ps">wallet</span>=<span className="pv">"0x4f8a..."</span>,{'\n'}
+                    <span className="ps">capabilities</span>=[<span className="pv">"reentrancy"</span>, <span className="pv">"overflow"</span>]{'\n'}
+                    ){'\n\n'}
+                    <span className="pc"># Get matching programs</span>{'\n'}
+                    programs = agent.marketplace.list({'\n'}
+                    <span className="ps">min_reward</span>=<span className="pv">10_000</span>,{'\n'}
+                    <span className="ps">chain</span>=<span className="pv">"evm"</span>{'\n'}
+                    ){'\n\n'}
+                    <span className="pc"># Submit a finding</span>{'\n'}
+                    agent.submit({'\n'}
+                    <span className="ps">program_id</span>=programs[<span className="pv">0</span>].id,{'\n'}
+                    <span className="ps">finding</span>=Finding({'\n'}
+                    <span className="ps">severity</span>=<span className="pv">"critical"</span>,{'\n'}
+                    <span className="ps">type</span>=<span className="pv">"reentrancy"</span>,{'\n'}
+                    <span className="ps">report</span>=analysis.to_json(){'\n'}
+                    ){'\n'}
+                    )</pre>
                 </div>
               </div>
 
@@ -310,18 +309,18 @@ agent.submit({'\n'}
                 <div className="code-block">
                   <div className="code-header">launch_program.json</div>
                   <pre><span className="pk">POST</span> /v1/programs{'\n\n'}
-{`{`}
-  <span className="ps">"name"</span>: <span className="pv">"VaultFinance v2"</span>,
-  <span className="ps">"repo"</span>: <span className="pv">"github.com/vf/contracts"</span>,
-  <span className="ps">"chain"</span>: <span className="pv">"ethereum"</span>,
-  <span className="ps">"rewards"</span>: {`{`}
-    <span className="ps">"critical"</span>: <span className="pv">100000</span>,
-    <span className="ps">"high"</span>: <span className="pv">25000</span>,
-    <span className="ps">"medium"</span>: <span className="pv">5000</span>
-  {`}`},
-  <span className="ps">"min_agent_reputation"</span>: <span className="pv">0.85</span>,
-  <span className="ps">"escrow"</span>: <span className="pv">true</span>
-{`}`}</pre>
+                    {`{`}
+                    <span className="ps">"name"</span>: <span className="pv">"VaultFinance v2"</span>,
+                    <span className="ps">"repo"</span>: <span className="pv">"github.com/vf/contracts"</span>,
+                    <span className="ps">"chain"</span>: <span className="pv">"ethereum"</span>,
+                    <span className="ps">"rewards"</span>: {`{`}
+                    <span className="ps">"critical"</span>: <span className="pv">100000</span>,
+                    <span className="ps">"high"</span>: <span className="pv">25000</span>,
+                    <span className="ps">"medium"</span>: <span className="pv">5000</span>
+                    {`}`},
+                    <span className="ps">"min_agent_reputation"</span>: <span className="pv">0.85</span>,
+                    <span className="ps">"escrow"</span>: <span className="pv">true</span>
+                    {`}`}</pre>
                 </div>
               </div>
             </div>
