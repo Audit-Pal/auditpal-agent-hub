@@ -35,15 +35,15 @@ export function ProgramCard({ program, onClick }: ProgramCardProps) {
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
-      className="group relative cursor-pointer border-b border-[rgba(255,255,255,0.04)] last:border-b-0 transition duration-300 hover:bg-[rgba(255,255,255,0.015)]"
+      className="group relative cursor-pointer border border-[rgba(255,255,255,0.03)] bg-[rgba(13,17,24,0.3)] backdrop-blur-md rounded-[24px] p-5 transition duration-300 hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.08)]"
     >
-      <div className="flex flex-wrap items-start justify-between gap-6 px-3 py-6 md:px-4 md:py-8">
+      <div className="flex flex-wrap items-start justify-between gap-6 pb-4">
         <div className="flex min-w-0 items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[rgba(56,217,178,0.2)] bg-[linear-gradient(135deg,rgba(30,186,152,1),rgba(7,79,70,0.94))] text-lg font-extrabold text-[#021614] shadow-[0_14px_28px_rgba(30,186,152,0.18)]">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[rgba(15,202,138,0.2)] bg-[linear-gradient(135deg,rgba(15,202,138,0.2),rgba(15,202,138,0.05))] text-lg font-extrabold text-[#0fca8a]">
             {program.logoMark}
           </div>
           <div className="min-w-0">
-            <h3 className="truncate text-[clamp(1.35rem,2vw,2rem)] font-semibold leading-tight text-[var(--text)] transition group-hover:text-[var(--accent-strong)]">
+            <h3 className="truncate font-['Fraunces',serif] text-2xl font-semibold leading-tight tracking-tight text-[var(--text)] transition group-hover:text-[#0fca8a]">
               {program.name}
             </h3>
             <p className="mt-1 truncate text-sm text-[var(--text-soft)]">{program.company}</p>
@@ -51,29 +51,29 @@ export function ProgramCard({ program, onClick }: ProgramCardProps) {
         </div>
 
         <div className="text-left md:min-w-[180px] md:text-right">
-          <p className="text-3xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{formatUsd(program.maxBountyUsd)}</p>
-          <p className="mt-1 text-sm text-[var(--text-soft)]">in {program.payoutCurrency}</p>
+          <p className="text-3xl font-extrabold tracking-tight text-[var(--text)]">{formatUsd(program.maxBountyUsd)}</p>
+          <p className="mt-1 text-sm text-[var(--text-soft)]">maximum payout</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-4 md:px-4 mt-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[rgba(16,31,43,0.72)] px-3 py-1 text-xs font-medium text-[var(--text)]">
+          <span className="inline-flex items-center rounded-full border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[11px] font-medium text-[var(--text-soft)]">
             {formatEnum(program.kind)}
           </span>
-          <span className="inline-flex items-center rounded-full border border-[rgba(142,240,191,0.18)] bg-[var(--success-soft)] px-3 py-1 text-xs font-medium text-[var(--success-text)]">
+          <span className="inline-flex items-center rounded-full border border-[rgba(15,202,138,0.15)] bg-[rgba(15,202,138,0.05)] px-3 py-1 text-[11px] font-medium text-[#0fca8a]">
             {liveLabel}
           </span>
-          <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[rgba(16,31,43,0.72)] px-3 py-1 text-xs font-medium text-[var(--text)]">
-            {program.pocRequired ? 'PoC required' : 'PoC optional'}
+          <span className="inline-flex items-center rounded-full border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[11px] font-medium text-[var(--text-soft)]">
+            {program.pocRequired ? 'PoC Required' : 'PoC Optional'}
           </span>
-          <span className="inline-flex items-center rounded-full border border-[rgba(255,159,67,0.18)] bg-[rgba(255,159,67,0.12)] px-3 py-1 text-xs font-medium text-[#ff9f43]">
-            50 Credits required
+          <span className="inline-flex items-center rounded-full border border-[rgba(240,166,48,0.15)] bg-[rgba(240,166,48,0.05)] px-3 py-1 text-[11px] font-medium text-[#f0a630]">
+            50 Credits
           </span>
         </div>
 
-        <p className="text-sm text-[var(--text-soft)]">
-          Started on <span className="font-medium text-[var(--text)]">{formatDate(program.startedAt)}</span>
+        <p className="text-[12px] text-[var(--text-muted)]">
+          Launch Date: <span className="font-medium text-[var(--text-soft)]">{formatDate(program.startedAt)}</span>
         </p>
       </div>
     </article>

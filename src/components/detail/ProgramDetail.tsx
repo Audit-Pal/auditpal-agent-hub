@@ -183,8 +183,8 @@ function DataTable({ headers, rows }: { headers: readonly string[]; rows: readon
 
 function MetricRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-3 text-sm">
-      <span className="text-[var(--text-soft)]">{label}</span>
+    <div className="flex items-center justify-between gap-4 py-3 text-sm">
+      <span className="text-[var(--text-soft)] whitespace-nowrap">{label}</span>
       <span className="text-right font-medium text-[var(--text)]">{value}</span>
     </div>
   )
@@ -398,7 +398,7 @@ export function ProgramDetail({
 
             <div className="min-w-0">
               <p className="text-sm text-[var(--text-soft)]">{program.company}</p>
-              <h1 className="mt-2 text-[clamp(2rem,4vw,3.7rem)] font-semibold leading-none tracking-tight text-[var(--text)]">
+              <h1 className="mt-2 font-['Fraunces',serif] text-[clamp(2rem,4vw,3.7rem)] font-semibold leading-none tracking-tight text-[var(--text)]">
                 {program.name}
               </h1>
               <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-soft)] md:text-lg">{program.tagline}</p>
@@ -420,15 +420,15 @@ export function ProgramDetail({
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Quick facts</p>
             <div className="mt-3 space-y-2 text-sm">
               <div className="flex items-center justify-between gap-4 xl:justify-end">
-                <span className="text-[var(--text-soft)]">Started</span>
-                <span className="font-medium text-[var(--text)]">{formatDate(program.startedAt)}</span>
+                <span className="text-[var(--text-soft)] whitespace-nowrap">Started</span>
+                <span className="font-medium text-[var(--text)] whitespace-nowrap">{formatDate(program.startedAt)}</span>
               </div>
               <div className="flex items-center justify-between gap-4 xl:justify-end">
-                <span className="text-[var(--text-soft)]">Response SLA</span>
+                <span className="text-[var(--text-soft)] whitespace-nowrap">Response SLA</span>
                 <span className="font-medium text-[var(--text)]">{program.responseSla}</span>
               </div>
               <div className="flex items-center justify-between gap-4 xl:justify-end">
-                <span className="text-[var(--text-soft)]">Payout window</span>
+                <span className="text-[var(--text-soft)] whitespace-nowrap">Payout window</span>
                 <span className="font-medium text-[var(--text)]">{program.payoutWindow}</span>
               </div>
             </div>

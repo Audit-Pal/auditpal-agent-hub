@@ -39,6 +39,7 @@ export function BountyRegistration() {
     summaryHighlights: 'High rewards\nActive triage',
     submissionChecklist: 'PoC required\nClean code',
     scheduledPublish: new Date().toISOString().slice(0, 16),
+    additionalScope: [] as { label: string; location: string; kind: string }[],
   })
 
   useEffect(() => {
@@ -65,10 +66,11 @@ export function BountyRegistration() {
           categories: data.categories || [],
           platforms: data.platforms || [],
           languages: data.languages || [],
-          summaryHighlights: (data.summaryHighlights || []).join('\n'),
-          submissionChecklist: (data.submissionChecklist || []).join('\n'),
           githubRepo: data.scopeTargets?.find((target: any) => target.referenceKind === 'GITHUB_REPO')?.location || '',
           contractAddress: data.scopeTargets?.find((target: any) => target.referenceKind === 'CONTRACT_ADDRESS')?.location || '',
+          additionalScope: (data.scopeTargets || [])
+            .filter((t: any) => t.referenceKind !== 'GITHUB_REPO' && t.referenceKind !== 'CONTRACT_ADDRESS')
+            .map((t: any) => ({ label: t.label || '', location: t.location || '', kind: t.referenceKind || 'DOMAIN' })),
           scheduledPublish: data.startedAt ? new Date(data.startedAt).toISOString().slice(0, 16) : prev.scheduledPublish,
         }))
       })
@@ -132,6 +134,18 @@ export function BountyRegistration() {
             referenceKind: 'CONTRACT_ADDRESS',
             referenceValue: form.contractAddress,
           },
+          ...form.additionalScope
+            .filter((s) => s.location.trim().length > 0)
+            .map((s) => ({
+              label: s.label || 'Additional Reference',
+              location: s.location,
+              assetType: s.kind === 'CONTRACT_ADDRESS' ? 'SMART_CONTRACT' : 'OTHER',
+              severity: 'MEDIUM',
+              reviewStatus: 'Pending',
+              note: 'Additional scope item',
+              referenceKind: s.kind || 'DOMAIN',
+              ...(s.location.startsWith('http') ? { referenceUrl: s.location } : { referenceValue: s.location }),
+            })),
         ],
         triageStages: [
           { order: 1, title: 'AI Intake', owner: 'AuditPal AI', automation: 'Full', trigger: 'Submission', outputs: ['Initial score'], humanGate: 'None' },
@@ -266,6 +280,86 @@ export function BountyRegistration() {
               <label className="field-label">Primary contract address</label>
               <input className="field" value={form.contractAddress} onChange={(event) => setForm({ ...form, contractAddress: event.target.value })} placeholder="0x1234..." required />
             </div>
+          </div>
+
+          {form.additionalScope.length > 0 && (
+            <div className="mt-4 space-y-6">
+              {form.additionalScope.map((item, idx) => (
+                <div key={idx} className="p-4 border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.01)] rounded-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Additional Item #{idx + 1}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = form.additionalScope.filter((_, i) => i !== idx)
+                        setForm({ ...form, additionalScope: next })
+                      }}
+                      className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--critical-text)] hover:opacity-80"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div>
+                      <label className="field-label">Reference Type</label>
+                      <select
+                        className="field"
+                        value={item.kind}
+                        onChange={(e) => {
+                          const next = [...form.additionalScope]
+                          next[idx].kind = e.target.value
+                          setForm({ ...form, additionalScope: next })
+                        }}
+                      >
+                        <option value="DOMAIN">Domain / URL</option>
+                        <option value="CONTRACT_ADDRESS">Contract Address</option>
+                        <option value="SOURCE_FILE">Source File</option>
+                        <option value="GITHUB_REPO">GitHub Repo</option>
+                        <option value="PACKAGE">Package / NPM</option>
+                        <option value="RUNBOOK">Runbook / Docs</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="field-label">Label</label>
+                      <input
+                        className="field"
+                        value={item.label}
+                        onChange={(e) => {
+                          const next = [...form.additionalScope]
+                          next[idx].label = e.target.value
+                          setForm({ ...form, additionalScope: next })
+                        }}
+                        placeholder="Documentation"
+                      />
+                    </div>
+                    <div>
+                      <label className="field-label">Location / URL</label>
+                      <input
+                        className="field"
+                        value={item.location}
+                        onChange={(e) => {
+                          const next = [...form.additionalScope]
+                          next[idx].location = e.target.value
+                          setForm({ ...form, additionalScope: next })
+                        }}
+                        placeholder={item.kind === 'CONTRACT_ADDRESS' ? '0x1234...' : 'https://...'}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, additionalScope: [...form.additionalScope, { label: '', location: '', kind: 'DOMAIN' }] })}
+              className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[#0fca8a] hover:opacity-80"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+              Add another reference
+            </button>
           </div>
         </section>
 

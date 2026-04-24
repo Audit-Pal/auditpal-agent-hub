@@ -58,8 +58,8 @@ function DetailSection({
 
 function MetricRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-3 text-sm">
-      <span className="text-[var(--text-soft)]">{label}</span>
+    <div className="flex items-center justify-between gap-4 py-3 text-sm">
+      <span className="text-[var(--text-soft)] whitespace-nowrap">{label}</span>
       <span className="text-right font-medium text-[var(--text)]">{value}</span>
     </div>
   )
@@ -98,7 +98,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
 
             <div className="min-w-0">
               <p className="text-sm text-[var(--text-soft)]">{agent.minerName || 'Validator-ranked runtime'}</p>
-              <h1 className="mt-2 text-[clamp(2rem,4vw,3.7rem)] font-semibold leading-none tracking-tight text-[var(--text)]">
+              <h1 className="mt-2 font-['Fraunces',serif] text-[clamp(2rem,4vw,3.7rem)] font-semibold leading-none tracking-tight text-[var(--text)]">
                 {agent.name}
               </h1>
               <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-soft)] md:text-lg">{agent.headline}</p>
@@ -122,16 +122,16 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Benchmark position</p>
             <div className="mt-3 space-y-2 text-sm">
               <div className="flex items-center justify-between gap-4 xl:justify-end">
-                <span className="text-[var(--text-soft)]">Global rank</span>
-                <span className="font-medium text-[var(--text)]">#{agent.rank || '-'}</span>
+                <span className="text-[var(--text-soft)] whitespace-nowrap">Global rank</span>
+                <span className="font-medium text-[var(--text)] whitespace-nowrap">#{agent.rank || '-'}</span>
               </div>
               <div className="flex items-center justify-between gap-4 xl:justify-end">
-                <span className="text-[var(--text-soft)]">Bounty footprint</span>
-                <span className="font-medium text-[var(--text)]">{linkedPrograms.length} programs</span>
+                <span className="text-[var(--text-soft)] whitespace-nowrap">Bounty footprint</span>
+                <span className="font-medium text-[var(--text)] whitespace-nowrap">{linkedPrograms.length} programs</span>
               </div>
               <div className="flex items-center justify-between gap-4 xl:justify-end">
-                <span className="text-[var(--text-soft)]">Trust score</span>
-                <span className="font-medium text-[var(--text)]">{Math.round(validatorScore * 100)}%</span>
+                <span className="text-[var(--text-soft)] whitespace-nowrap">Trust score</span>
+                <span className="font-medium text-[var(--text)] whitespace-nowrap">{Math.round(validatorScore * 100)}%</span>
               </div>
             </div>
           </div>
@@ -166,7 +166,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
           {activeTab === 'introduction' ? (
             <>
               <DetailSection title="Operating Thesis" subtitle="The core security logic and reasoning model behind this agent's runtime.">
-                <div className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.4)] p-6 md:p-8">
+                <div className="rounded-[30px] border border-[var(--border)] bg-[rgba(13,17,24,0.3)] backdrop-blur-md border border-[rgba(255,255,255,0.03)] p-6 md:p-8">
                   <p className="text-xl leading-9 text-[var(--text)]">{agent.summary}</p>
                 </div>
               </DetailSection>
@@ -174,7 +174,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
               <DetailSection title="Core Capabilities" subtitle="Security surfaces where this agent provides the most reliable coverage.">
                 <div className="grid gap-4 md:grid-cols-2">
                   {capabilities.map((capability) => (
-                    <div key={capability} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <div key={capability} className="rounded-[24px] border border-[var(--border)] bg-[rgba(13,17,24,0.3)] backdrop-blur-md border border-[rgba(255,255,255,0.03)] p-5">
                       <p className="text-lg font-semibold text-[var(--text)]">{capability}</p>
                       <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">
                         Specialized module designed for high-fidelity signal extraction and repeated validation.
@@ -187,7 +187,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
               {(supportedSurfaces.length > 0 || supportedTechnologies.length > 0) && (
                 <DetailSection title="Coverage Map" subtitle="Inferred targets and technology stacks most suitable for this agent.">
                   <div className="grid gap-4 md:grid-cols-2">
-                    <article className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <article className="rounded-[26px] border border-[var(--border)] bg-[rgba(13,17,24,0.3)] backdrop-blur-md border border-[rgba(255,255,255,0.03)] p-5">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Surfaces</p>
                       <div className="mt-4 flex flex-wrap gap-2">
                         {supportedSurfaces.map((surface) => (
@@ -197,7 +197,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
                         ))}
                       </div>
                     </article>
-                    <article className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <article className="rounded-[26px] border border-[var(--border)] bg-[rgba(13,17,24,0.3)] backdrop-blur-md border border-[rgba(255,255,255,0.03)] p-5">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Technologies</p>
                       <div className="mt-4 flex flex-wrap gap-2">
                         {supportedTechnologies.map((technology) => (
@@ -214,7 +214,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
               <DetailSection title="Execution Modules" subtitle="The deep tooling and internal signals used during the analysis phase.">
                 <div className="grid gap-4 md:grid-cols-2">
                   {tools.map((tool) => (
-                    <article key={tool.name} className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <article key={tool.name} className="rounded-[26px] border border-[var(--border)] bg-[rgba(13,17,24,0.3)] backdrop-blur-md border border-[rgba(255,255,255,0.03)] p-5">
                       <p className="text-lg font-semibold text-[var(--text)]">{tool.name}</p>
                       {tool.access && <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">{formatEnum(tool.access)}</p>}
                       <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">{tool.useCase}</p>
@@ -226,7 +226,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
               <DetailSection title="Runtime Flow" subtitle="Step-by-step progression as the agent moves from intake to finalized report.">
                 <div className="grid gap-4">
                   {runtimeFlow.map((stage, index) => (
-                    <article key={stage.title} className="rounded-[28px] border border-[var(--border)] bg-[var(--surface-muted)] p-6">
+                    <article key={stage.title} className="rounded-[28px] border border-[var(--border)] bg-[rgba(13,17,24,0.3)] backdrop-blur-md border border-[rgba(255,255,255,0.03)] p-6">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex items-start gap-4">
                           <div
@@ -258,7 +258,7 @@ export function AgentDetail({ agent, linkedPrograms, onBack }: AgentDetailProps)
               <DetailSection title="Recent Activity" subtitle="Benchmark history and latest confirmed signals across the marketplace.">
                 <div className="space-y-4">
                   {recentExecutions.map((execution) => (
-                    <article key={`${execution.title}-${execution.timestamp}`} className="rounded-[26px] border border-[var(--border)] bg-[var(--surface-muted)] p-5">
+                    <article key={`${execution.title}-${execution.timestamp}`} className="rounded-[26px] border border-[var(--border)] bg-[rgba(13,17,24,0.3)] backdrop-blur-md border border-[rgba(255,255,255,0.03)] p-5">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="max-w-xl">
                           <h4 className="text-xl font-semibold text-[var(--text)]">{execution.title}</h4>

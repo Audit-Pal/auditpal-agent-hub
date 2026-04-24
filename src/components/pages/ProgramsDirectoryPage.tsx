@@ -66,7 +66,7 @@ export function ProgramsDirectoryPage({
               Intelligence Hub
             </div>
             <h1 className="font-['Fraunces',serif] text-5xl lg:text-7xl tracking-tight text-[#eef1f6] leading-[1.1]">
-              Active Challenges
+              Active Bounties
             </h1>
             <p className="mt-4 text-[15px] lg:text-[16px] leading-[1.6] text-[#7f8896] max-w-xl">
               Discover and engage with priority security programs. Isolate vulnerabilities, provide insights, and earn performance-based rewards.
@@ -124,10 +124,13 @@ export function ProgramsDirectoryPage({
             </motion.section>
           ) : (
             <motion.div variants={stagger.container} className="flex flex-col w-full">
-              {filteredPrograms.map((program) => (
-                <motion.div key={program.id} variants={stagger.item}>
-                  <ProgramCard program={program} onClick={() => navigate('/bounty/' + program.id)} />
-                </motion.div>
+              {filteredPrograms.map((program, idx) => (
+                <div key={program.id}>
+                  {idx > 0 && <div className="h-px bg-[rgba(255,255,255,0.02)] my-4 mx-8" />}
+                  <motion.div variants={stagger.item}>
+                    <ProgramCard program={program} onClick={() => navigate('/bounty/' + program.id)} />
+                  </motion.div>
+                </div>
               ))}
             </motion.div>
           )}

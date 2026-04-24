@@ -36,7 +36,7 @@ export function SubnetAnimation() {
   }
 
   return (
-    <div className="w-full h-full min-h-[440px] flex items-center justify-center relative bg-[rgba(6,8,11,0.6)] backdrop-blur-md rounded-[24px] border border-[rgba(255,255,255,0.06)] overflow-hidden shadow-2xl">
+    <div className="w-full h-full min-h-[440px] flex items-center justify-center relative bg-[rgba(6,8,11,0.6)] backdrop-blur-md rounded-[24px] border border-[rgba(255,255,255,0.05)] overflow-hidden shadow-2xl">
       {/* Background radial glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(15,202,138,0.06)_0%,transparent_60%)] pointer-events-none" />
       

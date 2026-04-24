@@ -382,6 +382,48 @@ async function createReportFromSubmission(body: AgentSubmitReportInput, reporter
     return serializeReport(report)
 }
 
+// ── GET /reports/public (no auth) ────────────────────────────────────────────
+reportRoutes.get('/public', async (c) => {
+    const reports = await prisma.report.findMany({
+        select: {
+            id: true,
+            title: true,
+            status: true,
+            submittedAt: true,
+            rewardEstimateUsd: true,
+            program: {
+                select: {
+                    id: true,
+                    name: true,
+                    code: true,
+                },
+            },
+            vulnerabilities: {
+                select: { severity: true },
+                take: 1,
+                orderBy: { severity: 'asc' },
+            },
+        },
+        orderBy: { submittedAt: 'desc' },
+        take: 100,
+    })
+
+    const data = reports.map((r) => ({
+        id: r.id,
+        title: r.title,
+        severity: r.vulnerabilities[0]?.severity ?? 'LOW',
+        status: r.status,
+        submittedAt: r.submittedAt,
+        rewardEstimateUsd: r.rewardEstimateUsd,
+        bountyName: r.program.name,
+        programId: r.program.id,
+        programCode: r.program.code,
+        accepted: ['RESOLVED', 'ACCEPTED'].includes(r.status),
+    }))
+
+    return successResponse(c, data)
+})
+
 reportRoutes.get('/', authMiddleware, zValidator('query', reportQuerySchema), async (c) => {
     const q = c.req.valid('query')
     const user = c.get('user')
