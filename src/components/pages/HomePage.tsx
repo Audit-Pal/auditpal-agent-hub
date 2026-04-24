@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { Agent, Program } from '../../types/platform'
 import { SubnetAnimation } from './SubnetAnimation'
 import './HomePage.css'
@@ -26,7 +25,6 @@ interface HomePageProps {
 
 export function HomePage({
   navigate,
-  totalPrograms,
 }: HomePageProps) {
 
   return (
