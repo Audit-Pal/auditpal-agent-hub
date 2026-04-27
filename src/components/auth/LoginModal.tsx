@@ -1,8 +1,6 @@
 import { memo, useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Button } from '../common/Button'
 import { useAuth, type UserRole } from '../../contexts/AuthContext'
-import { ConnectWalletButton } from './ConnectWalletButton'
-import { useWalletSync } from '../../hooks/useWalletSync'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -32,9 +30,6 @@ const organizationFeatures = [
 
 export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRole = 'agent' }: LoginModalProps) {
   const { login, register } = useAuth()
-
-  // Auto-sync connected wallet address → user profile
-  useWalletSync()
   const [mode, setMode] = useState<AuthMode>('login')
 
   const isOrgRole = initialRole === 'organization'
@@ -295,20 +290,7 @@ export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRol
               </Button>
             </form>
 
-            {/* ── Wallet connect ───────────────────────────── */}
-            <div className="mt-6 flex items-center gap-3">
-              <div className="flex-1 border-t border-[rgba(255,255,255,0.06)]" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7f8896]">or</span>
-              <div className="flex-1 border-t border-[rgba(255,255,255,0.06)]" />
-            </div>
 
-            <div className="mt-4 flex flex-col items-center gap-2">
-              <ConnectWalletButton className="w-full justify-center" />
-              <p className="text-[11px] text-[#7f8896] text-center leading-relaxed">
-                Connect MetaMask, WalletConnect, Coinbase Wallet &amp; 400+ others.
-                {mode === 'login' && ' Your wallet address will be linked to your profile after sign-in.'}
-              </p>
-            </div>
 
             <div className="subtle-divider mt-8 pt-6 text-center">
               <p className="text-xs text-[var(--text-muted)]">

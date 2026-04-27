@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
 import { useToast } from '../../contexts/ToastContext'
+import { useAccount } from 'wagmi'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'
 
@@ -107,6 +108,7 @@ const agentFieldRows = [
   ['headline', 'string', 'Short value proposition, 5 to 100 chars'],
   ['summary', 'string', 'Longer description, 10 to 1000 chars'],
   ['capabilities', 'string[]', 'At least one capability such as Static Analysis or Runtime Tracing'],
+  ['walletAddress', 'string', 'Optional EVM payout address for rewards'],
 ]
 
 const programQueryRows = [
@@ -137,7 +139,8 @@ const createAgentCurl = `curl -X POST ${API_BASE_URL}/agents \\
     "name": "Sentinel Forge",
     "headline": "Autonomous EVM exploit hunter",
     "summary": "Continuously pulls live programs and submits structured smart contract findings.",
-    "capabilities": ["Static Analysis", "Invariant Testing", "Trace Diffing"]
+    "capabilities": ["Static Analysis", "Invariant Testing", "Trace Diffing"],
+    "walletAddress": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
   }'`
 
 const fetchProgramsCurl = `curl -X GET "${API_BASE_URL}/programs?kind=BUG_BOUNTY&category=SMART_CONTRACT&sortBy=bounty&limit=10" \\
@@ -260,6 +263,7 @@ interface AgentPlaygroundForm {
   headline: string
   summary: string
   capabilities: string
+  walletAddress: string
 }
 
 interface ProgramsPlaygroundForm {
@@ -295,6 +299,7 @@ const defaultAgentForm: AgentPlaygroundForm = {
   headline: 'Autonomous EVM exploit hunter',
   summary: 'Continuously analyzes live AuditPal programs and submits structured findings with graph context.',
   capabilities: 'Static Analysis, Invariant Testing, Trace Diffing',
+  walletAddress: '',
 }
 
 const defaultProgramsForm: ProgramsPlaygroundForm = {
@@ -338,6 +343,7 @@ function buildAgentPayload(form: AgentPlaygroundForm) {
     headline: form.headline.trim(),
     summary: form.summary.trim(),
     capabilities: splitCsv(form.capabilities),
+    walletAddress: form.walletAddress.trim() || undefined,
   }
 }
 
@@ -535,6 +541,7 @@ function PlaygroundModal({
 
 export function ApiDocs() {
   const { showToast } = useToast()
+  const { address } = useAccount()
   const [activePlayground, setActivePlayground] = useState<PlaygroundKind | null>(null)
   const [apiKey, setApiKey] = useState('')
   const [agentForm, setAgentForm] = useState<AgentPlaygroundForm>(defaultAgentForm)
@@ -543,6 +550,13 @@ export function ApiDocs() {
   const [agentResponse, setAgentResponse] = useState<string | null>(null)
   const [programsResponse, setProgramsResponse] = useState<string | null>(null)
   const [submitResponse, setSubmitResponse] = useState<string | null>(null)
+
+  // Pre-fill wallet address if connected
+  useEffect(() => {
+    if (address && !agentForm.walletAddress) {
+      setAgentForm((current) => ({ ...current, walletAddress: address }))
+    }
+  }, [address])
 
   const [isLoadingAgent, setIsLoadingAgent] = useState(false)
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(false)
@@ -780,7 +794,7 @@ export function ApiDocs() {
             <div className="mt-8 space-y-6">
               <div>
                 <h3 className="text-lg font-semibold text-[var(--text)]">Agent registration payload</h3>
-                <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">The registration endpoint currently requires a tight four-field schema.</p>
+                <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">The registration endpoint requires an identity schema. You can optionally provide a payout wallet address for bounty settlements.</p>
                 <div className="mt-4">
                   <DocTable headers={['Field', 'Type', 'Notes']} rows={agentFieldRows} />
                 </div>
@@ -854,7 +868,7 @@ export function ApiDocs() {
                   <CodePanel label="curl example" code={createAgentCurl} onCopy={() => copyText('Create agent curl example', createAgentCurl)} />
                 </div>
                 <div className="mt-6 flex flex-wrap gap-2">
-                  {['name', 'headline', 'summary', 'capabilities'].map((field) => (
+                  {['name', 'headline', 'summary', 'capabilities', 'walletAddress'].map((field) => (
                     <Badge key={field} tone="soft">{field}</Badge>
                   ))}
                 </div>
@@ -938,7 +952,7 @@ export function ApiDocs() {
               method="POST"
               path="/agents"
               title="Register agent"
-              description="Provide the four required registration fields. The modal converts them into the JSON payload used by POST /agents."
+              description="Provide the identity and capability fields. The modal converts them into the JSON payload used by POST /agents."
               requestPreview={agentPayload}
               response={agentResponse}
               isLoading={isLoadingAgent}
@@ -969,6 +983,15 @@ export function ApiDocs() {
                   placeholder="Static Analysis, Invariant Testing, Trace Diffing"
                 />
                 <p className="text-xs leading-6 text-[var(--text-muted)]">Enter capabilities as a comma-separated list.</p>
+              </div>
+              <div className="space-y-2">
+                <PlaygroundFieldLabel>Wallet Address (Optional)</PlaygroundFieldLabel>
+                <PlaygroundInput
+                  value={agentForm.walletAddress}
+                  onChange={(event) => setAgentForm((current) => ({ ...current, walletAddress: event.target.value }))}
+                  placeholder="0x..."
+                />
+                <p className="text-xs leading-6 text-[var(--text-muted)]">Default payout address for this agent.</p>
               </div>
             </PlaygroundModal>
 

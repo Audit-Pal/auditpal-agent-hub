@@ -6,7 +6,6 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { api } from '../../lib/api'
 import type { Agent } from '../../types/platform'
-import { ConnectWalletButton } from '../auth/ConnectWalletButton'
 import { useWalletSync } from '../../hooks/useWalletSync'
 
 interface EthereumProvider {
@@ -1163,12 +1162,10 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
             </div>
           </>
         ) : (
-          <div className="flex items-center gap-[12px]">
-            <ConnectWalletButton compact className="hidden sm:flex" />
-            <div className="h-4 w-[1px] bg-[rgba(255,255,255,0.08)] hidden sm:block mx-1" />
+          <>
             <button className="hidden sm:block text-[0.8rem] font-[500] text-[#7f8896] bg-transparent border border-[rgba(255,255,255,0.11)] px-[18px] py-[7px] rounded-[5px] cursor-pointer transition-colors duration-200 hover:text-[#eef1f6] hover:border-[rgba(255,255,255,0.18)]" onClick={onLogin}>Sign In</button>
             <button className="text-[0.8rem] font-[600] text-[#06080b] bg-[#0fca8a] border-none px-[18px] py-[7px] rounded-[5px] cursor-pointer transition-opacity hover:opacity-[0.88]" onClick={onLogin}>Get Access</button>
-          </div>
+          </>
         )}
 
         {/* Mobile menu toggle */}

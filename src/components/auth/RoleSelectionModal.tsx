@@ -1,4 +1,3 @@
-import { ConnectWalletButton } from './ConnectWalletButton'
 
 interface RoleSelectionModalProps {
   isOpen: boolean
@@ -136,12 +135,7 @@ export function RoleSelectionModal({ isOpen, onSelectRole, onClose }: RoleSelect
               All roles have access to view public bounty programs and documentation. Authentication is only required for submissions and program management.
             </p>
 
-            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <ConnectWalletButton compact />
-              <p className="text-[10px] text-[var(--text-muted)]">
-                Wallet-native access — no email needed
-              </p>
-            </div>
+
           </div>
         </div>
       </div>
