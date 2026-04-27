@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AgentLeaderboard } from '../directory/AgentLeaderboard'
 import type { Agent, ProgramCategory } from '../../types/platform'
+import { PageHero } from '../common/PageHero'
 
 const CATEGORIES: { id: ProgramCategory | 'ALL', label: string }[] = [
   { id: 'ALL', label: 'All Agents' },
@@ -25,47 +26,18 @@ export function AgentLeaderboardPage({ topRankedAgent, leaderboardAgents, openAg
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <section className="pb-4 mb-4 border-b border-[rgba(255,255,255,0.06)] relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-2 pb-4 lg:pt-4 lg:pb-8">
-          <div className="relative z-10 max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />
-              Intelligence Hub
-            </div>
-            <h1 className="font-['Fraunces',serif] text-5xl lg:text-7xl tracking-tight text-[#eef1f6] leading-[1.1]">
-              Leaderboard
-            </h1>
-            <p className="mt-4 text-[15px] lg:text-[16px] leading-[1.6] text-[#7f8896] max-w-xl">
-              Benchmarking and comparative intelligence for network triage agents.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full lg:w-auto">
-            <div className="flex-1 lg:flex-none border border-[rgba(255,255,255,0.06)] bg-[#0a0d12] rounded-[16px] p-5 lg:min-w-[200px]">
-              <p className="text-[10px] uppercase tracking-[0.12em] text-[#7f8896] font-bold mb-2">Current Leader</p>
-              <h2 className="text-xl font-bold tracking-tight text-[#eef1f6] mb-1">
-                {topRankedAgent?.name || 'No rankings yet'}
-              </h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {topRankedAgent?.rank && (
-                  <div className="inline-flex items-center rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#0fca8a]">
-                    Rank #{topRankedAgent.rank}
-                  </div>
-                )}
-                {topRankedAgent?.validatorScore !== undefined && (
-                  <div className="inline-flex items-center rounded-full border border-[rgba(255,255,255,0.11)] bg-[rgba(255,255,255,0.04)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#eef1f6]">
-                    Validator {(topRankedAgent.validatorScore || 0).toFixed(2)}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        title="Leaderboard"
+        description="Benchmark triage agents across rank, validator confidence, and supported surfaces without losing the context of each operator."
+        stats={[
+          { label: 'Current Leader', value: topRankedAgent?.name || 'No rankings yet' },
+          { label: 'Visible Agents', value: String(filteredAgents.length), tone: 'accent' },
+        ]}
+      />
 
       <div className="flex flex-col lg:flex-row items-start gap-8">
-        <aside className="w-full lg:w-64 shrink-0 space-y-6">
-          <div>
+        <aside className="w-full shrink-0 lg:w-64">
+          <div className="rounded-[28px] border border-[rgba(255,255,255,0.07)] bg-[rgba(9,14,20,0.32)] p-5 backdrop-blur-[16px]">
             <h3 className="section-kicker">Filter by category</h3>
             <div className="mt-4 flex flex-col gap-1">
               {CATEGORIES.map(category => {
@@ -97,7 +69,7 @@ export function AgentLeaderboardPage({ topRankedAgent, leaderboardAgents, openAg
               showCategories={activeCategory === 'ALL'} 
             />
           ) : (
-            <div className="py-16 border-t border-[rgba(255,255,255,0.06)] text-center w-full">
+            <div className="w-full rounded-[28px] border border-[rgba(255,255,255,0.06)] bg-[rgba(9,18,27,0.34)] py-16 text-center backdrop-blur-[14px]">
               <p className="text-[13px] text-[var(--text-soft)]">No agents found for this category.</p>
             </div>
           )}

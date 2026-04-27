@@ -34,7 +34,7 @@ export function FilterBar({
   resultCount,
 }: FilterBarProps) {
   return (
-    <section className="py-2 lg:pr-8 border-b lg:border-b-0 lg:border-r border-[rgba(255,255,255,0.06)] lg:min-h-[600px]">
+    <section className="rounded-[28px] border border-[rgba(255,255,255,0.07)] bg-[rgba(9,14,20,0.32)] p-5 backdrop-blur-[16px] lg:min-h-[600px]">
       <div className="flex flex-col gap-6">
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-[#7f8896]">
@@ -45,7 +45,7 @@ export function FilterBar({
           <input
             type="text"
             placeholder="Search programs..."
-            className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] pl-11 pr-4 py-3 text-[14px] text-[#eef1f6] transition hover:border-[rgba(15,202,138,0.32)] focus:border-[#0fca8a] focus:outline-none"
+            className="w-full rounded-[14px] border border-[rgba(255,255,255,0.11)] bg-[rgba(5,8,12,0.42)] py-3 pl-11 pr-4 text-[14px] text-[#eef1f6] transition hover:border-[rgba(15,202,138,0.32)] focus:border-[#0fca8a] focus:outline-none"
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
           />
@@ -54,7 +54,7 @@ export function FilterBar({
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#7f8896] mb-2">Kind</label>
-            <select value={kind} onChange={(event) => onKindChange(event.target.value)} className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
+            <select value={kind} onChange={(event) => onKindChange(event.target.value)} className="w-full rounded-[14px] border border-[rgba(255,255,255,0.11)] bg-[rgba(5,8,12,0.42)] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
               <option value="All kinds">All kinds</option>
               {kinds.map((option) => (
                 <option key={option} value={option}>{option}</option>
@@ -64,7 +64,7 @@ export function FilterBar({
 
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#7f8896] mb-2">Category</label>
-            <select value={category} onChange={(event) => onCategoryChange(event.target.value)} className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
+            <select value={category} onChange={(event) => onCategoryChange(event.target.value)} className="w-full rounded-[14px] border border-[rgba(255,255,255,0.11)] bg-[rgba(5,8,12,0.42)] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
               <option value="All categories">All categories</option>
               {categories.map((option) => (
                 <option key={option} value={option}>{option}</option>
@@ -74,7 +74,7 @@ export function FilterBar({
 
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#7f8896] mb-2">Platform</label>
-            <select value={platform} onChange={(event) => onPlatformChange(event.target.value)} className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
+            <select value={platform} onChange={(event) => onPlatformChange(event.target.value)} className="w-full rounded-[14px] border border-[rgba(255,255,255,0.11)] bg-[rgba(5,8,12,0.42)] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
               <option value="All platforms">All platforms</option>
               {platforms.map((option) => (
                 <option key={option} value={option}>{option}</option>
@@ -84,7 +84,7 @@ export function FilterBar({
 
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-[0.12em] text-[#7f8896] mb-2">Sort By</label>
-            <select value={sortBy} onChange={(event) => onSortChange(event.target.value)} className="w-full bg-[#06080b] border border-[rgba(255,255,255,0.11)] rounded-[8px] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
+            <select value={sortBy} onChange={(event) => onSortChange(event.target.value)} className="w-full rounded-[14px] border border-[rgba(255,255,255,0.11)] bg-[rgba(5,8,12,0.42)] px-3 py-2.5 text-[14px] text-[#eef1f6] outline-none">
               <option value="recent">Most recently updated</option>
               <option value="bounty">Highest reward</option>
               <option value="reviews">Most reviewed</option>
@@ -94,7 +94,7 @@ export function FilterBar({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 mt-8 pt-4 border-t border-[rgba(255,255,255,0.06)]">
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[rgba(255,255,255,0.06)] pt-4">
         <p className="text-[13px] text-[#7f8896]">{resultCount} bounties</p>
         <button
           onClick={onClear}

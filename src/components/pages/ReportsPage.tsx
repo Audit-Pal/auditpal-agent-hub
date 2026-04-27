@@ -5,6 +5,7 @@ import { ValidatorDashboard } from '../submission/ValidatorDashboard'
 import { useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 import type { ResearcherReport, ValidationAction } from '../../types/platform'
+import { PageHero } from '../common/PageHero'
 
 interface ReportsPageProps {
   sortedReports: ResearcherReport[]
@@ -48,36 +49,18 @@ function GuestGlobalPool({ navigate }: { navigate: (path: string) => void }) {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header */}
-      <section className="pb-4 mb-4 border-b border-[rgba(255,255,255,0.04)] relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-2 pb-4 lg:pt-4 lg:pb-8">
-          <div className="relative z-10 max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />
-              Global Pool
-            </div>
-            <h1 className="font-['Fraunces',serif] text-5xl lg:text-7xl tracking-tight text-[#eef1f6] leading-[1.1]">
-              Submissions
-            </h1>
-            <p className="mt-4 text-[15px] lg:text-[16px] leading-[1.6] text-[#7f8896] max-w-xl">
-              Public intelligence — every confirmed signal mined from the bounty pool.
-            </p>
-          </div>
-          <div className="flex gap-6 items-end">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)] font-bold mb-1">Total Blocks</p>
-              <p className="text-2xl font-bold tracking-tight text-[var(--text)]">{blocks.length}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)] font-bold mb-1">Accepted</p>
-              <p className="text-2xl font-bold tracking-tight text-[#0fca8a]">{blocks.filter(b => b.accepted).length}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Global Pool"
+        title="Submissions"
+        description="Public intelligence flowing out of the marketplace, from early signal to accepted findings."
+        stats={[
+          { label: 'Total Blocks', value: String(blocks.length) },
+          { label: 'Accepted', value: String(blocks.filter((block) => block.accepted).length), tone: 'accent' },
+        ]}
+      />
 
       {/* CTA banner */}
-      <div className="flex items-center justify-between gap-4 border border-[rgba(15,202,138,0.15)] bg-[rgba(15,202,138,0.04)] px-5 py-4 rounded-xl">
+      <div className="flex items-center justify-between gap-4 rounded-[24px] border border-[rgba(15,202,138,0.15)] bg-[rgba(15,202,138,0.07)] px-5 py-4 backdrop-blur-[14px]">
         <div>
           <p className="text-[13px] font-bold text-[var(--text)]">Sign in to submit findings</p>
           <p className="text-[12px] text-[var(--text-soft)] mt-0.5">Track your queue, earn rewards, and build an on-chain reputation.</p>
@@ -96,7 +79,7 @@ function GuestGlobalPool({ navigate }: { navigate: (path: string) => void }) {
           <Link to="/bounties" className="mt-4 inline-block text-[#0fca8a] text-sm hover:underline">Browse bounty programs →</Link>
         </div>
       ) : (
-        <div className="space-y-0">
+        <div className="overflow-hidden rounded-[30px] border border-[rgba(255,255,255,0.06)] bg-[rgba(8,13,18,0.3)] backdrop-blur-[16px]">
           {/* Table header */}
           <div className="hidden md:grid grid-cols-[1fr_140px_100px_100px_100px] gap-4 px-4 pb-3 border-b border-[rgba(255,255,255,0.04)]">
             {['Bounty / Finding', 'Date', 'Complexity', 'Reward', 'Status'].map((h) => (
@@ -178,26 +161,19 @@ export function ReportsPage({
 
   const openCount = filteredReports.filter((report) => !['ACCEPTED', 'RESOLVED', 'REJECTED', 'DUPLICATE', 'LOW_EFFORT'].includes(report.status)).length
   const closedCount = filteredReports.length - openCount
+  const acceptedCount = filteredReports.filter((report) => ['ACCEPTED', 'RESOLVED'].includes(report.status)).length
 
   if (user?.role === 'GATEKEEPER') {
     return (
       <div className="space-y-8 animate-fade-in">
-        <section className="pb-4 mb-4 border-b border-[rgba(255,255,255,0.04)] relative overflow-hidden">
-          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-2 pb-4 lg:pt-4 lg:pb-8">
-            <div className="relative z-10 max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />
-                Intelligence Hub
-              </div>
-              <h1 className="font-['Fraunces',serif] text-5xl lg:text-7xl tracking-tight text-[#eef1f6] leading-[1.1]">
-                Review Signal
-              </h1>
-              <p className="mt-4 text-[15px] lg:text-[16px] leading-[1.6] text-[#7f8896] max-w-xl">
-                Escalate high-confidence findings and manage early-stage triage pipelines.
-              </p>
-            </div>
-          </div>
-        </section>
+        <PageHero
+          title="Review Signal"
+          description="Escalate high-confidence findings, sort early-stage evidence, and keep the intake queue moving."
+          stats={[
+            { label: 'Reports in View', value: String(filteredReports.length) },
+            { label: 'Awaiting Review', value: String(openCount), tone: 'accent' },
+          ]}
+        />
         <GatekeeperDashboard
           reports={filteredReports}
           onEscalate={(v) => handleValidateVulnerability(v.id, 'ESCALATE', '')}
@@ -210,22 +186,14 @@ export function ReportsPage({
   if (user?.role === 'VALIDATOR') {
     return (
       <div className="space-y-8 animate-fade-in">
-        <section className="pb-4 mb-4 border-b border-[rgba(255,255,255,0.04)] relative overflow-hidden">
-          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-2 pb-4 lg:pt-4 lg:pb-8">
-            <div className="relative z-10 max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />
-                Intelligence Hub
-              </div>
-              <h1 className="font-['Fraunces',serif] text-5xl lg:text-7xl tracking-tight text-[#eef1f6] leading-[1.1]">
-                Finalize Reports
-              </h1>
-              <p className="mt-4 text-[15px] lg:text-[16px] leading-[1.6] text-[#7f8896] max-w-xl">
-                Confirm criticality, assign severity metrics, and ship outcomes downstream.
-              </p>
-            </div>
-          </div>
-        </section>
+        <PageHero
+          title="Finalize Reports"
+          description="Confirm criticality, assign payout logic, and move accepted findings to their final outcome."
+          stats={[
+            { label: 'Reports in View', value: String(filteredReports.length) },
+            { label: 'Ready to Close', value: String(closedCount), tone: 'soft' },
+          ]}
+        />
         <ValidatorDashboard reports={filteredReports} onValidate={(v, a, n, r) => handleValidateVulnerability(v.id, a, n, r)} />
       </div>
     )
@@ -233,35 +201,15 @@ export function ReportsPage({
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <section className="pb-4 mb-4 border-b border-[rgba(255,255,255,0.04)] relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 pt-2 pb-4 lg:pt-4 lg:pb-8">
-          <div className="relative z-10 max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,202,138,0.22)] bg-[rgba(15,202,138,0.08)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0fca8a] mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#0fca8a] animate-pulse" />
-              Intelligence Hub
-            </div>
-            <h1 className="font-['Fraunces',serif] text-5xl lg:text-7xl tracking-tight text-[#eef1f6] leading-[1.1]">
-              Submissions
-            </h1>
-            <p className="mt-4 text-[15px] lg:text-[16px] leading-[1.6] text-[#7f8896] max-w-xl">
-              Track submissions, active applications, and actionable next steps.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full lg:w-auto">
-            <div className="flex flex-col sm:flex-row gap-8 relative z-10 w-full lg:w-auto lg:items-end">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)] font-bold mb-1">Open Items</p>
-                <p className="text-2xl font-bold tracking-tight text-[var(--text)]">{openCount}</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)] font-bold mb-1">Closed Items</p>
-                <p className="text-2xl font-bold tracking-tight text-[var(--text)]">{closedCount}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        title="Submissions"
+        description="Track new reports, active applications, and the next action needed across your bounty work."
+        stats={[
+          { label: 'Total Reports', value: String(filteredReports.length) },
+          { label: 'Needs Action', value: String(openCount), tone: 'accent' },
+          { label: 'Accepted / Resolved', value: String(acceptedCount), tone: 'soft' },
+        ]}
+      />
 
       <ReportCenter
         reports={filteredReports}

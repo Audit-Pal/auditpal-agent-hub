@@ -93,8 +93,6 @@ export function ReportCenter({
   const [activeValidationId, setActiveValidationId] = useState<string | null>(null)
 
   const canValidate = viewerRole === 'ADMIN' || viewerRole === 'ORGANIZATION'
-  const actionableCount = reports.filter((report) => !['ACCEPTED', 'RESOLVED', 'REJECTED', 'DUPLICATE', 'LOW_EFFORT'].includes(report.status)).length
-  const acceptedCount = reports.filter((report) => ['ACCEPTED', 'RESOLVED'].includes(report.status)).length
 
   const handleValidation = async (reportId: string, action: ValidationAction) => {
     if (!onValidate) return
@@ -126,24 +124,6 @@ export function ReportCenter({
 
   return (
     <div className="space-y-6">
-      <section className="flex flex-wrap gap-12 border-b border-[rgba(255,255,255,0.06)] pb-8 mb-8">
-        <div>
-          <p className="section-kicker !tracking-[0.18em]">Total reports</p>
-          <p className="mt-3 text-4xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{reports.length}</p>
-          <p className="mt-2 text-xs text-[var(--text-soft)]">Visible records</p>
-        </div>
-        <div>
-          <p className="section-kicker !tracking-[0.18em]">Needs action</p>
-          <p className="mt-3 text-4xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{actionableCount}</p>
-          <p className="mt-2 text-xs text-[var(--text-soft)]">In review</p>
-        </div>
-        <div>
-          <p className="section-kicker !tracking-[0.18em]">Accepted or resolved</p>
-          <p className="mt-3 text-4xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{acceptedCount}</p>
-          <p className="mt-2 text-xs text-[var(--text-soft)]">Confirmed</p>
-        </div>
-      </section>
-
       <div className="space-y-5">
         {reports.map((report) => {
           const graphChips = buildGraphChips(report)
@@ -153,7 +133,7 @@ export function ReportCenter({
           const awaitingValidation = canValidate && ['AI_TRIAGED', 'TRIAGED', 'ESCALATED', 'SUBMITTED', 'LOW_EFFORT', 'NEEDS_INFO'].includes(report.status)
 
           return (
-            <article key={report.id} className="group relative cursor-pointer border-b border-[rgba(255,255,255,0.04)] last:border-b-0 py-6 transition duration-300 hover:bg-[rgba(255,255,255,0.015)] px-4">
+            <article key={report.id} className="group relative rounded-[28px] border border-[rgba(255,255,255,0.08)] bg-[rgba(9,15,22,0.28)] px-5 py-6 backdrop-blur-[16px] transition duration-300 hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(12,19,28,0.36)]">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="max-w-3xl">
                   <div className="flex flex-wrap items-center gap-2">

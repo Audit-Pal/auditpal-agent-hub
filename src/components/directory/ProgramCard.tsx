@@ -35,7 +35,7 @@ export function ProgramCard({ program, onClick }: ProgramCardProps) {
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
-      className="group relative cursor-pointer border border-[rgba(255,255,255,0.03)] bg-[rgba(13,17,24,0.3)] backdrop-blur-md rounded-[24px] p-5 transition duration-300 hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.08)]"
+      className="group relative cursor-pointer rounded-[26px] border border-[rgba(255,255,255,0.09)] bg-[rgba(9,15,22,0.34)] p-5 backdrop-blur-[16px] transition duration-300 hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(12,19,28,0.44)]"
     >
       <div className="flex flex-wrap items-start justify-between gap-6 pb-4">
         <div className="flex min-w-0 items-center gap-4">
@@ -56,7 +56,7 @@ export function ProgramCard({ program, onClick }: ProgramCardProps) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[rgba(255,255,255,0.07)] pt-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[11px] font-medium text-[var(--text-soft)]">
             {formatEnum(program.kind)}
