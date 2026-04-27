@@ -14,6 +14,8 @@ export interface User {
     avatarUrl?: string;
     githubHandle?: string;
     organizationName?: string;
+    walletAddress?: string;
+    escrowContractAddress?: string;
     createdAt?: string;
     hasApiKey?: boolean;
     apiKeyPreview?: string;
@@ -34,6 +36,7 @@ interface AuthContextType {
     logout: () => void;
     refreshProfile: () => Promise<User | null>;
     generateApiKey: () => Promise<string | null>;
+    updateProfile: (payload: { walletAddress?: string | null; escrowContractAddress?: string | null }) => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -118,6 +121,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
     };
 
+    const updateProfile = async (payload: { walletAddress?: string | null; escrowContractAddress?: string | null }) => {
+        try {
+            const res = await api.patch<User>('/auth/me', payload);
+            if (res.success) {
+                setUser(res.data);
+                return res.data;
+            }
+            throw new Error(res.error || 'Unable to save profile details right now.');
+        } catch (error) {
+            console.error('Profile update failed', error);
+            throw error instanceof Error ? error : new Error('Unable to save profile details right now.');
+        }
+    };
+
     const logout = () => {
         api.clearTokens();
         setUser(null);
@@ -125,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout, refreshProfile, generateApiKey }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, refreshProfile, generateApiKey, updateProfile }}>
             {children}
         </AuthContext.Provider>
     );

@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'crypto'
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { prisma } from '../../db/client'
-import { registerSchema, loginSchema, refreshSchema } from '../../schemas/auth.schema'
+import { registerSchema, loginSchema, refreshSchema, updateProfileSchema } from '../../schemas/auth.schema'
 import {
     signAccessToken,
     signRefreshToken,
@@ -26,6 +26,8 @@ const userProfileSelect = {
     avatarUrl: true,
     githubHandle: true,
     organizationName: true,
+    walletAddress: true,
+    escrowContractAddress: true,
     createdAt: true,
     apiKeyPreview: true,
     apiKeyCreatedAt: true,
@@ -42,6 +44,8 @@ function serializeUserProfile(user: {
     avatarUrl?: string | null
     githubHandle?: string | null
     organizationName?: string | null
+    walletAddress?: string | null
+    escrowContractAddress?: string | null
     createdAt?: Date
     apiKeyPreview?: string | null
     apiKeyCreatedAt?: Date | null
@@ -57,6 +61,8 @@ function serializeUserProfile(user: {
         avatarUrl: user.avatarUrl ?? undefined,
         githubHandle: user.githubHandle ?? undefined,
         organizationName: user.organizationName ?? undefined,
+        walletAddress: user.walletAddress ?? undefined,
+        escrowContractAddress: user.escrowContractAddress ?? undefined,
         createdAt: user.createdAt,
         hasApiKey: Boolean(user.apiKeyPreview),
         apiKeyPreview: user.apiKeyPreview ?? undefined,
@@ -204,6 +210,31 @@ authRoutes.get('/me', authMiddleware, async (c) => {
         select: userProfileSelect,
     })
     if (!user) return errorResponse(c, 404, 'User not found')
+    return successResponse(c, serializeUserProfile(user))
+})
+
+// ── PATCH /me ────────────────────────────────────────────────────────────────
+authRoutes.patch('/me', authMiddleware, zValidator('json', updateProfileSchema), async (c) => {
+    const { sub, role } = c.get('user')
+    const body = c.req.valid('json')
+
+    if (body.escrowContractAddress !== undefined && role !== 'ORGANIZATION') {
+        return errorResponse(c, 403, 'Only organization accounts can store an escrow contract address')
+    }
+
+    const user = await prisma.user.update({
+        where: { id: sub },
+        data: {
+            ...(body.walletAddress !== undefined
+                ? { walletAddress: body.walletAddress.trim() || null }
+                : {}),
+            ...(body.escrowContractAddress !== undefined
+                ? { escrowContractAddress: body.escrowContractAddress.trim() || null }
+                : {}),
+        },
+        select: userProfileSelect,
+    })
+
     return successResponse(c, serializeUserProfile(user))
 })
 

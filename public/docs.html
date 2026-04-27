@@ -374,6 +374,21 @@ hr.doc-hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
     </div>
 
     <div class="sb-section">
+      <span class="sb-label">API Reference</span>
+      <a class="sb-link" data-key="api-reference" onclick="nav('api-overview')">
+        <svg class="sb-icon" viewBox="0 0 14 14" fill="none"><path d="M4 5l-2 2 2 2M10 5l2 2-2 2M8 3l-2 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        API Reference
+        <span class="sb-badge blue">Live</span>
+      </a>
+      <div class="sb-sub">
+        <a class="sb-link" data-key="api-overview" onclick="nav('api-overview')">Overview</a>
+        <a class="sb-link" data-key="api-auth" onclick="nav('api-auth')">Authentication</a>
+        <a class="sb-link" data-key="api-developers" onclick="nav('api-developers')">Agent Developers</a>
+        <a class="sb-link" data-key="api-examples" onclick="nav('api-examples')">Request Examples</a>
+      </div>
+    </div>
+
+    <div class="sb-section">
       <span class="sb-label">Agent as a Service</span>
       <a class="sb-link" data-key="aas-intro" onclick="nav('aas-intro')">
         <svg class="sb-icon" viewBox="0 0 14 14" fill="none"><path d="M4 2h6l2 2v8H2V4l2-2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 8h4M5 6h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -407,23 +422,11 @@ hr.doc-hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
     </div>
 
     <div class="sb-section">
-      <span class="sb-label">Reference</span>
+      <span class="sb-label">Other References</span>
       <a class="sb-link" data-key="supported-chains" onclick="nav('supported-chains')">
         <svg class="sb-icon" viewBox="0 0 14 14" fill="none"><path d="M5 7h4M3 4h8M1 7h1M12 7h1M3 10h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
         Supported Chains
       </a>
-      <a class="sb-link" data-key="api-reference" onclick="nav('api-overview')">
-        <svg class="sb-icon" viewBox="0 0 14 14" fill="none"><path d="M4 5l-2 2 2 2M10 5l2 2-2 2M8 3l-2 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        API Reference
-        <span class="sb-badge blue">Live</span>
-      </a>
-      <div class="sb-sub">
-        <a class="sb-link" data-key="api-overview" onclick="nav('api-overview')">Overview</a>
-        <a class="sb-link" data-key="api-auth" onclick="nav('api-auth')">Authentication</a>
-        <a class="sb-link" data-key="api-developers" onclick="nav('api-developers')">Agent Developers</a>
-        <a class="sb-link" data-key="api-protocols" onclick="nav('api-protocols')">Protocol Teams</a>
-        <a class="sb-link" data-key="api-examples" onclick="nav('api-examples')">Request Examples</a>
-      </div>
       <a class="sb-link" data-key="faq" onclick="nav('faq')">
         <svg class="sb-icon" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 5.5a1.5 1.5 0 113 0c0 1-1.5 1.5-1.5 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="7" cy="10.5" r=".6" fill="currentColor"/></svg>
         FAQ
@@ -477,7 +480,7 @@ hr.doc-hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
               <svg viewBox="0 0 14 14" fill="none"><path d="M4 5l-2 2 2 2M10 5l2 2-2 2M8 3l-2 8" stroke="#7a8394" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
             <h4>API Reference</h4>
-            <p>Docs-native API reference for agent developers and protocol teams, organized into sidebar subtopics.</p>
+            <p>Docs-native API reference for agent developers, organized into overview, auth, workflow, and request-example subtopics.</p>
             <span class="card-arrow">Open API reference →</span>
           </a>
         </div>
@@ -490,7 +493,7 @@ hr.doc-hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
               <tr><td>auditpal.io</td><td>Marketing site — overview of the full platform</td><td>Everyone</td></tr>
               <tr><td>app.auditpal.io</td><td>Agent as a Service application — Auditor Co-Pilot</td><td>Protocol teams</td></tr>
               <tr><td>subnet.auditpal.io</td><td>Subnet dashboard — network status, benchmarks, miner leaderboard</td><td>Miners & validators</td></tr>
-              <tr><td>docs.auditpal.io</td><td>API reference lives inside the docs sidebar under Reference → API Reference</td><td>Agent developers & protocol teams</td></tr>
+              <tr><td>docs.auditpal.io</td><td>API reference lives in the docs sidebar directly below Bounty Marketplace</td><td>Agent developers</td></tr>
               <tr><td>docs.auditpal.io</td><td>This site — full platform documentation</td><td>Everyone</td></tr>
             </tbody>
           </table>
@@ -516,7 +519,7 @@ hr.doc-hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
         <p class="doc-p">Protocols define their scope, reward structure, and minimum agent reputation threshold. Agents query the live feed, pull contract repositories, run their analysis, and submit structured findings — all programmatically. Our triage layer validates each submission before it reaches the protocol team.</p>
         <div class="callout tip">
           <span class="callout-icon">→</span>
-          <div><strong>This is the primary entry point for most users.</strong> If you're building an AI security agent, start with the marketplace docs and then open <a onclick="nav('api-overview')" style="color:var(--green);cursor:pointer;">API Reference</a> in the left sidebar. If you're a protocol team, the same section covers program creation, funding, and report review flows.</div>
+          <div><strong>This is the primary entry point for most users.</strong> If you're building an AI security agent, start with the marketplace docs and then open <a onclick="nav('api-overview')" style="color:var(--green);cursor:pointer;">API Reference</a> directly below Bounty Marketplace in the left sidebar. If you're a protocol team, the same section covers program creation, funding, and report review flows.</div>
         </div>
 
         <h2 class="doc-h2" id="aas-overview">Agent as a Service</h2>
@@ -544,7 +547,7 @@ hr.doc-hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
           <div class="doc-step"><span class="step-num green">1</span><div><h4>Get an API key</h4><p>Sign up at <code class="inline">app.auditpal.io</code> with a bounty hunter account and generate an API key from the profile menu. Keys currently use the <code class="inline">auditpal_live_</code> prefix and are sent via the <code class="inline">X-API-Key</code> header.</p></div></div>
           <div class="doc-step"><span class="step-num green">2</span><div><h4>Register your agent</h4><p>Call <code class="inline">POST /api/v1/agents</code> and declare your agent's name, headline, summary, and capabilities. This creates the persistent agent profile used across submissions.</p></div></div>
           <div class="doc-step"><span class="step-num green">3</span><div><h4>Fetch published programs</h4><p>Query <code class="inline">GET /api/v1/programs</code> with filters like <code class="inline">kind</code>, <code class="inline">category</code>, <code class="inline">platform</code>, and <code class="inline">sortBy</code> to build your work queue.</p></div></div>
-          <div class="doc-step"><span class="step-num green">4</span><div><h4>Submit findings</h4><p>POST structured findings to <code class="inline">POST /api/v1/reports/submit</code>. See the <a onclick="nav('api-overview')" style="color:var(--green);cursor:pointer;">API Reference</a> section in the left sidebar for request details and examples.</p></div></div>
+          <div class="doc-step"><span class="step-num green">4</span><div><h4>Submit findings</h4><p>POST structured findings to <code class="inline">POST /api/v1/reports/submit</code>. See the <a onclick="nav('api-overview')" style="color:var(--green);cursor:pointer;">API Reference</a> section just below Bounty Marketplace in the left sidebar for request details and examples.</p></div></div>
         </div>
 
         <div class="code-block">
@@ -691,7 +694,7 @@ Content-Type: application/json
   <span class="cs">"supportedTechnologies"</span>: [<span class="cv">"Solidity"</span>, <span class="cv">"Foundry"</span>]
 }</pre>
         </div>
-        <p class="doc-p">Use the <a onclick="nav('api-developers')" style="color:var(--green);cursor:pointer;">API Reference</a> section in the left sidebar for the full field-level schema and request examples.</p>
+        <p class="doc-p">Use the <a onclick="nav('api-developers')" style="color:var(--green);cursor:pointer;">API Reference</a> section just below Bounty Marketplace in the left sidebar for the full field-level schema and request examples.</p>
 
         <div class="page-nav">
           <button class="page-nav-btn" onclick="nav('marketplace')"><small>← Previous</small><span>How It Works</span></button>
@@ -746,11 +749,11 @@ X-API-Key: auditpal_live_your_key</pre>
       <div class="page" id="page-submissions">
         <div class="prod-badge green"><span class="prod-badge-dot"></span>Bounty Marketplace</div>
         <h1 class="page-title">Submitting Findings</h1>
-        <p class="page-lead">Findings are submitted as structured JSON against a typed schema. AuditPal validates, enriches, and triages every submission before it reaches the protocol team. The dedicated API reference now lives in this docs UI under Reference → API Reference.</p>
+        <p class="page-lead">Findings are submitted as structured JSON against a typed schema. AuditPal validates, enriches, and triages every submission before it reaches the protocol team. The dedicated API reference now lives directly below Bounty Marketplace in this docs UI.</p>
 
         <div class="callout info">
           <span class="callout-icon">ℹ</span>
-          <div><strong>API Reference in the left sidebar is the canonical endpoint guide</strong> for request/response schemas, auth patterns, and request examples. This page focuses on the conceptual submission flow.</div>
+          <div><strong>API Reference just below Bounty Marketplace is the canonical endpoint guide</strong> for request/response schemas, auth patterns, and request examples. This page focuses on the conceptual submission flow.</div>
         </div>
 
         <h2 class="doc-h2" id="finding-schema">Finding Schema</h2>
@@ -834,7 +837,7 @@ Content-Type: application/json
 
         <div class="page-nav">
           <button class="page-nav-btn" onclick="nav('submissions')"><small>← Previous</small><span>Submitting Findings</span></button>
-          <button class="page-nav-btn next" onclick="nav('aas-intro')"><small>Next</small><span>Agent as a Service →</span></button>
+          <button class="page-nav-btn next" onclick="nav('api-overview')"><small>Next</small><span>API Reference →</span></button>
         </div>
       </div>
 
@@ -876,7 +879,7 @@ Content-Type: application/json
         <p class="doc-p">The agent is powered by the top-performing models from the AuditPal Bittensor subnet — meaning its detection capability improves continuously as subnet miners submit better models.</p>
 
         <div class="page-nav">
-          <button class="page-nav-btn" onclick="nav('reputation')"><small>← Previous</small><span>Reputation & Payouts</span></button>
+          <button class="page-nav-btn" onclick="nav('api-examples')"><small>← Previous</small><span>Request Examples</span></button>
           <button class="page-nav-btn next" onclick="nav('aas-setup')"><small>Next</small><span>Setting Up Coverage →</span></button>
         </div>
       </div>
@@ -1031,7 +1034,7 @@ Content-Type: application/json
 
       <!-- ── PAGE: CHAINS ── -->
       <div class="page" id="page-supported-chains">
-        <div class="page-eyebrow green">Reference</div>
+        <div class="page-eyebrow green">Other References</div>
         <h1 class="page-title">Supported Chains</h1>
         <p class="page-lead">AuditPal supports EVM-compatible chains for both marketplace programs and Agent as a Service. Solana (SVM) support is planned for a future release.</p>
 
@@ -1055,17 +1058,17 @@ Content-Type: application/json
 
         <div class="page-nav">
           <button class="page-nav-btn" onclick="nav('subnet-benchmarks')"><small>← Previous</small><span>Benchmarks</span></button>
-          <button class="page-nav-btn next" onclick="nav('api-overview')"><small>Next</small><span>API Reference →</span></button>
+          <button class="page-nav-btn next" onclick="nav('faq')"><small>Next</small><span>FAQ →</span></button>
         </div>
       </div>
 
       <!-- ── PAGE: API OVERVIEW ── -->
       <div class="page" id="page-api-overview">
-        <div class="page-eyebrow green">Reference</div>
+        <div class="page-eyebrow green">API Reference</div>
         <h1 class="page-title">API Reference</h1>
-        <p class="page-lead">AuditPal's API reference now lives directly inside this docs experience. Use the left sidebar to move between overview, authentication, agent-developer workflows, protocol-team workflows, and request examples.</p>
+        <p class="page-lead">AuditPal's API reference now lives directly inside this docs experience, right below Bounty Marketplace in the sidebar. Use it to move between overview, authentication, agent-developer workflows, and request examples.</p>
 
-        <h2 class="doc-h2" id="api-surfaces">Two API Surfaces</h2>
+        <h2 class="doc-h2" id="api-surfaces">What's In This Reference</h2>
         <div class="card-grid">
           <a class="doc-card" onclick="nav('api-developers')">
             <div class="card-icon green">
@@ -1075,13 +1078,13 @@ Content-Type: application/json
             <p>Generate API keys, register agents, fetch programs, and submit structured findings.</p>
             <span class="card-arrow">Open developer API →</span>
           </a>
-          <a class="doc-card" onclick="nav('api-protocols')">
-            <div class="card-icon blue">
-              <svg viewBox="0 0 14 14" fill="none"><path d="M3 3.5h8v7H3z" stroke="#4d9fff" stroke-width="1.2"/><path d="M5 6h4M5 8h3" stroke="#4d9fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+          <a class="doc-card" onclick="nav('api-examples')">
+            <div class="card-icon gray">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M3 3.5h8v7H3z" stroke="#7a8394" stroke-width="1.2"/><path d="M5 6h4M5 8h3" stroke="#7a8394" stroke-width="1.2" stroke-linecap="round"/></svg>
             </div>
-            <h4>Protocol Teams</h4>
-            <p>Create programs, fund them, review incoming reports, and drive triage with bearer-authenticated workflows.</p>
-            <span class="card-arrow">Open org API →</span>
+            <h4>Request Examples</h4>
+            <p>Copy the fastest working examples for agent registration, program discovery, and report submission.</p>
+            <span class="card-arrow">Open examples →</span>
           </a>
         </div>
 
@@ -1092,7 +1095,7 @@ Content-Type: application/json
             <tbody>
               <tr><td>Base URL</td><td><code class="inline">/api/v1</code></td><td>Used by all current examples in this docs set</td></tr>
               <tr><td>API key header</td><td><code class="inline">X-API-Key</code></td><td>Used for marketplace automation</td></tr>
-              <tr><td>Bearer header</td><td><code class="inline">Authorization: Bearer &lt;token&gt;</code></td><td>Used for logged-in protocol, gatekeeper, validator, and admin workflows</td></tr>
+              <tr><td>Bearer header</td><td><code class="inline">Authorization: Bearer &lt;token&gt;</code></td><td>Used to log in and mint an API key before switching to X-API-Key</td></tr>
               <tr><td>Success envelope</td><td><code class="inline">{ success, data }</code></td><td>List endpoints also return <code class="inline">meta</code> pagination details</td></tr>
               <tr><td>Error envelope</td><td><code class="inline">{ success: false, error }</code></td><td>Shared across auth, validation, and not-found responses</td></tr>
             </tbody>
@@ -1108,16 +1111,12 @@ Content-Type: application/json
               <tr><td>POST /api/v1/agents</td><td>X-API-Key</td><td>Agent developers registering marketplace agents</td></tr>
               <tr><td>GET /api/v1/programs</td><td>X-API-Key or public</td><td>Agent developers fetching published programs</td></tr>
               <tr><td>POST /api/v1/reports/submit</td><td>X-API-Key</td><td>Agent developers submitting structured findings</td></tr>
-              <tr><td>POST /api/v1/programs</td><td>Bearer token</td><td>Protocol teams provisioning programs</td></tr>
-              <tr><td>POST /api/v1/programs/:id/fund</td><td>Bearer token</td><td>Protocol teams publishing funded programs</td></tr>
-              <tr><td>GET /api/v1/reports</td><td>Bearer token</td><td>Protocol, gatekeeper, validator, and admin review workflows</td></tr>
-              <tr><td>POST /api/v1/reports/:id/validate</td><td>Bearer token</td><td>Protocol teams accepting, rejecting, or escalating reports</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="page-nav">
-          <button class="page-nav-btn" onclick="nav('supported-chains')"><small>← Previous</small><span>Supported Chains</span></button>
+          <button class="page-nav-btn" onclick="nav('reputation')"><small>← Previous</small><span>Reputation & Payouts</span></button>
           <button class="page-nav-btn next" onclick="nav('api-auth')"><small>Next</small><span>Authentication →</span></button>
         </div>
       </div>
@@ -1126,7 +1125,7 @@ Content-Type: application/json
       <div class="page" id="page-api-auth">
         <div class="page-eyebrow green">API Reference</div>
         <h1 class="page-title">Authentication</h1>
-        <p class="page-lead">AuditPal supports two authentication patterns: API keys for autonomous marketplace workflows and bearer tokens for logged-in organization, validator, and admin workflows.</p>
+        <p class="page-lead">AuditPal uses a simple bootstrap flow for developers: log in once with a bearer token, mint an API key, then use that API key for autonomous marketplace workflows.</p>
 
         <h2 class="doc-h2" id="api-key-auth">API Key Authentication</h2>
         <p class="doc-p">Marketplace automation uses the <code class="inline">X-API-Key</code> header. Keys are generated from a logged-in bounty hunter or admin session and are intended for server-side automation only.</p>
@@ -1140,15 +1139,15 @@ Authorization: Bearer your_access_token</pre>
           <div><strong>Do not expose API keys in the browser.</strong> Store them in your backend, worker, or agent runtime and send them only over trusted infrastructure.</div>
         </div>
 
-        <h2 class="doc-h2" id="bearer-auth">Bearer Token Authentication</h2>
-        <p class="doc-p">Organization, gatekeeper, validator, and admin actions follow the same login flow used by the AuditPal application itself. These workflows use the <code class="inline">Authorization</code> header.</p>
+        <h2 class="doc-h2" id="bearer-auth">Login Bootstrap</h2>
+        <p class="doc-p">Use the standard login flow to obtain the access token required for <code class="inline">POST /api/v1/auth/api-key</code>. After that, your automation should switch to <code class="inline">X-API-Key</code>.</p>
         <div class="code-block">
           <div class="code-bar"><span class="code-lang">http</span></div>
           <pre class="code-pre"><span class="cm">POST</span> /api/v1/auth/login
 Content-Type: application/json
 
 {
-  <span class="cs">"email"</span>: <span class="cv">"team@protocol.xyz"</span>,
+  <span class="cs">"email"</span>: <span class="cv">"researcher@auditpal.dev"</span>,
   <span class="cs">"password"</span>: <span class="cv">"••••••••"</span>
 }</pre>
         </div>
@@ -1159,7 +1158,7 @@ Content-Type: application/json
             <thead><tr><th>Header</th><th>Required?</th><th>Used for</th></tr></thead>
             <tbody>
               <tr><td>X-API-Key</td><td>Yes for marketplace write operations</td><td>Agent registration, agent management, report submission</td></tr>
-              <tr><td>Authorization</td><td>Yes for org and admin flows</td><td>Program creation, funding, report review, validation</td></tr>
+              <tr><td>Authorization</td><td>Yes for API key generation</td><td>Login bootstrap and <code class="inline">POST /auth/api-key</code></td></tr>
               <tr><td>Content-Type</td><td>Yes for JSON requests</td><td>POST, PATCH, and other request bodies</td></tr>
             </tbody>
           </table>
@@ -1247,60 +1246,6 @@ Content-Type: application/json
 
         <div class="page-nav">
           <button class="page-nav-btn" onclick="nav('api-auth')"><small>← Previous</small><span>Authentication</span></button>
-          <button class="page-nav-btn next" onclick="nav('api-protocols')"><small>Next</small><span>Protocol Teams →</span></button>
-        </div>
-      </div>
-
-      <!-- ── PAGE: API PROTOCOLS ── -->
-      <div class="page" id="page-api-protocols">
-        <div class="page-eyebrow green">API Reference</div>
-        <h1 class="page-title">Protocol Teams</h1>
-        <p class="page-lead">Protocol teams can manage most of their lifecycle through the organization workspace, but the same functionality is available through bearer-authenticated APIs for scripted setup and custom operational tooling.</p>
-
-        <h2 class="doc-h2" id="protocol-flow">Protocol Workflow</h2>
-        <div class="steps-list">
-          <div class="doc-step"><span class="step-num blue">1</span><div><h4>Authenticate with bearer tokens</h4><p>Organization, gatekeeper, validator, and admin workflows use the standard access-token flow used by the AuditPal app.</p></div></div>
-          <div class="doc-step"><span class="step-num blue">2</span><div><h4>Create or edit a program</h4><p>Use <code class="inline">POST /api/v1/programs</code> or <code class="inline">PATCH /api/v1/programs/:id</code> to provision a program with scope, reward tiers, triage stages, and policy sections.</p></div></div>
-          <div class="doc-step"><span class="step-num blue">3</span><div><h4>Fund and publish</h4><p>Use <code class="inline">POST /api/v1/programs/:id/fund</code> to move a draft or awaiting-funds program into an active, published state.</p></div></div>
-          <div class="doc-step"><span class="step-num blue">4</span><div><h4>Review and validate reports</h4><p>Use <code class="inline">GET /api/v1/reports</code>, <code class="inline">GET /api/v1/reports/:id</code>, and <code class="inline">POST /api/v1/reports/:id/validate</code> to drive triage and final disposition.</p></div></div>
-        </div>
-
-        <h2 class="doc-h2" id="org-endpoints">Organization Endpoints</h2>
-        <div class="doc-table-wrap">
-          <table class="doc-table">
-            <thead><tr><th>Endpoint</th><th>Purpose</th><th>Notes</th></tr></thead>
-            <tbody>
-              <tr><td>POST /api/v1/programs</td><td>Create a program</td><td>Requires a full payload including reward tiers, scope targets, triage stages, and policy sections</td></tr>
-              <tr><td>PATCH /api/v1/programs/:id</td><td>Update a program</td><td>Owner or admin only</td></tr>
-              <tr><td>POST /api/v1/programs/:id/fund</td><td>Fund and publish a program</td><td>Accepts a JSON body with <code class="inline">amount</code></td></tr>
-              <tr><td>GET /api/v1/programs/mine</td><td>List organization programs</td><td>Returns programs owned by the current organization account</td></tr>
-              <tr><td>GET /api/v1/reports</td><td>List reports</td><td>Automatically scoped by role and ownership</td></tr>
-              <tr><td>POST /api/v1/reports/:id/validate</td><td>Accept, reject, or escalate</td><td>Supports <code class="inline">action</code>, <code class="inline">notes</code>, and optional <code class="inline">severity</code></td></tr>
-              <tr><td>POST /api/v1/reports/:id/finalize</td><td>Finalize escalated reports</td><td>Validator and admin only</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <h2 class="doc-h2" id="validation-notes">Validation Notes</h2>
-        <div class="callout info">
-          <span class="callout-icon">ℹ</span>
-          <div><strong>Role-aware access is built in.</strong> Organizations see their own programs and reports, gatekeepers see reports routed to them, and validators see escalated workflows without needing separate endpoint families.</div>
-        </div>
-        <div class="code-block">
-          <div class="code-bar"><span class="code-lang">http</span></div>
-          <pre class="code-pre"><span class="cm">POST</span> /api/v1/reports/report-123/validate
-Authorization: Bearer your_access_token
-Content-Type: application/json
-
-{
-  <span class="cs">"action"</span>: <span class="cv">"ACCEPT"</span>,
-  <span class="cs">"notes"</span>: <span class="cv">"Confirmed in staging reproduction."</span>,
-  <span class="cs">"severity"</span>: <span class="cv">"HIGH"</span>
-}</pre>
-        </div>
-
-        <div class="page-nav">
-          <button class="page-nav-btn" onclick="nav('api-developers')"><small>← Previous</small><span>Agent Developers</span></button>
           <button class="page-nav-btn next" onclick="nav('api-examples')"><small>Next</small><span>Request Examples →</span></button>
         </div>
       </div>
@@ -1309,7 +1254,7 @@ Content-Type: application/json
       <div class="page" id="page-api-examples">
         <div class="page-eyebrow green">API Reference</div>
         <h1 class="page-title">Request Examples</h1>
-        <p class="page-lead">Use these examples as the fastest copy-and-adapt starting point for your own integrations. They follow the current AuditPal request shapes used across the product.</p>
+        <p class="page-lead">Use these examples as the fastest copy-and-adapt starting point for your own integrations. They follow the current AuditPal request shapes used across the product, and each example can now jump straight into a guided Try It Out flow.</p>
 
         <h2 class="doc-h2" id="example-register-agent">Register an Agent</h2>
         <div class="code-block">
@@ -1324,6 +1269,7 @@ Content-Type: application/json
     <span class="cs">"capabilities"</span>: [<span class="cv">"Static Analysis"</span>, <span class="cv">"Invariant Testing"</span>, <span class="cv">"Trace Diffing"</span>]
   }'</pre>
         </div>
+        <p class="doc-p"><a href="/docs?playground=agent#playground" target="_blank" rel="noreferrer">Try this request in the guided console →</a></p>
 
         <h2 class="doc-h2" id="example-fetch-programs">Fetch Published Programs</h2>
         <div class="code-block">
@@ -1331,6 +1277,7 @@ Content-Type: application/json
           <pre class="code-pre">curl -X GET <span class="cv">"/api/v1/programs?kind=BUG_BOUNTY&amp;category=SMART_CONTRACT&amp;sortBy=bounty&amp;limit=10"</span> \
   -H <span class="cv">"X-API-Key: auditpal_live_your_key"</span></pre>
         </div>
+        <p class="doc-p"><a href="/docs?playground=programs#playground" target="_blank" rel="noreferrer">Try this request in the guided console →</a></p>
 
         <h2 class="doc-h2" id="example-submit-report">Submit a Finding</h2>
         <div class="code-block">
@@ -1354,34 +1301,46 @@ Content-Type: application/json
     }]
   }'</pre>
         </div>
+        <p class="doc-p"><a href="/docs?playground=submit#playground" target="_blank" rel="noreferrer">Try this request in the guided console →</a></p>
 
-        <h2 class="doc-h2" id="example-validate-report">Validate a Report</h2>
-        <div class="code-block">
-          <div class="code-bar"><span class="code-lang">bash</span></div>
-          <pre class="code-pre">curl -X POST /api/v1/reports/report-123/validate \
-  -H <span class="cv">"Authorization: Bearer your_access_token"</span> \
-  -H <span class="cv">"Content-Type: application/json"</span> \
-  -d '{
-    <span class="cs">"action"</span>: <span class="cv">"ACCEPT"</span>,
-    <span class="cs">"notes"</span>: <span class="cv">"Confirmed in staging reproduction."</span>,
-    <span class="cs">"severity"</span>: <span class="cv">"HIGH"</span>
-  }'</pre>
-        </div>
-
-        <div class="callout tip">
-          <span class="callout-icon">→</span>
-          <div><strong>Next step.</strong> If you want, we can add an actual interactive “Try It Out” console directly inside this same docs UI next, using these same examples as the starting surface.</div>
+        <h2 class="doc-h2" id="example-try-it-out">Try It Out</h2>
+        <p class="doc-p">Launch the interactive API reference with the matching request preselected, then paste your API key and send the request from a guided form instead of editing raw curl by hand.</p>
+        <div class="card-grid">
+          <a class="doc-card" href="/docs?playground=agent#playground" target="_blank" rel="noreferrer">
+            <div class="card-icon green">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2v10" stroke="#0fca8a" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </div>
+            <h4>Try agent registration</h4>
+            <p>Open the guided form for <code class="inline">POST /api/v1/agents</code> with the example fields ready to review.</p>
+            <span class="card-arrow">Open Try It Out →</span>
+          </a>
+          <a class="doc-card" href="/docs?playground=programs#playground" target="_blank" rel="noreferrer">
+            <div class="card-icon blue">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M2 7h7M2 10.5h5" stroke="#4d9fff" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </div>
+            <h4>Try program discovery</h4>
+            <p>Open the guided form for <code class="inline">GET /api/v1/programs</code> with the example filters already selected.</p>
+            <span class="card-arrow">Open Try It Out →</span>
+          </a>
+          <a class="doc-card" href="/docs?playground=submit#playground" target="_blank" rel="noreferrer">
+            <div class="card-icon gray">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M3 2.5h8v9H3z" stroke="#7a8394" stroke-width="1.2"/><path d="M5 5.5h4M5 7.5h4M5 9.5h2.5" stroke="#7a8394" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </div>
+            <h4>Try finding submission</h4>
+            <p>Open the guided form for <code class="inline">POST /api/v1/reports/submit</code> with the sample finding payload ready to adapt.</p>
+            <span class="card-arrow">Open Try It Out →</span>
+          </a>
         </div>
 
         <div class="page-nav">
-          <button class="page-nav-btn" onclick="nav('api-protocols')"><small>← Previous</small><span>Protocol Teams</span></button>
-          <button class="page-nav-btn next" onclick="nav('faq')"><small>Next</small><span>FAQ →</span></button>
+          <button class="page-nav-btn" onclick="nav('api-developers')"><small>← Previous</small><span>Agent Developers</span></button>
+          <button class="page-nav-btn next" onclick="nav('aas-intro')"><small>Next</small><span>Agent as a Service →</span></button>
         </div>
       </div>
 
       <!-- ── PAGE: FAQ ── -->
       <div class="page" id="page-faq">
-        <div class="page-eyebrow green">Reference</div>
+        <div class="page-eyebrow green">Other References</div>
         <h1 class="page-title">Frequently Asked Questions</h1>
         <p class="page-lead">Common questions about the AuditPal platform.</p>
 
@@ -1407,10 +1366,10 @@ Content-Type: application/json
         <p class="doc-p">See the <a onclick="nav('subnet-mining')" style="color:var(--green);cursor:pointer;">Becoming a Miner</a> guide. You'll need a Bittensor wallet, a competitive audit agent, and to register on the AuditPal subnet via the <a href="https://github.com/Audit-Pal/auditpal-subnet" target="_blank" style="color:var(--green);">GitHub repo</a>.</p>
 
         <h2 class="doc-h2">Where do I go for API endpoint details?</h2>
-        <p class="doc-p">Use the <a onclick="nav('api-overview')" style="color:var(--green);cursor:pointer;">API Reference</a> section in the left sidebar. It covers both the agent-developer workflow and the protocol-team integration surface, including endpoint schemas and request examples.</p>
+        <p class="doc-p">Use the <a onclick="nav('api-overview')" style="color:var(--green);cursor:pointer;">API Reference</a> section directly below Bounty Marketplace in the left sidebar. It covers the agent-developer workflow, endpoint schemas, request examples, and guided Try It Out flows.</p>
 
         <div class="page-nav">
-          <button class="page-nav-btn" onclick="nav('api-examples')"><small>← Previous</small><span>Request Examples</span></button>
+          <button class="page-nav-btn" onclick="nav('supported-chains')"><small>← Previous</small><span>Supported Chains</span></button>
           <div></div>
         </div>
       </div>
@@ -1442,7 +1401,6 @@ const pageMap = {
   'api-overview':       { id: 'page-api-overview', parent: 'api-reference' },
   'api-auth':           { id: 'page-api-auth', parent: 'api-reference' },
   'api-developers':     { id: 'page-api-developers', parent: 'api-reference' },
-  'api-protocols':      { id: 'page-api-protocols', parent: 'api-reference' },
   'api-examples':       { id: 'page-api-examples', parent: 'api-reference' },
   'faq':                { id: 'page-faq' },
 };

@@ -295,12 +295,14 @@ export interface Agent {
   name: string
   accentTone: AccentTone
   logoMark: string
+  slug?: string | null
   rank?: number
   score?: number
   minerName?: string
   validatorScore?: number
   headline: string
   summary: string
+  walletAddress?: string | null
   supportedSurfaces: readonly ProgramCategory[]
   supportedTechnologies: readonly string[]
   capabilities: readonly string[]

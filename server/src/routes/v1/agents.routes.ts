@@ -57,6 +57,9 @@ agentRoutes.get('/mine', authMiddleware, async (c) => {
             id: true, slug: true, name: true, headline: true, summary: true,
             logoMark: true, accentTone: true, capabilities: true,
             guardrails: true, supportedSurfaces: true, supportedTechnologies: true,
+            walletAddress: true,
+            tools: true,
+            runtimeFlow: { orderBy: { order: 'asc' as const } },
         },
     })
     return successResponse(c, agents)
@@ -67,6 +70,10 @@ agentRoutes.post('/', authMiddleware, requireRole('BOUNTY_HUNTER', 'ADMIN'), zVa
     const { sub } = c.get('user')
     const body = c.req.valid('json') as any
     const slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    const owner = await prisma.user.findUnique({
+        where: { id: sub },
+        select: { walletAddress: true },
+    })
 
     const agent = await prisma.agent.create({
         data: {
@@ -81,6 +88,9 @@ agentRoutes.post('/', authMiddleware, requireRole('BOUNTY_HUNTER', 'ADMIN'), zVa
             supportedSurfaces: body.supportedSurfaces ?? [],
             supportedTechnologies: body.supportedTechnologies ?? [],
             ownerId: sub,
+            walletAddress: body.walletAddress !== undefined
+                ? (body.walletAddress.trim() || null)
+                : (owner?.walletAddress ?? null),
             logoMark: body.name.substring(0, 1).toUpperCase(),
             isActive: true,
             ...(body.tools?.length ? {
@@ -143,6 +153,9 @@ agentRoutes.patch('/:id', authMiddleware, zValidator('json', updateAgentSchema),
         where: { id },
         data: {
             ...scalarFields,
+            ...(body.walletAddress !== undefined
+                ? { walletAddress: body.walletAddress.trim() || null }
+                : {}),
             ...(tools !== undefined && {
                 tools: {
                     deleteMany: {},

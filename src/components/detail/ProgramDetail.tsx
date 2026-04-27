@@ -62,6 +62,10 @@ const accentColorMap: Record<string, string> = {
   rose: '#ff7f96',
 }
 
+const heroSurfaceClass = 'relative overflow-hidden rounded-[34px] border border-[rgba(255,255,255,0.045)] bg-[linear-gradient(145deg,rgba(13,25,34,0.48),rgba(9,16,24,0.32))] shadow-[0_12px_36px_rgba(0,0,0,0.08)] backdrop-blur-[14px]'
+const panelSurfaceClass = 'rounded-[28px] border border-[rgba(255,255,255,0.055)] bg-[linear-gradient(145deg,rgba(13,25,34,0.4),rgba(9,16,24,0.24))] shadow-[0_10px_28px_rgba(0,0,0,0.08)] backdrop-blur-[14px]'
+const insetSurfaceClass = 'rounded-[24px] border border-[rgba(255,255,255,0.05)] bg-[rgba(7,12,18,0.22)] backdrop-blur-[10px]'
+
 function normalizeTab(tab: ProgramTab): VisibleTab {
   return tab === 'scope' ? 'scope' : 'overview'
 }
@@ -386,78 +390,83 @@ export function ProgramDetail({
         ]}
       />
 
-      <section className="content-auto contain-paint border-b border-[var(--border)] pb-8">
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_260px] xl:items-start">
-          <div className="flex min-w-0 items-start gap-4 md:gap-5">
-            <div
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[18px] border border-[var(--border)] text-xl font-extrabold text-white"
-              style={{ backgroundColor: accentColorMap[program.accentTone.toLowerCase()] || '#1eba98' }}
-            >
-              {program.logoMark}
-            </div>
+      <section className={heroSurfaceClass}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(15,202,138,0.08),transparent_44%),radial-gradient(circle_at_82%_18%,rgba(77,159,255,0.06),transparent_34%)]" />
+        <div className="absolute inset-y-0 right-[18%] hidden w-px bg-[linear-gradient(180deg,transparent,rgba(255,255,255,0.035),transparent)] xl:block" />
 
-            <div className="min-w-0">
-              <p className="text-sm text-[var(--text-soft)]">{program.company}</p>
-              <h1 className="mt-2 font-['Fraunces',serif] text-[clamp(2rem,4vw,3.7rem)] font-semibold leading-none tracking-tight text-[var(--text)]">
-                {program.name}
-              </h1>
-              <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-soft)] md:text-lg">{program.tagline}</p>
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                <Badge tone="accent" className="!rounded-full !px-3 !py-1 !text-[10px] !tracking-[0.18em]">
-                  {formatEnum(program.kind)}
-                </Badge>
-                <Badge tone="success" className="!rounded-full !px-3 !py-1 !text-[10px] !tracking-[0.18em]">
-                  {liveLabel}
-                </Badge>
-                <Badge tone="soft" className="!rounded-full !px-3 !py-1 !text-[10px] !tracking-[0.18em]">
-                  {program.code}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          <div className="content-auto contain-paint border-t border-[var(--border)] pt-4 xl:border-t-0 xl:text-right">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Quick facts</p>
-            <div className="mt-3 space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-4 xl:justify-end">
-                <span className="text-[var(--text-soft)] whitespace-nowrap">Started</span>
-                <span className="font-medium text-[var(--text)] whitespace-nowrap">{formatDate(program.startedAt)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4 xl:justify-end">
-                <span className="text-[var(--text-soft)] whitespace-nowrap">Response SLA</span>
-                <span className="font-medium text-[var(--text)]">{program.responseSla}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4 xl:justify-end">
-                <span className="text-[var(--text-soft)] whitespace-nowrap">Payout window</span>
-                <span className="font-medium text-[var(--text)]">{program.payoutWindow}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <nav className="border-b border-[var(--border)]">
-        <div className="flex gap-6 overflow-x-auto">
-          {tabMeta.map((tab) => {
-            const isActive = activeTab === tab.id
-
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={[
-                  'border-b-2 px-1 pb-3 text-sm font-semibold transition-colors',
-                  isActive
-                    ? 'border-[var(--accent)] text-[var(--text)]'
-                    : 'border-transparent text-[var(--text-soft)] hover:text-[var(--text)]',
-                ].join(' ')}
+        <div className="relative border-b border-[rgba(255,255,255,0.05)] px-6 py-7 md:px-8 md:py-9 xl:px-10 xl:py-10">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
+            <div className="flex min-w-0 items-start gap-4 md:gap-5">
+              <div
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[18px] border border-[rgba(255,255,255,0.08)] text-xl font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                style={{ backgroundColor: accentColorMap[program.accentTone.toLowerCase()] || '#1eba98' }}
               >
-                {tab.label}
-              </button>
-            )
-          })}
+                {program.logoMark}
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-sm text-[var(--text-soft)]">{program.company}</p>
+                <h1 className="mt-2 font-['Fraunces',serif] text-[clamp(2rem,4vw,3.7rem)] font-semibold leading-none tracking-tight text-[var(--text)]">
+                  {program.name}
+                </h1>
+                <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-soft)] md:text-lg">{program.tagline}</p>
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                  <Badge tone="accent" className="!rounded-full !px-3 !py-1 !text-[10px] !tracking-[0.18em]">
+                    {formatEnum(program.kind)}
+                  </Badge>
+                  <Badge tone="success" className="!rounded-full !px-3 !py-1 !text-[10px] !tracking-[0.18em]">
+                    {liveLabel}
+                  </Badge>
+                  <Badge tone="soft" className="!rounded-full !px-3 !py-1 !text-[10px] !tracking-[0.18em]">
+                    {program.code}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${insetSurfaceClass} content-auto contain-paint p-5 xl:ml-auto xl:w-full xl:max-w-[280px]`}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Quick facts</p>
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[var(--text-soft)] whitespace-nowrap">Started</span>
+                  <span className="font-medium text-[var(--text)] whitespace-nowrap">{formatDate(program.startedAt)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[var(--text-soft)] whitespace-nowrap">Response SLA</span>
+                  <span className="font-medium text-[var(--text)] text-right">{program.responseSla}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[var(--text-soft)] whitespace-nowrap">Payout window</span>
+                  <span className="font-medium text-[var(--text)] text-right">{program.payoutWindow}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </nav>
+
+        <nav className="relative px-6 md:px-8 xl:px-10">
+          <div className="flex gap-6 overflow-x-auto">
+            {tabMeta.map((tab) => {
+              const isActive = activeTab === tab.id
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={[
+                    'border-b-2 px-1 pb-3 pt-4 text-sm font-semibold transition-colors',
+                    isActive
+                      ? 'border-[var(--accent)] text-[var(--text)]'
+                      : 'border-transparent text-[var(--text-soft)] hover:text-[var(--text)]',
+                  ].join(' ')}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+        </nav>
+      </section>
 
       <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-8">
@@ -655,7 +664,7 @@ export function ProgramDetail({
         </div>
 
         <aside className="space-y-8 xl:sticky xl:top-28 xl:self-start">
-          <section className="content-auto contain-paint border-t border-[var(--border)] pt-8 xl:border-l xl:border-t-0 xl:pl-8 xl:pt-0">
+          <section className={`${panelSurfaceClass} content-auto contain-paint p-6`}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Program summary</p>
             <p className="mt-3 text-4xl font-extrabold tracking-[-0.04em] text-[var(--text)]">{formatUsd(program.maxBountyUsd)}</p>
             <p className="mt-1 text-sm text-[var(--text-soft)]">Maximum reward in {program.payoutCurrency}</p>
@@ -694,7 +703,7 @@ export function ProgramDetail({
           </section>
 
           {latestViewerReport ? (
-            <section className="content-auto contain-paint border-t border-[var(--border)] pt-8 xl:border-l xl:pl-8 xl:pt-0">
+            <section className={`${panelSurfaceClass} content-auto contain-paint p-6`}>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-muted)]">Your latest submission</p>
               <p className="mt-4 text-lg font-semibold text-[var(--text)]">{viewerName || latestViewerReport.reporterName}</p>
               <p className="mt-1 text-sm text-[var(--text-soft)]">{latestViewerReport.humanId}</p>

@@ -135,6 +135,8 @@ model User {
   githubHandle      String?
   /// For ORGANIZATION role — the company/org name using Agent-as-a-service
   organizationName  String?
+  walletAddress     String?
+  escrowContractAddress String?
   apiKeyHash        String?        @unique
   apiKeyPreview     String?
   apiKeyCreatedAt   DateTime?
@@ -400,6 +402,7 @@ model Agent {
   supportedSurfaces      ProgramCategory[]
   isActive               Boolean             @default(true)
   ownerId                String?
+  walletAddress          String?
   createdAt              DateTime            @default(now())
   updatedAt              DateTime            @updatedAt
 

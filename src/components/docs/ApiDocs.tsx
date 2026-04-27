@@ -1,12 +1,10 @@
-import { useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
+import { useEffect, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Button } from '../common/Button'
 import { Badge } from '../common/Badge'
 import { useToast } from '../../contexts/ToastContext'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'
-
-type Audience = 'developers' | 'protocols'
 
 const developerFlow = [
   {
@@ -27,25 +25,6 @@ const developerFlow = [
   },
 ]
 
-const protocolFlow = [
-  {
-    title: 'Create an organization workspace',
-    description: 'Protocol teams authenticate with the normal bearer token flow and manage their programs from the organization dashboard or backend automation.',
-  },
-  {
-    title: 'Draft or create a program',
-    description: 'POST /programs with scope, reward tiers, triage stages, and policy sections when you want to provision programs programmatically.',
-  },
-  {
-    title: 'Fund and publish',
-    description: 'POST /programs/:id/fund moves a draft or awaiting-funds program into an active, published state.',
-  },
-  {
-    title: 'Review and validate reports',
-    description: 'Use GET /reports, POST /reports/:id/validate, and validator actions to move findings through triage and resolution.',
-  },
-]
-
 const sharedConventions = [
   {
     title: 'Base URL',
@@ -56,8 +35,8 @@ const sharedConventions = [
     body: 'Mutating and detail endpoints respond with { success, data }. List endpoints also include a meta object with total, page, limit, and totalPages.',
   },
   {
-    title: 'Auth split',
-    body: 'Agent developers use X-API-Key on marketplace automation routes. Protocol teams use Authorization: Bearer <accessToken> on organization workflows.',
+    title: 'Auth flow',
+    body: 'Use Authorization: Bearer <accessToken> only to mint an API key. After that, your automation should send X-API-Key on marketplace routes.',
   },
 ]
 
@@ -67,7 +46,7 @@ const authExamples = {
   bearer: `curl -X POST ${API_BASE_URL}/auth/login \\
   -H "Content-Type: application/json" \\
   -d '{
-    "email": "team@protocol.xyz",
+    "email": "researcher@auditpal.dev",
     "password": "••••••••"
   }'`,
 }
@@ -123,37 +102,6 @@ const developerEndpoints = [
   },
 ]
 
-const protocolEndpoints = [
-  {
-    method: 'POST',
-    tone: 'success' as const,
-    path: '/programs',
-    auth: 'Bearer token',
-    summary: 'Create a program with reward tiers, scope targets, triage stages, and policy sections.',
-  },
-  {
-    method: 'POST',
-    tone: 'success' as const,
-    path: '/programs/:id/fund',
-    auth: 'Bearer token',
-    summary: 'Activate and publish a draft or awaiting-funds program by attaching the funding amount.',
-  },
-  {
-    method: 'GET',
-    tone: 'accent' as const,
-    path: '/reports?programId=...',
-    auth: 'Bearer token',
-    summary: 'List incoming reports for the current organization, gatekeeper, validator, or admin role.',
-  },
-  {
-    method: 'POST',
-    tone: 'success' as const,
-    path: '/reports/:id/validate',
-    auth: 'Bearer token',
-    summary: 'Accept, reject, or escalate a report and optionally override severity or add notes.',
-  },
-]
-
 const agentFieldRows = [
   ['name', 'string', 'Agent display name, 2 to 50 chars'],
   ['headline', 'string', 'Short value proposition, 5 to 100 chars'],
@@ -180,13 +128,6 @@ const reportFieldRows = [
   ['vulnerabilities', 'Vulnerability[]', 'At least one vulnerability with title, severity, target, summary, impact, and proof'],
   ['graphContext', 'object', 'Optional semantic context for affected asset, component, attack vector, references, and tags'],
   ['knowledgeGraph', 'object', 'Optional entities and relations to seed downstream graph workflows'],
-]
-
-const orgFieldRows = [
-  ['Program creation', 'Bearer token', 'Organization and admin roles can create programs with the same schema used by the org workspace. Required groups include rewardTiers, scopeTargets, triageStages, and policySections.'],
-  ['Program funding', 'Bearer token', 'POST /programs/:id/fund accepts { amount } and publishes the program when status is DRAFT or AWAITING_FUNDS.'],
-  ['Report review', 'Bearer token', 'GET /reports and GET /reports/:id scope results to the current organization, gatekeeper, validator, or admin.'],
-  ['Validation', 'Bearer token', 'POST /reports/:id/validate accepts action, notes, and optional severity. Validator-only finalization happens on POST /reports/:id/finalize.'],
 ]
 
 const createAgentCurl = `curl -X POST ${API_BASE_URL}/agents \\
@@ -231,31 +172,6 @@ const submitReportCurl = `curl -X POST ${API_BASE_URL}/reports/submit \\
       "tags": ["reentrancy", "low-level-call"]
     }
   }'`
-
-const createProgramCurl = `curl -X POST ${API_BASE_URL}/programs \\
-  -H "Authorization: Bearer $ACCESS_TOKEN" \\
-  -H "Content-Type: application/json" \\
-  -d '{ ...full program payload... }'`
-
-const fundProgramCurl = `curl -X POST ${API_BASE_URL}/programs/program-evm-001/fund \\
-  -H "Authorization: Bearer $ACCESS_TOKEN" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "amount": 50000
-  }'`
-
-const validateReportCurl = `curl -X POST ${API_BASE_URL}/reports/report-123/validate \\
-  -H "Authorization: Bearer $ACCESS_TOKEN" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "action": "ACCEPT",
-    "notes": "Confirmed in staging reproduction.",
-    "severity": "HIGH"
-  }'`
-
-function cx(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(' ')
-}
 
 function DocTable({ rows, headers }: { rows: string[][]; headers: [string, string, string] }) {
   return (
@@ -332,6 +248,12 @@ async function formatResponse(res: Response) {
 }
 
 type PlaygroundKind = 'agent' | 'programs' | 'submit'
+
+const playgroundKinds: readonly PlaygroundKind[] = ['agent', 'programs', 'submit']
+
+function isPlaygroundKind(value: string | null): value is PlaygroundKind {
+  return Boolean(value && playgroundKinds.includes(value as PlaygroundKind))
+}
 
 interface AgentPlaygroundForm {
   name: string
@@ -613,7 +535,6 @@ function PlaygroundModal({
 
 export function ApiDocs() {
   const { showToast } = useToast()
-  const [audience, setAudience] = useState<Audience>('developers')
   const [activePlayground, setActivePlayground] = useState<PlaygroundKind | null>(null)
   const [apiKey, setApiKey] = useState('')
   const [agentForm, setAgentForm] = useState<AgentPlaygroundForm>(defaultAgentForm)
@@ -630,6 +551,17 @@ export function ApiDocs() {
   const agentPayload = JSON.stringify(buildAgentPayload(agentForm), null, 2)
   const programQuery = buildProgramsQuery(programsForm)
   const submitPayload = JSON.stringify(buildSubmitPayload(submitForm), null, 2)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const requestedPlayground = params.get('playground')
+    if (!isPlaygroundKind(requestedPlayground)) return
+
+    setActivePlayground(requestedPlayground)
+    window.requestAnimationFrame(() => {
+      document.getElementById('playground')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [])
 
   const copyText = async (label: string, value: string) => {
     try {
@@ -722,31 +654,16 @@ export function ApiDocs() {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">Developer Portal</p>
             <h1 className="mt-4 max-w-3xl font-serif text-5xl leading-tight text-[var(--text)] md:text-6xl">
-              AuditPal API reference for agent builders and protocol teams
+              AuditPal API reference for agent builders
             </h1>
             <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--text-soft)]">
-              AuditPal has two integration surfaces: API-key driven marketplace automation for researchers and agents, plus bearer-authenticated workspace APIs for protocol teams who want to launch programs, fund them, and review findings programmatically.
+              Generate an API key, register your agent, pull live programs, and submit structured findings through the marketplace API without leaving this reference.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Badge tone="success">Try It Out Ready</Badge>
               <Badge tone="accent">X-API-Key</Badge>
-              <Badge tone="soft">Bearer Tokens</Badge>
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button
-                variant={audience === 'developers' ? 'primary' : 'outline'}
-                onClick={() => setAudience('developers')}
-              >
-                Agent Developers
-              </Button>
-              <Button
-                variant={audience === 'protocols' ? 'primary' : 'outline'}
-                onClick={() => setAudience('protocols')}
-              >
-                Protocol Teams
-              </Button>
+              <Badge tone="soft">Marketplace API</Badge>
             </div>
           </div>
 
@@ -775,8 +692,7 @@ export function ApiDocs() {
               <a href="#overview" className="rounded-full px-3 py-2 text-[var(--text-soft)] transition hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text)]">Overview</a>
               <a href="#authentication" className="rounded-full px-3 py-2 text-[var(--text-soft)] transition hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text)]">Authentication</a>
               <a href="#developers" className="rounded-full px-3 py-2 text-[var(--text-soft)] transition hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text)]">Agent Developers</a>
-              <a href="#protocols" className="rounded-full px-3 py-2 text-[var(--text-soft)] transition hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text)]">Protocol Teams</a>
-              <a href="#playground" className="rounded-full px-3 py-2 text-[var(--text-soft)] transition hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text)]">Live Playground</a>
+              <a href="#playground" className="rounded-full px-3 py-2 text-[var(--text-soft)] transition hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text)]">Try It Out</a>
             </div>
           </div>
         </aside>
@@ -784,36 +700,16 @@ export function ApiDocs() {
         <div className="space-y-8">
           <section id="overview" className="rounded-[32px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-8">
             <div className="flex flex-wrap items-center gap-3">
-              <Badge tone="new">Two Audiences</Badge>
-              <p className="text-sm text-[var(--text-muted)]">Choose the workflow that matches how you use AuditPal.</p>
+              <Badge tone="new">Developer Workflow</Badge>
+              <p className="text-sm text-[var(--text-muted)]">Everything here is focused on building agent-side marketplace automation.</p>
             </div>
 
-            <div className="mt-6 grid gap-5 lg:grid-cols-2">
-              <div className={cx(
-                'rounded-[26px] border p-6 transition',
-                audience === 'developers'
-                  ? 'border-[rgba(56,217,178,0.28)] bg-[rgba(10,33,29,0.72)]'
-                  : 'border-[var(--border)] bg-[rgba(7,14,20,0.72)]',
-              )}>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Agent developers</p>
-                <h2 className="mt-3 font-serif text-3xl text-[var(--text)]">Build autonomous bounty workflows</h2>
-                <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">
-                  Register agents, pull published programs, and submit structured findings using API keys. This path is ideal for research bots and platform-side automation.
-                </p>
-              </div>
-
-              <div className={cx(
-                'rounded-[26px] border p-6 transition',
-                audience === 'protocols'
-                  ? 'border-[rgba(56,217,178,0.28)] bg-[rgba(10,33,29,0.72)]'
-                  : 'border-[var(--border)] bg-[rgba(7,14,20,0.72)]',
-              )}>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Protocol teams</p>
-                <h2 className="mt-3 font-serif text-3xl text-[var(--text)]">Launch and manage programs</h2>
-                <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">
-                  Use the organization workspace or bearer-authenticated APIs to create programs, fund them, and route report validation through your triage workflow.
-                </p>
-              </div>
+            <div className="mt-6 rounded-[26px] border border-[rgba(56,217,178,0.28)] bg-[rgba(10,33,29,0.72)] p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Agent developers</p>
+              <h2 className="mt-3 font-serif text-3xl text-[var(--text)]">Build autonomous bounty workflows</h2>
+              <p className="mt-4 max-w-4xl text-sm leading-7 text-[var(--text-soft)]">
+                Register agents, pull published programs, and submit structured findings using API keys. This reference is optimized for research bots, agent runtimes, and backend automations participating in the marketplace.
+              </p>
             </div>
           </section>
 
@@ -833,11 +729,11 @@ export function ApiDocs() {
 
             <div className="rounded-[30px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-8">
               <div className="flex items-center gap-3">
-                <Badge tone="soft">Protocol Auth</Badge>
-                <h2 className="font-serif text-2xl text-[var(--text)]">Bearer token flow</h2>
+                <Badge tone="soft">Bootstrap</Badge>
+                <h2 className="font-serif text-2xl text-[var(--text)]">Login flow</h2>
               </div>
               <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">
-                Organization, gatekeeper, validator, and admin workflows use standard access tokens in the <code className="text-[var(--accent-strong)]">Authorization</code> header. That is the same auth model the app uses internally.
+                Use a normal login session to obtain the access token required for <code className="text-[var(--accent-strong)]">POST /auth/api-key</code>. Once your key is minted, agent automation should switch to <code className="text-[var(--accent-strong)]">X-API-Key</code>.
               </p>
               <div className="mt-5">
                 <CodePanel label="Login example" code={authExamples.bearer} onCopy={() => copyText('Bearer login curl example', authExamples.bearer)} />
@@ -908,65 +804,11 @@ export function ApiDocs() {
             </div>
           </section>
 
-          <section id="protocols" className="rounded-[32px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-8">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge tone="accent">Protocol Teams</Badge>
-              <h2 className="font-serif text-3xl text-[var(--text)]">Organization and triage workflows</h2>
-            </div>
-            <p className="mt-3 max-w-4xl text-sm leading-7 text-[var(--text-soft)]">
-              Protocol teams can run entirely through the app, but the underlying API is available when you want internal tooling, provisioning scripts, or handoffs into your own operational systems.
-            </p>
-
-            <div className="mt-4 rounded-[24px] border border-[rgba(77,159,255,0.18)] bg-[rgba(77,159,255,0.08)] p-5 text-sm leading-7 text-[var(--text-soft)]">
-              The organization dashboard is still the fastest way to launch a program because the create-program schema is intentionally detailed. The API mirrors that same workflow for scripted setup and integrations.
-            </div>
-
-            <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              {protocolFlow.map((step, index) => (
-                <div key={step.title} className="rounded-[24px] border border-[var(--border)] bg-[rgba(255,255,255,0.02)] p-5">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(77,159,255,0.24)] bg-[rgba(77,159,255,0.12)] font-mono text-xs text-[#8dc0ff]">
-                      0{index + 1}
-                    </span>
-                    <h3 className="text-base font-semibold text-[var(--text)]">{step.title}</h3>
-                  </div>
-                  <p className="mt-3 text-sm leading-7 text-[var(--text-soft)]">{step.description}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 grid gap-5 lg:grid-cols-2">
-              {protocolEndpoints.map((endpoint) => (
-                <div key={endpoint.path} className="rounded-[24px] border border-[var(--border)] bg-[rgba(7,14,20,0.72)] p-5">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Badge tone={endpoint.tone}>{endpoint.method}</Badge>
-                    <code className="text-sm text-[var(--text)]">{endpoint.path}</code>
-                  </div>
-                  <p className="mt-3 text-sm text-[var(--text-muted)]">Auth: {endpoint.auth}</p>
-                  <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{endpoint.summary}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-[var(--text)]">Protocol-team reference notes</h3>
-              <div className="mt-4">
-                <DocTable headers={['Workflow', 'Auth', 'Notes']} rows={orgFieldRows} />
-              </div>
-            </div>
-
-            <div className="mt-8 grid gap-5 xl:grid-cols-3">
-              <CodePanel label="Create program" code={createProgramCurl} onCopy={() => copyText('Create program curl example', createProgramCurl)} />
-              <CodePanel label="Fund program" code={fundProgramCurl} onCopy={() => copyText('Fund program curl example', fundProgramCurl)} />
-              <CodePanel label="Validate report" code={validateReportCurl} onCopy={() => copyText('Validate report curl example', validateReportCurl)} />
-            </div>
-          </section>
-
           <section id="playground" className="space-y-6">
             <div className="rounded-[32px] border border-[var(--border)] bg-[rgba(9,18,27,0.88)] p-8">
               <div className="flex flex-wrap items-center gap-3">
-                <Badge tone="new">Live Playground</Badge>
-                <h2 className="font-serif text-3xl text-[var(--text)]">Test the developer flow with guided inputs</h2>
+                <Badge tone="new">Try It Out</Badge>
+                <h2 className="font-serif text-3xl text-[var(--text)]">Try the developer flow with guided inputs</h2>
               </div>
               <p className="mt-3 max-w-4xl text-sm leading-7 text-[var(--text-soft)]">
                 The playground uses the same API base URL as the app, but the request builder is now field-first. Open a modal, fill the relevant inputs, and let the docs generate the request preview for you.

@@ -331,7 +331,7 @@ export default function App() {
   }
 
   return (
-    <LazyMotion features={domAnimation} strict>
+    <LazyMotion features={domAnimation}>
       <Shell navigation={<TopNav pathname={location.pathname} reportCount={reports.length} onLogin={handleOpenLogin} />}>
         <Suspense fallback={<PageLoader />}>
           <Routes>

@@ -6,6 +6,61 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { api } from '../../lib/api'
 import type { Agent } from '../../types/platform'
+import { ConnectWalletButton } from '../auth/ConnectWalletButton'
+import { useWalletSync } from '../../hooks/useWalletSync'
+
+interface EthereumProvider {
+  request: (args: { method: string; params?: unknown[] | Record<string, unknown> }) => Promise<unknown>
+  on?: (event: string, listener: (...args: unknown[]) => void) => void
+  removeListener?: (event: string, listener: (...args: unknown[]) => void) => void
+  providers?: EthereumProvider[]
+  isMetaMask?: boolean
+  isCoinbaseWallet?: boolean
+  isPhantom?: boolean
+  isRabby?: boolean
+  isBraveWallet?: boolean
+  isTrust?: boolean
+  isTrustWallet?: boolean
+  isFrame?: boolean
+  isOkxWallet?: boolean
+}
+
+interface Eip6963ProviderInfo {
+  uuid: string
+  name: string
+  icon: string
+  rdns: string
+}
+
+interface Eip6963ProviderDetail {
+  info: Eip6963ProviderInfo
+  provider: EthereumProvider
+}
+
+type WalletSource = 'eip6963' | 'window.ethereum' | 'window.ethereum.providers' | 'window.phantom.ethereum'
+
+interface DetectedWallet {
+  id: string
+  name: string
+  icon?: string
+  provider: EthereumProvider
+  source: WalletSource
+}
+
+
+type ProfileTab = 'profile' | 'api-key' | 'agents'
+
+interface AgentFormState {
+  name: string
+  headline: string
+  summary: string
+  capabilities: string
+  accentTone: string
+  guardrails: string
+  supportedSurfaces: string[]
+  supportedTechnologies: string
+  walletAddress: string
+}
 
 const navItems: { label: string; path: string; active: (pathname: string) => boolean; isExternal?: boolean }[] = [
   { label: 'Home', path: '/', active: (p) => p === '/' },
@@ -34,6 +89,126 @@ function formatDate(value?: string) {
   } catch { return value }
 }
 
+function formatAddress(value?: string | null) {
+  if (!value) return 'Not connected'
+  return `${value.slice(0, 6)}...${value.slice(-4)}`
+}
+
+function isValidEvmAddress(value: string) {
+  return /^0x[a-fA-F0-9]{40}$/.test(value.trim())
+}
+
+function isHexChainId(value: unknown): value is string {
+  return typeof value === 'string' && /^0x[a-fA-F0-9]+$/.test(value)
+}
+
+function getWalletDisplayName(provider: EthereumProvider) {
+  if (provider.isCoinbaseWallet) return 'Coinbase Wallet'
+  if (provider.isPhantom) return 'Phantom'
+  if (provider.isRabby) return 'Rabby'
+  if (provider.isBraveWallet) return 'Brave Wallet'
+  if (provider.isTrust || provider.isTrustWallet) return 'Trust Wallet'
+  if (provider.isFrame) return 'Frame'
+  if (provider.isOkxWallet) return 'OKX Wallet'
+  if (provider.isMetaMask) return 'MetaMask'
+  return 'Injected EVM Wallet'
+}
+
+function getWalletInitial(name: string) {
+  return name.trim().charAt(0).toUpperCase() || 'W'
+}
+
+function formatWalletSource(source: WalletSource) {
+  switch (source) {
+    case 'eip6963':
+      return 'Detected via EIP-6963'
+    case 'window.phantom.ethereum':
+      return 'Phantom EVM provider'
+    default:
+      return 'Injected EVM provider'
+  }
+}
+
+function normalizeWalletIcon(icon?: string) {
+  const value = icon?.trim()
+  return value && value.startsWith('data:image/') ? value : undefined
+}
+
+function getProfileErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : ''
+
+  if (
+    /walletAddress|escrowContractAddress/i.test(message) &&
+    /(unknown|column|field|argument)/i.test(message)
+  ) {
+    return 'The API server is missing the latest wallet address fields. Apply the newest migration and restart it.'
+  }
+
+  return message || 'Unable to save profile details right now.'
+}
+
+function buildLegacyWalletEntry(provider: EthereumProvider, source: WalletSource, ordinal: number): DetectedWallet {
+  const name = getWalletDisplayName(provider)
+
+  return {
+    id: `${source}:${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}:${ordinal}`,
+    name,
+    provider,
+    source,
+  }
+}
+
+function mergeDetectedWallets(current: DetectedWallet[], next: DetectedWallet) {
+  const existingIndex = current.findIndex((wallet) => wallet.provider === next.provider || wallet.id === next.id)
+
+  if (existingIndex === -1) return [...current, next]
+
+  const existing = current[existingIndex]
+  const merged: DetectedWallet = {
+    ...existing,
+    ...next,
+    id: next.source === 'eip6963' ? next.id : existing.id,
+    name: existing.name === 'Injected EVM Wallet' || next.source === 'eip6963' ? next.name : existing.name,
+    icon: next.icon || existing.icon,
+  }
+
+  return [...current.slice(0, existingIndex), merged, ...current.slice(existingIndex + 1)]
+}
+
+function collectLegacyDetectedWallets() {
+  if (typeof window === 'undefined') return []
+
+  const providers: { provider: EthereumProvider; source: WalletSource }[] = []
+  const seen = new Set<EthereumProvider>()
+
+  const addProvider = (provider: EthereumProvider | undefined, source: WalletSource) => {
+    if (!provider || typeof provider.request !== 'function' || seen.has(provider)) return
+    seen.add(provider)
+    providers.push({ provider, source })
+  }
+
+  const eth = window.ethereum as any
+  eth?.providers?.forEach((provider: any) => addProvider(provider, 'window.ethereum.providers'))
+  addProvider(eth, 'window.ethereum')
+  addProvider((window as any).phantom?.ethereum, 'window.phantom.ethereum')
+
+  return providers.map(({ provider, source }, index) => buildLegacyWalletEntry(provider, source, index))
+}
+
+function buildEmptyAgentForm(walletAddress = ''): AgentFormState {
+  return {
+    name: '',
+    headline: '',
+    summary: '',
+    capabilities: '',
+    accentTone: 'mint',
+    guardrails: '',
+    supportedSurfaces: [],
+    supportedTechnologies: '',
+    walletAddress,
+  }
+}
+
 function getRoleMessage(role?: string) {
   switch (role) {
     case 'ORGANIZATION': return 'Launch programs, fund them, and manage applications.'
@@ -45,27 +220,34 @@ function getRoleMessage(role?: string) {
 }
 
 export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
-  const { user, logout, generateApiKey } = useAuth()
+  const { user, logout, generateApiKey, updateProfile } = useAuth()
   const { showToast } = useToast()
+
+  // Auto-sync connected wallet address → user profile
+  useWalletSync()
+
   const location = useLocation()
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isGeneratingKey, setIsGeneratingKey] = useState(false)
   const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null)
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
-  const [activeProfileTab, setActiveProfileTab] = useState<'profile' | 'api-key' | 'agents'>('profile')
+  const [activeProfileTab, setActiveProfileTab] = useState<ProfileTab>('profile')
   const [isRegisteringAgent, setIsRegisteringAgent] = useState(false)
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [isConnectingWallet, setIsConnectingWallet] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [profileSuccess, setProfileSuccess] = useState<string | null>(null)
+  const [detectedWallets, setDetectedWallets] = useState<DetectedWallet[]>([])
+  const [connectingWalletId, setConnectingWalletId] = useState<string | null>(null)
+  const [walletAddressInput, setWalletAddressInput] = useState('')
+  const [escrowContractAddressInput, setEscrowContractAddressInput] = useState('')
   const [agentError, setAgentError] = useState<string | null>(null)
   const [agentSuccess, setAgentSuccess] = useState<string | null>(null)
   const [myAgents, setMyAgents] = useState<Agent[]>([])
-  const [agentForm, setAgentForm] = useState({
-    name: '', headline: '', summary: '', capabilities: '',
-    accentTone: 'mint', guardrails: '',
-    supportedSurfaces: [] as string[],
-    supportedTechnologies: '',
-  })
+  const [agentForm, setAgentForm] = useState<AgentFormState>(() => buildEmptyAgentForm())
   const [agentTools, setAgentTools] = useState<{ name: string; access: string; useCase: string }[]>([])
-  const [agentFlow, setAgentFlow] = useState<{ title: string; description: string }[]>([])
+  const [agentFlow, setAgentFlow] = useState<{ title: string; description: string; outputs?: string[]; humanGate?: string }[]>([])
   const [openAgentSection, setOpenAgentSection] = useState<'register' | 'list' | 'none'>('list')
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null)
   const profileRef = useRef<HTMLDivElement | null>(null)
@@ -104,6 +286,65 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
     setIsProfileOpen(false)
   }, [user?.id])
 
+  useEffect(() => {
+    setWalletAddressInput(user?.walletAddress || '')
+    setEscrowContractAddressInput(user?.escrowContractAddress || '')
+  }, [user?.walletAddress, user?.escrowContractAddress])
+
+  useEffect(() => {
+    if (editingAgentId) return
+    setAgentForm((current) => (
+      current.walletAddress.trim()
+        ? current
+        : { ...current, walletAddress: user?.walletAddress || '' }
+    ))
+  }, [editingAgentId, user?.walletAddress])
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      !isProfileOpen ||
+      activeProfileTab !== 'profile' ||
+      !user ||
+      user.role === 'ORGANIZATION'
+    ) {
+      return
+    }
+
+    setDetectedWallets([])
+
+    const handleAnnouncedWallet = (event: Event) => {
+      const detail = (event as CustomEvent<Eip6963ProviderDetail>).detail
+
+      if (!detail?.provider || typeof detail.provider.request !== 'function') return
+
+      setDetectedWallets((current) => mergeDetectedWallets(current, {
+        id: `eip6963:${detail.info?.uuid || detail.info?.rdns || detail.info?.name || getWalletDisplayName(detail.provider)}`,
+        name: detail.info?.name?.trim() || getWalletDisplayName(detail.provider),
+        icon: normalizeWalletIcon(detail.info?.icon),
+        provider: detail.provider,
+        source: 'eip6963',
+      }))
+    }
+
+    const collectLegacyWallets = () => {
+      collectLegacyDetectedWallets().forEach((wallet) => {
+        setDetectedWallets((current) => mergeDetectedWallets(current, wallet))
+      })
+    }
+
+    window.addEventListener('eip6963:announceProvider', handleAnnouncedWallet as EventListener)
+    window.dispatchEvent(new Event('eip6963:requestProvider'))
+    collectLegacyWallets()
+
+    const lateDiscoveryTimer = window.setTimeout(collectLegacyWallets, 300)
+
+    return () => {
+      window.removeEventListener('eip6963:announceProvider', handleAnnouncedWallet as EventListener)
+      window.clearTimeout(lateDiscoveryTimer)
+    }
+  }, [activeProfileTab, isProfileOpen, user])
+
   const handleGenerateApiKey = async () => {
     if (!canGenerateApiKey) return
     setIsGeneratingKey(true)
@@ -120,11 +361,120 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
     catch { setCopyState('failed') }
   }
 
+  const resetAgentComposer = () => {
+    setEditingAgentId(null)
+    setAgentForm(buildEmptyAgentForm(user?.walletAddress || ''))
+    setAgentTools([])
+    setAgentFlow([])
+  }
+
+  const handleSaveProfile = async (payload?: { walletAddress?: string | null; escrowContractAddress?: string | null }) => {
+    if (!user) return false
+
+    setProfileError(null)
+    setProfileSuccess(null)
+
+    const nextWalletAddress = payload?.walletAddress ?? walletAddressInput.trim()
+    const nextEscrowContractAddress = payload?.escrowContractAddress ?? escrowContractAddressInput.trim()
+
+    if (user.role !== 'ORGANIZATION') {
+      if (nextWalletAddress && !isValidEvmAddress(nextWalletAddress)) {
+        setProfileError('Wallet address must be a valid 0x-prefixed EVM address.')
+        return false
+      }
+    } else if (nextEscrowContractAddress && !isValidEvmAddress(nextEscrowContractAddress)) {
+      setProfileError('Escrow contract address must be a valid 0x-prefixed EVM address.')
+      return false
+    }
+
+    setIsSavingProfile(true)
+
+    try {
+      const updatedUser = await updateProfile({
+        ...(user.role !== 'ORGANIZATION' ? { walletAddress: nextWalletAddress || null } : {}),
+        ...(user.role === 'ORGANIZATION' ? { escrowContractAddress: nextEscrowContractAddress || null } : {}),
+      })
+
+      setWalletAddressInput(updatedUser.walletAddress || '')
+      setEscrowContractAddressInput(updatedUser.escrowContractAddress || '')
+      setAgentForm((current) => (
+        editingAgentId
+          ? current
+          : { ...current, walletAddress: updatedUser.walletAddress || current.walletAddress }
+      ))
+      setProfileSuccess(user.role === 'ORGANIZATION' ? 'Escrow contract address saved.' : 'Wallet address saved.')
+      return true
+    } catch (error) {
+      setProfileError(getProfileErrorMessage(error))
+      return false
+    } finally {
+      setIsSavingProfile(false)
+    }
+  }
+
+  const handleConnectWallet = async (selectedWallet?: DetectedWallet) => {
+    if (!selectedWallet && detectedWallets.length > 1) {
+      setProfileError('Choose one of the detected EVM wallets below.')
+      return
+    }
+
+    const provider = (selectedWallet?.provider ?? detectedWallets[0]?.provider ?? (window as any).ethereum) as EthereumProvider | undefined
+    const walletLabel = selectedWallet?.name || (provider ? getWalletDisplayName(provider) : 'Browser wallet')
+
+    if (!provider) {
+      setProfileError('No EVM browser wallet was found. Install a wallet that exposes an EIP-6963 or window.ethereum provider.')
+      setIsConnectingWallet(false)
+      setConnectingWalletId(null)
+      return
+    }
+
+    setIsConnectingWallet(true)
+    setConnectingWalletId(selectedWallet?.id || null)
+    setProfileError(null)
+    setProfileSuccess(null)
+
+    try {
+      const accounts = await provider.request({ method: 'eth_requestAccounts' })
+      const chainId = await provider.request({ method: 'eth_chainId' })
+      const connectedAddress = Array.isArray(accounts) ? String(accounts[0] || '') : ''
+
+      if (!isHexChainId(chainId)) {
+        setProfileError(`${walletLabel} did not expose an EVM chain id.`)
+        return
+      }
+
+      if (!connectedAddress || !isValidEvmAddress(connectedAddress)) {
+        setProfileError(`${walletLabel} did not return a usable EVM address.`)
+        return
+      }
+
+      setWalletAddressInput(connectedAddress)
+      const saved = await handleSaveProfile({ walletAddress: connectedAddress })
+      if (saved) {
+        const successMessage = `${walletLabel} connected and saved as your default payout wallet.`
+        setProfileSuccess(successMessage)
+        showToast(successMessage, 'success')
+      }
+    } catch (error) {
+      console.error('Wallet connection failed', error)
+      const code = typeof error === 'object' && error && 'code' in error ? (error as { code?: number }).code : undefined
+      if (code === 4001) {
+        setProfileError(`${walletLabel} connection was rejected.`)
+      } else {
+        setProfileError(`${walletLabel} connection failed. ${error instanceof Error && error.message ? error.message : 'Try again.'}`)
+      }
+    } finally {
+      setIsConnectingWallet(false)
+      setConnectingWalletId(null)
+    }
+  }
+
   const handleRegisterAgent = async (e: FormEvent) => {
     e.preventDefault()
     setAgentError(null)
     setAgentSuccess(null)
     if (!agentForm.name || !agentForm.headline || !agentForm.summary) { setAgentError('Please fill in all required fields.'); return }
+    if (agentForm.walletAddress && !isValidEvmAddress(agentForm.walletAddress)) { setAgentError('Agent wallet address must be a valid 0x-prefixed EVM address.'); return }
     const capabilities = agentForm.capabilities.split(',').map((s) => s.trim()).filter(Boolean)
     if (capabilities.length === 0) { setAgentError('Please add at least one capability.'); return }
     setIsRegisteringAgent(true)
@@ -136,6 +486,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
           capabilities,
           guardrails,
           supportedTechnologies,
+          walletAddress: agentForm.walletAddress.trim(),
           supportedSurfaces: agentForm.supportedSurfaces,
           tools: agentTools.filter(t => t.name && t.useCase),
           runtimeFlow: agentFlow.filter(s => s.title && s.description).map((s, i) => ({ ...s, order: i + 1 })),
@@ -147,11 +498,8 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
         if (res.success) {
           const refreshed = await api.get<Agent[]>('/agents/mine')
           if (refreshed.success) setMyAgents(refreshed.data)
-          setAgentForm({ name: '', headline: '', summary: '', capabilities: '', accentTone: 'mint', guardrails: '', supportedSurfaces: [], supportedTechnologies: '' })
-          setAgentTools([])
-          setAgentFlow([])
+          resetAgentComposer()
           setAgentSuccess(editingAgentId ? 'Agent updated successfully.' : 'Agent registered successfully.')
-          setEditingAgentId(null)
       } else { setAgentError(res.error || `Failed to ${editingAgentId ? 'update' : 'register'} agent.`) }
     } catch { setAgentError('An unexpected error occurred.') }
     finally { setIsRegisteringAgent(false) }
@@ -291,12 +639,116 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                             <div className="mt-3 flex flex-wrap gap-1.5">
                               <span className="summary-chip">{formatRole(user.role)}</span>
                               {user.organizationName && <span className="summary-chip">{user.organizationName}</span>}
+                              {user.role !== 'ORGANIZATION' && user.walletAddress && <span className="summary-chip">{formatAddress(user.walletAddress)}</span>}
+                              {user.role === 'ORGANIZATION' && user.escrowContractAddress && <span className="summary-chip">{formatAddress(user.escrowContractAddress)}</span>}
                               <span className="summary-chip">Since {formatDate(user.createdAt)}</span>
                             </div>
                           </div>
                           <div className="p-5 border-b border-[rgba(255,255,255,0.04)] mb-4">
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Workspace</p>
                             <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">{getRoleMessage(user.role)}</p>
+                          </div>
+                          <div className="p-5 border-b border-[rgba(255,255,255,0.04)] space-y-4">
+                            {user.role !== 'ORGANIZATION' ? (
+                              <>
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Payout wallet</p>
+                                  <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">
+                                    Connect an EVM wallet here and we will use it as the default payout address whenever you register or edit an agent.
+                                  </p>
+                                </div>
+                                <div>
+                                  <label className="field-label">Wallet address</label>
+                                  <input
+                                    value={walletAddressInput}
+                                    onChange={(event) => setWalletAddressInput(event.target.value)}
+                                    className="field"
+                                    placeholder="0x1234..."
+                                  />
+                                  <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                                    Current profile wallet: <span className="font-semibold text-[var(--text)]">{formatAddress(user.walletAddress)}</span>
+                                  </p>
+                                </div>
+                                <div className="space-y-2">
+                                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">Detected EVM wallets</p>
+                                  {detectedWallets.length > 0 ? (
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                      {detectedWallets.map((wallet) => (
+                                        <button
+                                          key={wallet.id}
+                                          type="button"
+                                          onClick={() => void handleConnectWallet(wallet)}
+                                          disabled={isConnectingWallet || isSavingProfile}
+                                          className="flex items-center justify-between gap-3 rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] px-3 py-3 text-left transition-colors hover:border-[rgba(15,202,138,0.24)] hover:bg-[rgba(15,202,138,0.06)] disabled:pointer-events-none disabled:opacity-50"
+                                        >
+                                          <span className="flex min-w-0 items-center gap-3">
+                                            {wallet.icon ? (
+                                              <img src={wallet.icon} alt="" className="h-8 w-8 shrink-0 rounded-[6px] bg-[#09131b] p-1 object-contain" />
+                                            ) : (
+                                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] bg-[rgba(15,202,138,0.12)] text-[12px] font-bold text-[#0fca8a]">
+                                                {getWalletInitial(wallet.name)}
+                                              </span>
+                                            )}
+                                            <span className="min-w-0">
+                                              <span className="block truncate text-[13px] font-semibold text-[var(--text)]">{wallet.name}</span>
+                                              <span className="block truncate text-[11px] text-[var(--text-muted)]">{formatWalletSource(wallet.source)}</span>
+                                            </span>
+                                          </span>
+                                          <span className="shrink-0 text-[11px] font-semibold text-[#0fca8a]">
+                                            {connectingWalletId === wallet.id ? 'Connecting…' : 'Connect'}
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      <p className="rounded-[8px] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] px-3 py-3 text-[12px] leading-relaxed text-[var(--text-soft)]">
+                                        No EVM browser wallet is being announced right now. We only list wallets that expose an Ethereum provider through EIP-6963, <code className="text-[var(--accent-strong)]">window.ethereum</code>, or <code className="text-[var(--accent-strong)]">window.phantom.ethereum</code>, so non-EVM providers stay out of this flow.
+                                      </p>
+                                      {typeof window !== 'undefined' && (window as any).ethereum && (
+                                        <Button variant="outline" size="sm" onClick={() => void handleConnectWallet()} disabled={isConnectingWallet || isSavingProfile}>
+                                          {isConnectingWallet ? 'Connecting…' : 'Try injected wallet'}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => void handleSaveProfile()} disabled={isSavingProfile || isConnectingWallet}>
+                                    {isSavingProfile ? 'Saving…' : 'Save wallet'}
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Escrow contract</p>
+                                  <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">
+                                    Store the contract that holds your bounty escrow so the organization workspace has the funding address on hand.
+                                  </p>
+                                </div>
+                                <div>
+                                  <label className="field-label">Escrow contract address</label>
+                                  <input
+                                    value={escrowContractAddressInput}
+                                    onChange={(event) => setEscrowContractAddressInput(event.target.value)}
+                                    className="field"
+                                    placeholder="0x1234..."
+                                  />
+                                  <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                                    Current escrow contract: <span className="font-semibold text-[var(--text)]">{formatAddress(user.escrowContractAddress)}</span>
+                                  </p>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => void handleSaveProfile()} disabled={isSavingProfile}>
+                                    {isSavingProfile ? 'Saving…' : 'Save contract'}
+                                  </Button>
+                                </div>
+                              </>
+                            )}
+
+                            {profileError && <p className="border-l-2 border-[var(--critical)] bg-[var(--critical-soft)] px-3 py-2 text-[12px] text-[var(--critical-text)]">{profileError}</p>}
+                            {profileSuccess && <p className="border-l-2 border-[#0fca8a] bg-[rgba(15,202,138,0.08)] px-3 py-2 text-[12px] text-[#0fca8a]">{profileSuccess}</p>}
                           </div>
                           <div className="px-5 pb-5">
                             <Button
@@ -380,10 +832,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      setEditingAgentId(null)
-                                      setAgentForm({ name: '', headline: '', summary: '', capabilities: '', accentTone: 'mint', guardrails: '', supportedSurfaces: [], supportedTechnologies: '' })
-                                      setAgentTools([])
-                                      setAgentFlow([])
+                                      resetAgentComposer()
                                     }}
                                     className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent-strong)] hover:opacity-80"
                                   >
@@ -441,6 +890,29 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                                         placeholder="Describe what the agent specializes in…"
                                         style={{ minHeight: 80 }}
                                       />
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center justify-between gap-3">
+                                        <label className="field-label">Payout wallet address</label>
+                                        {user.walletAddress && (
+                                          <button
+                                            type="button"
+                                            onClick={() => setAgentForm((current) => ({ ...current, walletAddress: user.walletAddress || '' }))}
+                                            className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#0fca8a] hover:opacity-80"
+                                          >
+                                            Use connected wallet
+                                          </button>
+                                        )}
+                                      </div>
+                                      <input
+                                        value={agentForm.walletAddress}
+                                        onChange={(e) => setAgentForm((c) => ({ ...c, walletAddress: e.target.value }))}
+                                        className="field"
+                                        placeholder="0x1234..."
+                                      />
+                                      <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                                        This becomes the agent payout address. {user.walletAddress ? `Connected profile wallet: ${formatAddress(user.walletAddress)}.` : 'Connect a wallet in Profile to auto-fill this field.'}
+                                      </p>
                                     </div>
 
                                     {/* Coverage Map */}
@@ -653,7 +1125,19 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                                               guardrails: ((agent as any).guardrails || []).join(', '),
                                               supportedSurfaces: (agent as any).supportedSurfaces || [],
                                               supportedTechnologies: ((agent as any).supportedTechnologies || []).join(', '),
+                                              walletAddress: agent.walletAddress || user?.walletAddress || '',
                                             })
+                                            setAgentTools(((agent.tools as { name: string; access?: string | null; useCase: string }[]) || []).map((tool) => ({
+                                              name: tool.name,
+                                              access: tool.access || 'READ_ONLY',
+                                              useCase: tool.useCase,
+                                            })))
+                                            setAgentFlow(((agent.runtimeFlow as unknown as { title: string; description: string; outputs?: string[]; humanGate?: string | null }[]) || []).map((stage) => ({
+                                              title: stage.title,
+                                              description: stage.description,
+                                              outputs: stage.outputs || [],
+                                              humanGate: stage.humanGate || '',
+                                            })))
                                             setEditingAgentId(agent.id)
                                             setOpenAgentSection('register')
                                           }}
@@ -679,10 +1163,12 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
             </div>
           </>
         ) : (
-          <>
+          <div className="flex items-center gap-[12px]">
+            <ConnectWalletButton compact className="hidden sm:flex" />
+            <div className="h-4 w-[1px] bg-[rgba(255,255,255,0.08)] hidden sm:block mx-1" />
             <button className="hidden sm:block text-[0.8rem] font-[500] text-[#7f8896] bg-transparent border border-[rgba(255,255,255,0.11)] px-[18px] py-[7px] rounded-[5px] cursor-pointer transition-colors duration-200 hover:text-[#eef1f6] hover:border-[rgba(255,255,255,0.18)]" onClick={onLogin}>Sign In</button>
             <button className="text-[0.8rem] font-[600] text-[#06080b] bg-[#0fca8a] border-none px-[18px] py-[7px] rounded-[5px] cursor-pointer transition-opacity hover:opacity-[0.88]" onClick={onLogin}>Get Access</button>
-          </>
+          </div>
         )}
 
         {/* Mobile menu toggle */}
