@@ -4,6 +4,7 @@
     "description": "AuditPal API — Bun + Hono + Prisma + Zod",
     "module": "src/index.ts",
     "scripts": {
+        "build": "prisma generate",
         "dev": "bun run --watch src/index.ts",
         "start": "bun run src/index.ts",
         "db:generate": "prisma generate",
