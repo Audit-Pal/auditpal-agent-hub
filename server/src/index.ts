@@ -19,7 +19,15 @@ app.use('*', prettyJSON())
 app.use(
     '*',
     cors({
-        origin: allowedOrigins,
+        origin: (origin) => {
+            if (!origin) return allowedOrigins[0]
+            const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin
+            const isAllowed = allowedOrigins.some((allowed) => {
+                const normalizedAllowed = allowed.endsWith('/') ? allowed.slice(0, -1) : allowed
+                return normalizedAllowed === normalizedOrigin
+            })
+            return isAllowed ? origin : allowedOrigins[0]
+        },
         allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
         allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
         credentials: true,
