@@ -32,6 +32,7 @@ const userProfileSelect = {
     apiKeyPreview: true,
     apiKeyCreatedAt: true,
     apiKeyLastUsedAt: true,
+    platformCredits: true,
 } as const
 
 function serializeUserProfile(user: {
@@ -50,6 +51,7 @@ function serializeUserProfile(user: {
     apiKeyPreview?: string | null
     apiKeyCreatedAt?: Date | null
     apiKeyLastUsedAt?: Date | null
+    platformCredits: number
 }) {
     return {
         id: user.id,
@@ -68,6 +70,7 @@ function serializeUserProfile(user: {
         apiKeyPreview: user.apiKeyPreview ?? undefined,
         apiKeyCreatedAt: user.apiKeyCreatedAt ?? undefined,
         apiKeyLastUsedAt: user.apiKeyLastUsedAt ?? undefined,
+        platformCredits: user.platformCredits,
     }
 }
 
