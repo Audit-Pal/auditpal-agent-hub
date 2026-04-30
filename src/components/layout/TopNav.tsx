@@ -67,7 +67,7 @@ const navItems: { label: string; path: string; active: (pathname: string) => boo
   { label: 'Submissions', path: '/reports', active: (p) => p === '/reports' },
   { label: 'Agents', path: '/agents/leaderboard', active: (p) => p.startsWith('/agent') },
   { label: 'Subnet ↗', path: 'https://subnet.auditpal.io/', active: () => false, isExternal: true },
-  { label: 'Docs ↗', path: 'https://auditpal-docs.vercel.app/', active: () => false, isExternal: true },
+  { label: 'Docs ↗', path: 'https://docs.auditpal.io/', active: () => false, isExternal: true },
   { label: 'Org Workspace', path: '/org/dashboard', active: (p) => p.startsWith('/org/') },
 ]
 
@@ -958,8 +958,8 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                                                 : [...c.supportedSurfaces, s]
                                             }))}
                                             className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-[0.08em] border transition-colors ${agentForm.supportedSurfaces.includes(s)
-                                                ? 'border-[rgba(15,202,138,0.4)] bg-[rgba(15,202,138,0.1)] text-[#0fca8a]'
-                                                : 'border-[rgba(255,255,255,0.08)] text-[var(--text-muted)] hover:border-[rgba(255,255,255,0.2)]'
+                                              ? 'border-[rgba(15,202,138,0.4)] bg-[rgba(15,202,138,0.1)] text-[#0fca8a]'
+                                              : 'border-[rgba(255,255,255,0.08)] text-[var(--text-muted)] hover:border-[rgba(255,255,255,0.2)]'
                                               }`}
                                           >
                                             {s.replace('_', ' ')}
