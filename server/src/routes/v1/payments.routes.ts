@@ -77,7 +77,7 @@ paymentsRoutes.post('/webhook', async (c) => {
     try {
         // Hono req.raw is a native Request. We need the text body.
         const body = await c.req.text()
-        event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
+        event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret)
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err)
         console.error(`Webhook signature verification failed.`, message)
