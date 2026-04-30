@@ -53,89 +53,90 @@ export function RoleSelectionModal({ isOpen, onSelectRole, onClose }: RoleSelect
   ]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,38,0.72)] p-4 animate-fade-in">
-      <div className="surface-card-strong w-full max-w-6xl overflow-hidden rounded-[34px] p-8 md:p-10">
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <p className="section-kicker">Welcome to AuditPal</p>
-            <h2 className="mt-3 font-serif text-[clamp(2rem,4vw,3.2rem)] leading-tight text-[var(--text)]">
-              How would you like to get started?
-            </h2>
-            <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--text-soft)]">
-              Choose your role to access the right workspace and features. You can always create additional accounts later.
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-[var(--text-muted)] transition hover:bg-[rgba(13,26,37,0.94)] hover:text-[var(--text)]"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-3">
-          {roles.map((role) => (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(15,23,38,0.72)] animate-fade-in">
+      <div className="flex min-h-full items-center justify-center p-4 md:p-8">
+        <div className="surface-card-strong w-full max-w-6xl overflow-hidden rounded-[34px] p-8 md:p-10 relative">
+          <div className="mb-8 flex items-start justify-between gap-4">
+            <div>
+              <p className="section-kicker">Welcome to AuditPal</p>
+              <h2 className="mt-3 font-serif text-[clamp(1.75rem,4vw,3.2rem)] leading-tight text-[var(--text)]">
+                How would you like to get started?
+              </h2>
+              <p className="mt-3 max-w-2xl text-[14px] md:text-[15px] leading-relaxed text-[var(--text-soft)]">
+                Choose your role to access the right workspace and features. You can always create additional accounts later.
+              </p>
+            </div>
             <button
-              key={role.id}
-              onClick={() => onSelectRole(role.id)}
-              className="group surface-card-muted flex flex-col rounded-[28px] p-6 text-left transition-all duration-200 hover:scale-[1.02] hover:border-[rgba(0,212,168,0.3)] hover:shadow-[0_20px_50px_rgba(0,212,168,0.12)]"
+              onClick={onClose}
+              className="rounded-full p-2 text-[var(--text-muted)] transition hover:bg-[rgba(13,26,37,0.94)] hover:text-[var(--text)]"
+              aria-label="Close modal"
             >
-              <div
-                className="flex h-16 w-16 items-center justify-center rounded-2xl border transition-all duration-300 group-hover:scale-110"
-                style={{
-                  backgroundColor: `${role.accent}15`,
-                  borderColor: `${role.accent}30`,
-                  color: role.accent,
-                }}
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {roles.map((role) => (
+              <button
+                key={role.id}
+                onClick={() => onSelectRole(role.id)}
+                className="group surface-card-muted flex flex-col rounded-[28px] p-6 text-left transition-all duration-200 hover:scale-[1.01] hover:border-[rgba(0,212,168,0.3)] hover:shadow-[0_20px_50px_rgba(0,212,168,0.12)]"
               >
-                {role.icon}
-              </div>
-
-              <div className="mt-5 flex-1">
-                <h3 className="text-xl font-bold tracking-[-0.02em] text-[var(--text)]">{role.title}</h3>
-                <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-muted)]">
-                  {role.subtitle}
-                </p>
-                <p className="mt-3 text-[13px] leading-relaxed text-[var(--text-soft)]">{role.description}</p>
-
-                <ul className="mt-4 space-y-2">
-                  {role.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-[12px] text-[var(--text-soft)]">
-                      <span className="mt-0.5 text-[var(--accent)]">→</span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-6">
                 <div
-                  className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-bold transition-all duration-300"
+                  className="flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-2xl border transition-all duration-300 group-hover:scale-110"
                   style={{
                     backgroundColor: `${role.accent}15`,
+                    borderColor: `${role.accent}30`,
                     color: role.accent,
                   }}
                 >
-                  {role.id === 'guest' ? 'Continue as Guest' : 'Select & Continue'}
-                  <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+                  {role.icon}
                 </div>
-              </div>
-            </button>
-          ))}
-        </div>
 
-        <div className="subtle-divider mt-8 pt-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-[12px] text-[var(--text-muted)] max-w-md">
-              All roles have access to view public bounty programs and documentation. Authentication is only required for submissions and program management.
-            </p>
+                <div className="mt-5 flex-1">
+                  <h3 className="text-lg md:text-xl font-bold tracking-[-0.02em] text-[var(--text)]">{role.title}</h3>
+                  <p className="mt-1 text-[10px] md:text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                    {role.subtitle}
+                  </p>
+                  <p className="mt-3 text-[13px] leading-relaxed text-[var(--text-soft)]">{role.description}</p>
 
+                  <ul className="mt-4 space-y-2">
+                    {role.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2 text-[12px] text-[var(--text-soft)]">
+                        <span className="mt-0.5 text-[var(--accent)]">→</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
+                <div className="mt-6">
+                  <div
+                    className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-bold transition-all duration-300"
+                    style={{
+                      backgroundColor: `${role.accent}15`,
+                      color: role.accent,
+                    }}
+                  >
+                    {role.id === 'guest' ? 'Continue as Guest' : 'Select & Continue'}
+                    <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="subtle-divider mt-8 pt-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-[12px] text-[var(--text-muted)] max-w-md">
+                All roles have access to view public bounty programs and documentation. Authentication is only required for submissions and program management.
+              </p>
+            </div>
           </div>
         </div>
       </div>

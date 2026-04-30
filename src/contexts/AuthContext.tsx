@@ -21,6 +21,7 @@ export interface User {
     apiKeyPreview?: string;
     apiKeyCreatedAt?: string;
     apiKeyLastUsedAt?: string;
+    platformCredits?: number;
 }
 
 interface GenerateApiKeyResponse {

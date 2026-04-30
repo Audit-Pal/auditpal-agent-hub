@@ -67,7 +67,7 @@ const navItems: { label: string; path: string; active: (pathname: string) => boo
   { label: 'Submissions', path: '/reports', active: (p) => p === '/reports' },
   { label: 'Agents', path: '/agents/leaderboard', active: (p) => p.startsWith('/agent') },
   { label: 'Subnet ↗', path: 'https://subnet.auditpal.io/', active: () => false, isExternal: true },
-  { label: 'Docs ↗', path: '/docs.html', active: () => false, isExternal: true },
+  { label: 'Docs ↗', path: 'https://auditpal-docs.vercel.app/', active: () => false, isExternal: true },
   { label: 'Org Workspace', path: '/org/dashboard', active: (p) => p.startsWith('/org/') },
 ]
 
@@ -249,6 +249,25 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
   const [agentFlow, setAgentFlow] = useState<{ title: string; description: string; outputs?: string[]; humanGate?: string }[]>([])
   const [openAgentSection, setOpenAgentSection] = useState<'register' | 'list' | 'none'>('list')
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null)
+  const [isBuyingCredits, setIsBuyingCredits] = useState(false)
+
+  const handleBuyCredits = async () => {
+    setIsBuyingCredits(true)
+    try {
+      const res = await api.post<{ url: string }>('/payments/create-checkout-session', { amountUsd: 10 })
+      if (res.success && res.data?.url) {
+        window.location.href = res.data.url
+      } else {
+        showToast('Failed to start checkout session', 'error')
+      }
+    } catch (error) {
+      console.error('Failed to buy credits', error)
+      showToast('An unexpected error occurred', 'error')
+    } finally {
+      setIsBuyingCredits(false)
+    }
+  }
+
   const profileRef = useRef<HTMLDivElement | null>(null)
 
   const canGenerateApiKey = user?.role === 'BOUNTY_HUNTER' || user?.role === 'ADMIN'
@@ -478,27 +497,27 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
     if (capabilities.length === 0) { setAgentError('Please add at least one capability.'); return }
     setIsRegisteringAgent(true)
     try {
-        const guardrails = agentForm.guardrails.split(',').map((s) => s.trim()).filter(Boolean)
-        const supportedTechnologies = agentForm.supportedTechnologies.split(',').map((s) => s.trim()).filter(Boolean)
-        const payload = {
-          ...agentForm,
-          capabilities,
-          guardrails,
-          supportedTechnologies,
-          walletAddress: agentForm.walletAddress.trim(),
-          supportedSurfaces: agentForm.supportedSurfaces,
-          tools: agentTools.filter(t => t.name && t.useCase),
-          runtimeFlow: agentFlow.filter(s => s.title && s.description).map((s, i) => ({ ...s, order: i + 1 })),
-        }
-        const res = editingAgentId
-          ? await api.patch(`/agents/${editingAgentId}`, payload)
-          : await api.post('/agents', payload)
+      const guardrails = agentForm.guardrails.split(',').map((s) => s.trim()).filter(Boolean)
+      const supportedTechnologies = agentForm.supportedTechnologies.split(',').map((s) => s.trim()).filter(Boolean)
+      const payload = {
+        ...agentForm,
+        capabilities,
+        guardrails,
+        supportedTechnologies,
+        walletAddress: agentForm.walletAddress.trim(),
+        supportedSurfaces: agentForm.supportedSurfaces,
+        tools: agentTools.filter(t => t.name && t.useCase),
+        runtimeFlow: agentFlow.filter(s => s.title && s.description).map((s, i) => ({ ...s, order: i + 1 })),
+      }
+      const res = editingAgentId
+        ? await api.patch(`/agents/${editingAgentId}`, payload)
+        : await api.post('/agents', payload)
 
-        if (res.success) {
-          const refreshed = await api.get<Agent[]>('/agents/mine')
-          if (refreshed.success) setMyAgents(refreshed.data)
-          resetAgentComposer()
-          setAgentSuccess(editingAgentId ? 'Agent updated successfully.' : 'Agent registered successfully.')
+      if (res.success) {
+        const refreshed = await api.get<Agent[]>('/agents/mine')
+        if (refreshed.success) setMyAgents(refreshed.data)
+        resetAgentComposer()
+        setAgentSuccess(editingAgentId ? 'Agent updated successfully.' : 'Agent registered successfully.')
       } else { setAgentError(res.error || `Failed to ${editingAgentId ? 'update' : 'register'} agent.`) }
     } catch { setAgentError('An unexpected error occurred.') }
     finally { setIsRegisteringAgent(false) }
@@ -647,6 +666,16 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Workspace</p>
                             <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">{getRoleMessage(user.role)}</p>
                           </div>
+                          <div className="p-5 border-b border-[rgba(255,255,255,0.04)] mb-4">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Platform Credits</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-[20px] font-bold text-[#0fca8a]">{user.platformCredits ?? 0} <span className="text-[12px] text-[var(--text-soft)] font-normal uppercase tracking-widest">CRD</span></p>
+                              <Button variant="outline" size="sm" onClick={() => void handleBuyCredits()} disabled={isBuyingCredits}>
+                                {isBuyingCredits ? 'Loading...' : 'Buy Credits'}
+                              </Button>
+                            </div>
+                            <p className="text-[12px] text-[var(--text-muted)] mt-2">Credits are used to run AI agents on the platform.</p>
+                          </div>
                           <div className="p-5 border-b border-[rgba(255,255,255,0.04)] space-y-4">
                             {user.role !== 'ORGANIZATION' ? (
                               <>
@@ -757,9 +786,9 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                               onClick={logout}
                             >
                               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                            Sign out
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                              </svg>
+                              Sign out
                             </Button>
                           </div>
                         </div>
@@ -928,11 +957,10 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                                                 ? c.supportedSurfaces.filter((x) => x !== s)
                                                 : [...c.supportedSurfaces, s]
                                             }))}
-                                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-[0.08em] border transition-colors ${
-                                              agentForm.supportedSurfaces.includes(s)
+                                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-[0.08em] border transition-colors ${agentForm.supportedSurfaces.includes(s)
                                                 ? 'border-[rgba(15,202,138,0.4)] bg-[rgba(15,202,138,0.1)] text-[#0fca8a]'
                                                 : 'border-[rgba(255,255,255,0.08)] text-[var(--text-muted)] hover:border-[rgba(255,255,255,0.2)]'
-                                            }`}
+                                              }`}
                                           >
                                             {s.replace('_', ' ')}
                                           </button>
@@ -1115,7 +1143,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                                         </div>
                                         <button
                                           onClick={() => {
-                                          setAgentForm({
+                                            setAgentForm({
                                               name: agent.name,
                                               headline: agent.headline,
                                               summary: (agent as any).summary || '',
