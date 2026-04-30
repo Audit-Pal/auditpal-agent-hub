@@ -11,7 +11,7 @@ const isProduction = process.env.NODE_ENV === 'production' || process.env.NODE_E
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    process.env.CORS_ORIGIN,
+    ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()) : []),
 ].filter(Boolean) as string[]
 
 app.use('*', logger())
@@ -48,9 +48,7 @@ const mode = process.env.NODE_ENV ?? 'development'
 
 console.log(`🚀 AuditPal API running in [${mode}] mode`)
 console.log(`   Local: http://localhost:${port}`)
-if (process.env.CORS_ORIGIN) {
-    console.log(`   Allowed Origin: ${process.env.CORS_ORIGIN}`)
-}
+console.log(`   Allowed Origins: ${allowedOrigins.join(', ')}`)
 console.log(`   API: http://localhost:${port}/api/v1`)
 console.log(`   Health: http://localhost:${port}/health`)
 
