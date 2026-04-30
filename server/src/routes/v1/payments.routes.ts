@@ -38,7 +38,15 @@ paymentsRoutes.post(
                             currency: 'usd',
                             product_data: {
                                 name: 'AuditPal Credits',
-                                description: `${creditsToBuy} Credits ($1 = 100 Credits). These credits power your autonomous security agents and priority triage requests.`,
+                                description: `
+⚡️ 100 Credits = $1.00 USD
+━━━━━━━━━━━━━━━━━━━━━━━━
+📦 Package Includes:
+• 🤖 Full AI Agent Triage Access
+• 🛡️ Priority Security Scanning
+• 📊 Real-time Execution Metrics
+• ⚡️ Instant Credit Settlement
+`.trim(),
                                 images: ['https://auditpal.io/logo-mark.png'],
                             },
                             unit_amount: amountUsd * 100, // in cents
