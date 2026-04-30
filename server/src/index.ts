@@ -11,7 +11,11 @@ const isProduction = process.env.NODE_ENV === 'production' || process.env.NODE_E
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()) : []),
+    ...(process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(',')
+              .map((o) => o.trim().replace(/^["']|["']$/g, '')) // Strip leading/trailing quotes
+              .filter(Boolean)
+        : []),
 ].filter(Boolean) as string[]
 
 app.use('*', logger())

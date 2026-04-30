@@ -37,8 +37,9 @@ paymentsRoutes.post(
                         price_data: {
                             currency: 'usd',
                             product_data: {
-                                name: `${creditsToBuy} Platform Credits`,
-                                description: 'Credits to run AI Agents on AuditPal',
+                                name: 'AuditPal Credits',
+                                description: `${creditsToBuy} Credits ($1 = 100 Credits). These credits power your autonomous security agents and priority triage requests.`,
+                                images: ['https://auditpal.io/logo-mark.png'],
                             },
                             unit_amount: amountUsd * 100, // in cents
                         },
