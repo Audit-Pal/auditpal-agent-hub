@@ -38,15 +38,7 @@ paymentsRoutes.post(
                             currency: 'usd',
                             product_data: {
                                 name: 'AuditPal Credits',
-                                description: `
-⚡️ 100 Credits = $1.00 USD
-━━━━━━━━━━━━━━━━━━━━━━━━
-📦 Package Includes:
-• 🤖 Full AI Agent Triage Access
-• 🛡️ Priority Security Scanning
-• 📊 Real-time Execution Metrics
-• ⚡️ Instant Credit Settlement
-`.trim(),
+                                description: `⚡️ $1.00 USD = 100 Credits\n\n• 🤖 AI Agent Triage Access\n• 🛡️ Priority Security Scanning\n• 📊 Real-time Execution Metrics\n• ⚡️ Instant Credit Settlement`,
                                 images: ['https://auditpal.io/logo-mark.png'],
                             },
                             unit_amount: amountUsd * 100, // in cents
@@ -58,8 +50,8 @@ paymentsRoutes.post(
                     userId: user.sub,
                     credits: creditsToBuy.toString(),
                 },
-                success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?checkout=success`,
-                cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?checkout=cancel`,
+                success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/checkout/success`,
+                cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/bounties`,
             })
 
             return c.json({ success: true, data: { url: session.url } })
@@ -102,7 +94,8 @@ paymentsRoutes.post('/webhook', async (c) => {
         if (userId && creditsStr) {
             const creditsToAdd = parseInt(creditsStr, 10)
             try {
-                await prisma.user.update({
+                // Update user credits in the database
+                const updatedUser = await prisma.user.update({
                     where: { id: userId },
                     data: {
                         platformCredits: {
@@ -110,11 +103,16 @@ paymentsRoutes.post('/webhook', async (c) => {
                         },
                     },
                 })
-                console.log(`Added ${creditsToAdd} credits to user ${userId}`)
+                
+                console.log(`✅ [Webhook] Successfully added ${creditsToAdd} credits to user ${userId}. New balance: ${updatedUser.platformCredits}`)
             } catch (dbErr) {
-                console.error(`Failed to update user credits:`, dbErr)
-                // Might want to queue this or retry in a real app
+                console.error(`❌ [Webhook] Failed to update user credits for user ${userId}:`, dbErr)
+                // In a production app, you might want to send this to an error tracking service
+                // or a dead-letter queue for manual intervention.
+                return c.json({ success: false, error: 'Database update failed' }, 500)
             }
+        } else {
+            console.warn('⚠️ [Webhook] Missing userId or credits in session metadata', { userId, creditsStr })
         }
     }
 

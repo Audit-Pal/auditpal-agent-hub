@@ -19,6 +19,7 @@ const AgentsDirectoryPage = lazy(() => import('./components/pages/AgentsDirector
 const AgentLeaderboardPage = lazy(() => import('./components/pages/AgentLeaderboardPage').then(m => ({ default: m.AgentLeaderboardPage })))
 const ProgramDetailPage = lazy(() => import('./components/pages/ProgramDetailPage').then(m => ({ default: m.ProgramDetailPage })))
 const AgentDetailPage = lazy(() => import('./components/pages/AgentDetailPage').then(m => ({ default: m.AgentDetailPage })))
+const CheckoutSuccess = lazy(() => import('./components/pages/CheckoutSuccess').then(m => ({ default: m.CheckoutSuccess })))
 
 import { PageLoader } from './components/common/PageLoader'
 
@@ -416,6 +417,7 @@ export default function App() {
             <Route path="/program/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} />} />
             <Route path="/program/:id/submission" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} initialTab="submission" />} />
             <Route path="/agent/:id" element={<AgentDetailPage agentBackTarget={agentBackTarget} navigate={navigate} />} />
+            <Route path="/checkout/success" element={<CheckoutSuccess />} />
             <Route path="/org/dashboard" element={<OrgDashboard />} />
             <Route path="/org/register-bounty" element={<BountyRegistration />} />
             <Route path="/org/edit-bounty/:id" element={<BountyRegistration />} />
