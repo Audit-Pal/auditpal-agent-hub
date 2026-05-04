@@ -1,4 +1,4 @@
-
+import { useState } from 'react'
 import type { ResearcherReport, ValidationAction, Severity } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
@@ -82,6 +82,8 @@ export function ReportCenter({
 }: ReportCenterProps) {
 
 
+  const [filterState, setFilterState] = useState<'ALL' | 'REJECTED' | 'ACCEPTED' | 'RESOLVED'>('ALL')
+
   if (reports.length === 0) {
     return (
       <section className="p-8 text-center md:p-12 border-b border-[rgba(255,255,255,0.06)] pb-12 mb-4">
@@ -99,10 +101,42 @@ export function ReportCenter({
     )
   }
 
+  const filteredDisplayReports = reports.filter((report) => {
+    if (filterState === 'ALL') return true
+    return report.status === filterState
+  })
+
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[rgba(255,255,255,0.06)] pb-4">
+        <button
+          onClick={() => setFilterState('ALL')}
+          className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${filterState === 'ALL' ? 'bg-[var(--accent-strong)] text-black' : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-soft)] hover:bg-[rgba(255,255,255,0.08)]'}`}
+        >
+          All
+        </button>
+        <button
+          onClick={() => setFilterState('ACCEPTED')}
+          className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${filterState === 'ACCEPTED' ? 'bg-[var(--accent-strong)] text-black' : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-soft)] hover:bg-[rgba(255,255,255,0.08)]'}`}
+        >
+          To-Reward
+        </button>
+        <button
+          onClick={() => setFilterState('RESOLVED')}
+          className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${filterState === 'RESOLVED' ? 'bg-[var(--accent-strong)] text-black' : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-soft)] hover:bg-[rgba(255,255,255,0.08)]'}`}
+        >
+          Rewarded
+        </button>
+        <button
+          onClick={() => setFilterState('REJECTED')}
+          className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors ${filterState === 'REJECTED' ? 'bg-[var(--accent-strong)] text-black' : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-soft)] hover:bg-[rgba(255,255,255,0.08)]'}`}
+        >
+          Rejected
+        </button>
+      </div>
+
       <div className="space-y-5">
-        {reports.map((report) => {
+        {filteredDisplayReports.map((report) => {
           const primaryVulnerability = report.vulnerabilities?.[0]
           
           return (
@@ -157,15 +191,20 @@ export function ReportCenter({
                 </div>
               </div>
 
-              {report.nextAction && (
+              {report.nextAction && report.status !== 'REJECTED' && (
                 <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.04)]">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent-strong)]">Next Action</p>
-                  <p className="mt-1 text-xs text-[var(--text-soft)] line-clamp-1">{report.nextAction}</p>
+                  <p className="mt-1 text-xs text-[var(--text-soft)] line-clamp-1">
+                    {report.status === 'ACCEPTED' ? 'Reward distribution' : report.nextAction}
+                  </p>
                 </div>
               )}
             </article>
           )
         })}
+        {filteredDisplayReports.length === 0 && (
+          <div className="py-8 text-center text-[var(--text-muted)] text-sm">No reports match the selected filter.</div>
+        )}
       </div>
     </div>
   )

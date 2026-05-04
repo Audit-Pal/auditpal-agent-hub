@@ -134,7 +134,7 @@ export function ReportDetailPage() {
         </button>
       </div>
 
-      <article className="rounded-[32px] border border-[rgba(255,255,255,0.08)] bg-[rgba(9,15,22,0.4)] p-8 md:p-12 backdrop-blur-[20px]">
+      <article className="pb-12">
         <header className="mb-10">
           <div className="flex flex-wrap items-center gap-3">
             <Badge tone="soft">{report.humanId}</Badge>
@@ -163,6 +163,8 @@ export function ReportDetailPage() {
             )}
           </div>
         </header>
+        
+        <hr className="my-12 border-[rgba(255,255,255,0.08)]" />
 
         <div className="grid gap-12 lg:grid-cols-[1fr_300px]">
           <div className="space-y-12">
@@ -227,12 +229,14 @@ export function ReportDetailPage() {
           </div>
 
           <aside className="space-y-10">
-            <div className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] p-6">
-              <p className="section-kicker !text-[var(--accent-strong)]">Next Action</p>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--text)]">
-                {report.nextAction || 'Awaiting manual triage or program update.'}
-              </p>
-            </div>
+            {report.status !== 'REJECTED' && (
+              <div className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] p-6">
+                <p className="section-kicker !text-[var(--accent-strong)]">Next Action</p>
+                <p className="mt-3 text-sm leading-relaxed text-[var(--text)]">
+                  {report.status === 'ACCEPTED' ? 'Reward distribution' : (report.nextAction || 'Awaiting manual triage or program update.')}
+                </p>
+              </div>
+            )}
 
             <div className="space-y-6">
               <div>
