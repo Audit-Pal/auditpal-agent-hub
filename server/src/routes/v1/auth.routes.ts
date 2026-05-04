@@ -263,3 +263,23 @@ authRoutes.post('/api-key', authMiddleware, requireRole('BOUNTY_HUNTER', 'ADMIN'
         user: serializeUserProfile(user),
     })
 })
+
+// ── DELETE /api-key ─────────────────────────────────────────────────────────────
+authRoutes.delete('/api-key', authMiddleware, requireRole('BOUNTY_HUNTER', 'ADMIN'), async (c) => {
+    const { sub } = c.get('user')
+
+    const user = await prisma.user.update({
+        where: { id: sub },
+        data: {
+            apiKeyHash: null,
+            apiKeyPreview: null,
+            apiKeyCreatedAt: null,
+            apiKeyLastUsedAt: null,
+        },
+        select: userProfileSelect,
+    })
+
+    return successResponse(c, {
+        user: serializeUserProfile(user),
+    })
+})

@@ -219,7 +219,7 @@ function getRoleMessage(role?: string) {
 }
 
 export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
-  const { user, logout, generateApiKey, updateProfile } = useAuth()
+  const { user, logout, generateApiKey, revokeApiKey, updateProfile } = useAuth()
   const { showToast } = useToast()
 
   // Auto-sync connected wallet address → user profile
@@ -229,6 +229,7 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isGeneratingKey, setIsGeneratingKey] = useState(false)
+  const [isRevokingKey, setIsRevokingKey] = useState(false)
   const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null)
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const [activeProfileTab, setActiveProfileTab] = useState<ProfileTab>('profile')
@@ -377,6 +378,16 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
     if (!generatedApiKey) return
     try { await navigator.clipboard.writeText(generatedApiKey); setCopyState('copied') }
     catch { setCopyState('failed') }
+  }
+
+  const handleRevokeApiKey = async () => {
+    setIsRevokingKey(true)
+    const success = await revokeApiKey()
+    setIsRevokingKey(false)
+    if (!success) { showToast('Unable to revoke API key right now.', 'error'); return }
+    setGeneratedApiKey(null)
+    setCopyState('idle')
+    showToast('API key revoked successfully.', 'success')
   }
 
   const resetAgentComposer = () => {
@@ -666,16 +677,18 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Workspace</p>
                             <p className="text-[13px] leading-relaxed text-[var(--text-soft)]">{getRoleMessage(user.role)}</p>
                           </div>
-                          <div className="p-5 border-b border-[rgba(255,255,255,0.04)] mb-4">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Platform Credits</p>
-                            <div className="flex items-center justify-between">
-                              <p className="text-[20px] font-bold text-[#0fca8a]">{user.platformCredits ?? 0} <span className="text-[12px] text-[var(--text-soft)] font-normal uppercase tracking-widest">CRD</span></p>
-                              <Button variant="outline" size="sm" onClick={() => void handleBuyCredits()} disabled={isBuyingCredits}>
-                                {isBuyingCredits ? 'Loading...' : 'Buy Credits'}
-                              </Button>
+                          {user.role !== 'ORGANIZATION' && (
+                            <div className="p-5 border-b border-[rgba(255,255,255,0.04)] mb-4">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Platform Credits</p>
+                              <div className="flex items-center justify-between">
+                                <p className="text-[20px] font-bold text-[#0fca8a]">{user.platformCredits ?? 0} <span className="text-[12px] text-[var(--text-soft)] font-normal uppercase tracking-widest">CRD</span></p>
+                                <Button variant="outline" size="sm" onClick={() => void handleBuyCredits()} disabled={isBuyingCredits}>
+                                  {isBuyingCredits ? 'Loading...' : 'Buy Credits'}
+                                </Button>
+                              </div>
+                              <p className="text-[12px] text-[var(--text-muted)] mt-2">Credits are used to run AI agents on the platform.</p>
                             </div>
-                            <p className="text-[12px] text-[var(--text-muted)] mt-2">Credits are used to run AI agents on the platform.</p>
-                          </div>
+                          )}
                           <div className="p-5 border-b border-[rgba(255,255,255,0.04)] space-y-4">
                             {user.role !== 'ORGANIZATION' ? (
                               <>
@@ -820,6 +833,11 @@ export function TopNav({ pathname, reportCount, onLogin }: TopNavProps) {
                                 <Button variant="primary" size="sm" onClick={handleGenerateApiKey} disabled={isGeneratingKey}>
                                   {isGeneratingKey ? 'Generating…' : user.hasApiKey ? 'Regenerate' : 'Generate key'}
                                 </Button>
+                                {user.hasApiKey && (
+                                  <Button variant="destructive" size="sm" onClick={handleRevokeApiKey} disabled={isRevokingKey}>
+                                    {isRevokingKey ? 'Revoking…' : 'Revoke key'}
+                                  </Button>
+                                )}
                                 {generatedApiKey && (
                                   <Button variant="outline" size="sm" onClick={handleCopyApiKey}>
                                     {copyState === 'copied' ? '✓ Copied' : copyState === 'failed' ? 'Failed' : 'Copy key'}

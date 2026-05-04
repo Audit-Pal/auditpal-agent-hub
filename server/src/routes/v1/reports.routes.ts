@@ -16,6 +16,7 @@ import {
 import { assessReportEffort, runAiTriage } from '../../lib/triage.service'
 import { authMiddleware, requireRole, submissionAuthMiddleware } from '../../middleware/auth'
 import { errorResponse, successResponse, paginatedResponse } from '../../lib/response'
+import type { TokenPayload } from '../../lib/jwt'
 import type { HonoEnv } from '../../types/hono'
 
 export const reportRoutes = new Hono<HonoEnv>()
@@ -291,7 +292,9 @@ async function generateHumanId(programCode: string) {
     return programCode + '-R' + String(count + 1).padStart(3, '0')
 }
 
-async function createReportFromSubmission(body: AgentSubmitReportInput, reporterId: string) {
+async function createReportFromSubmission(body: AgentSubmitReportInput, user: TokenPayload) {
+    const reporterId = user.sub
+
     const program = await prisma.program.findUnique({
         where: { id: body.programId },
         select: {
@@ -303,6 +306,29 @@ async function createReportFromSubmission(body: AgentSubmitReportInput, reporter
     })
 
     if (!program) return null
+
+    // For API key submissions, enforce wallet and deduct credits
+    if (user.type === 'api_key') {
+        const dbUser = await prisma.user.findUnique({
+            where: { id: user.sub },
+            select: { platformCredits: true, walletAddress: true },
+        })
+
+        if (!dbUser?.walletAddress) {
+            throw new Error('Wallet address required for agent submission via API')
+        }
+
+        if ((dbUser?.platformCredits ?? 0) < 100) {
+            throw new Error('Insufficient credits for submission (100 required)')
+        }
+
+        // Deduct credits immediately
+        await prisma.user.update({
+            where: { id: user.sub },
+            data: { platformCredits: { decrement: 100 } },
+        })
+    }
+
 
     const humanId = await generateHumanId(program.code)
     const structuredData = buildStructuredData(body, program)
@@ -477,11 +503,15 @@ reportRoutes.post(
         const body = c.req.valid('json')
         const user = c.get('user')
 
-        const report = await createReportFromSubmission(body, user.sub)
-        if (!report) return errorResponse(c, 404, 'Program not found')
-
-        return successResponse(c, report, 201)
+        try {
+            const report = await createReportFromSubmission(body, user)
+            if (!report) return errorResponse(c, 404, 'Program not found')
+            return successResponse(c, report, 201)
+        } catch (error: any) {
+            return errorResponse(c, 400, error.message || 'Submission failed')
+        }
     }
+
 )
 
 reportRoutes.patch(
@@ -530,11 +560,15 @@ reportRoutes.post(
         const body = c.req.valid('json')
         const user = c.get('user')
 
-        const report = await createReportFromSubmission(body, user.sub)
-        if (!report) return errorResponse(c, 404, 'Program not found')
-
-        return successResponse(c, report, 201)
+        try {
+            const report = await createReportFromSubmission(body, user)
+            if (!report) return errorResponse(c, 404, 'Program not found')
+            return successResponse(c, report, 201)
+        } catch (error: any) {
+            return errorResponse(c, 400, error.message || 'Submission failed')
+        }
     }
+
 )
 
 // ── GET /reports/escalated ─────────────────────────────────────────────────────

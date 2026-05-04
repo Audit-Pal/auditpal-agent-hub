@@ -37,6 +37,7 @@ interface AuthContextType {
     logout: () => void;
     refreshProfile: () => Promise<User | null>;
     generateApiKey: () => Promise<string | null>;
+    revokeApiKey: () => Promise<boolean>;
     updateProfile: (payload: { walletAddress?: string | null; escrowContractAddress?: string | null }) => Promise<User>;
 }
 
@@ -136,6 +137,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const revokeApiKey = async () => {
+        try {
+            const res = await api.delete<{ user: User }>('/auth/api-key');
+            if (res.success) {
+                setUser(res.data.user);
+                return true;
+            }
+        } catch (error) {
+            console.error('API key revocation failed', error);
+        }
+        return false;
+    };
+
     const logout = () => {
         api.clearTokens();
         setUser(null);
@@ -143,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout, refreshProfile, generateApiKey, updateProfile }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, refreshProfile, generateApiKey, revokeApiKey, updateProfile }}>
             {children}
         </AuthContext.Provider>
     );

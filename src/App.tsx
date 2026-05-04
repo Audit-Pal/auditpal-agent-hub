@@ -19,6 +19,7 @@ const AgentsDirectoryPage = lazy(() => import('./components/pages/AgentsDirector
 const AgentLeaderboardPage = lazy(() => import('./components/pages/AgentLeaderboardPage').then(m => ({ default: m.AgentLeaderboardPage })))
 const ProgramDetailPage = lazy(() => import('./components/pages/ProgramDetailPage').then(m => ({ default: m.ProgramDetailPage })))
 const AgentDetailPage = lazy(() => import('./components/pages/AgentDetailPage').then(m => ({ default: m.AgentDetailPage })))
+const ReportDetailPage = lazy(() => import('./components/pages/ReportDetailPage').then(m => ({ default: m.ReportDetailPage })))
 const CheckoutSuccess = lazy(() => import('./components/pages/CheckoutSuccess').then(m => ({ default: m.CheckoutSuccess })))
 
 import { PageLoader } from './components/common/PageLoader'
@@ -410,6 +411,8 @@ export default function App() {
                 />
               }
             />
+            <Route path="/report/:id" element={<ReportDetailPage />} />
+
             <Route path="/agents" element={<AgentsDirectoryPage leaderboardAgents={leaderboardAgents} openAgent={openAgent} navigate={navigate} />} />
             <Route path="/agents/leaderboard" element={<AgentLeaderboardPage topRankedAgent={topRankedAgent} leaderboardAgents={leaderboardAgents} openAgent={openAgent} />} />
             <Route path="/bounty/:id" element={<ProgramDetailPage user={user} reports={reports} navigate={navigate} openSubmission={openSubmission} openAgent={openAgent} onLogin={handleOpenLogin} />} />

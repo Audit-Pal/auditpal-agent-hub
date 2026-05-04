@@ -1,8 +1,10 @@
-import { useState } from 'react'
+
 import type { ResearcherReport, ValidationAction, Severity } from '../../types/platform'
 import { Badge } from '../common/Badge'
 import { Button } from '../common/Button'
 import { formatEnum } from '../../utils/formatters'
+import { Link } from 'react-router-dom'
+
 
 interface ReportCenterProps {
   reports: readonly ResearcherReport[]
@@ -67,16 +69,7 @@ function formatDate(value?: string | null) {
   }).format(new Date(value))
 }
 
-function buildGraphChips(report: ResearcherReport) {
-  const graphContext = report.structuredData?.graphContext
-  return [
-    graphContext?.vulnerabilityClass,
-    graphContext?.affectedAsset,
-    graphContext?.affectedComponent,
-    graphContext?.reporterAgent,
-    ...(graphContext?.tags || []),
-  ].filter(Boolean) as string[]
-}
+
 
 export function ReportCenter({
   reports,
@@ -85,25 +78,9 @@ export function ReportCenter({
   viewerId,
   onBrowsePrograms,
   onOpenProgram,
-  onValidate,
   onEditReport,
 }: ReportCenterProps) {
-  const [validationNotes, setValidationNotes] = useState<Record<string, string>>({})
-  const [validationSeverity, setValidationSeverity] = useState<Record<string, string>>({})
-  const [activeValidationId, setActiveValidationId] = useState<string | null>(null)
 
-  const canValidate = viewerRole === 'ADMIN' || viewerRole === 'ORGANIZATION'
-
-  const handleValidation = async (reportId: string, action: ValidationAction) => {
-    if (!onValidate) return
-
-    setActiveValidationId(reportId)
-    try {
-      await onValidate(reportId, action, validationNotes[reportId], validationSeverity[reportId])
-    } finally {
-      setActiveValidationId(null)
-    }
-  }
 
   if (reports.length === 0) {
     return (
@@ -126,203 +103,64 @@ export function ReportCenter({
     <div className="space-y-6">
       <div className="space-y-5">
         {reports.map((report) => {
-          const graphChips = buildGraphChips(report)
-          const graphContext = report.structuredData?.graphContext
           const primaryVulnerability = report.vulnerabilities?.[0]
-          const currentSeverity = validationSeverity[report.id] || primaryVulnerability?.severity || 'LOW'
-          const awaitingValidation = canValidate && ['AI_TRIAGED', 'TRIAGED', 'ESCALATED', 'SUBMITTED', 'LOW_EFFORT', 'NEEDS_INFO'].includes(report.status)
-
+          
           return (
             <article key={report.id} className="group relative rounded-[28px] border border-[rgba(255,255,255,0.08)] bg-[rgba(9,15,22,0.28)] px-5 py-6 backdrop-blur-[16px] transition duration-300 hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(12,19,28,0.36)]">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="max-w-3xl">
+              <div className="flex flex-wrap items-center justify-between gap-6">
+                <div className="flex-1 min-w-[300px]">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone="soft">{report.humanId}</Badge>
                     {primaryVulnerability && <Badge tone={getSeverityTone(primaryVulnerability.severity)}>Severity: {formatEnum(primaryVulnerability.severity)}</Badge>}
                     <Badge tone={getStatusTone(report.status)}>{formatEnum(report.status)}</Badge>
-                    <Badge tone="soft">{formatEnum(report.source)}</Badge>
                     {report.vulnerabilities?.length && report.vulnerabilities.length > 1 && (
                       <Badge tone="accent">+{report.vulnerabilities.length - 1} findings</Badge>
                     )}
                   </div>
 
-                  <h2 className="mt-4 font-serif text-3xl leading-tight text-[var(--text)]">{report.title}</h2>
-                  <button
-                    onClick={() => onOpenProgram(report.programId)}
-                    className="mt-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:text-[var(--text)]"
-                  >
-                    {report.programName || 'Program'}{report.programCode ? ` · ${report.programCode}` : ''}
-                  </button>
-                  <p className="mt-2 text-sm text-[var(--text-muted)]">
-                    Submitted by {report.reporterName}{report.decisionOwner ? ` · Validator: ${report.decisionOwner}` : ''}
-                  </p>
+                  <h2 className="mt-4 font-serif text-2xl leading-tight text-[var(--text)]">{report.title}</h2>
+                  
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-soft)]">
+                    <button
+                      onClick={() => onOpenProgram(report.programId)}
+                      className="font-bold text-[var(--accent-strong)] hover:underline"
+                    >
+                      {report.programName || 'Program'}{report.programCode ? ` · ${report.programCode}` : ''}
+                    </button>
+                    <span>•</span>
+                    <span>Submitted by {report.reporterName}</span>
+                    <span>•</span>
+                    <span>{formatDate(report.submittedAt)}</span>
+                  </div>
+                </div>
 
-                  {primaryVulnerability && <p className="mt-4 text-sm leading-7 text-[var(--text-soft)]">{primaryVulnerability.summary}</p>}
-
-                  {onEditReport && isEditable(report, viewerRole, viewerId) && (
-                    <div className="mt-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">AI Score</p>
+                    <p className="mt-0.5 text-sm font-semibold text-[var(--text)]">
+                      {report.aiScore !== null && report.aiScore !== undefined ? report.aiScore.toFixed(1) : '—'}
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {onEditReport && isEditable(report, viewerRole, viewerId) && (
                       <Button variant="outline" size="sm" onClick={() => onEditReport(report)}>
-                        Edit application
+                        Edit
                       </Button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="border-l-2 border-[var(--accent)] pl-5 min-w-[250px]">
-                  <p className="section-kicker !tracking-[0.18em]">Next action</p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--text)]">{report.nextAction || 'Awaiting the next queue update.'}</p>
+                    )}
+                    <Link to={`/report/${report.id}`}>
+                      <Button variant="primary" size="sm">
+                        View Details
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-8 flex flex-wrap gap-8 border-y border-[rgba(255,255,255,0.06)] py-6">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Primary target</p>
-                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{primaryVulnerability?.target || 'Unknown'}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Route</p>
-                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{report.route}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Submitted</p>
-                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{formatDate(report.submittedAt)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Response SLA</p>
-                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{report.responseSla || 'Pending bounty SLA'}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">AI score</p>
-                  <p className="mt-1.5 text-[13px] font-semibold text-[var(--text)]">{report.aiScore !== null && report.aiScore !== undefined ? report.aiScore.toFixed(1) : 'Not scored'}</p>
-                </div>
-              </div>
-
-              {(report.aiSummary || report.note) && (
-                <div className="mt-8 space-y-6">
-                  {report.aiSummary && (
-                    <div>
-                      <p className="section-kicker !tracking-[0.18em]">AI triage</p>
-                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{report.aiSummary}</p>
-                    </div>
-                  )}
-                  {report.note && (
-                    <div>
-                      <p className="section-kicker !tracking-[0.18em]">
-                        {report.status === 'LOW_EFFORT' ? 'Automated filter' : 'Human decision'}
-                      </p>
-                      <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{report.note}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {primaryVulnerability && (
-                <div className="mt-8 space-y-6">
-                  <div>
-                    <p className="section-kicker !tracking-[0.18em]">Impact</p>
-                    <p className="mt-2 text-sm leading-7 text-[var(--text-soft)]">{primaryVulnerability.impact}</p>
-                  </div>
-                  <div>
-                    <p className="section-kicker !tracking-[0.18em]">Proof</p>
-                    <p className="mt-2 text-sm leading-7 text-[var(--text-soft)] whitespace-pre-line">{primaryVulnerability.proof}</p>
-                  </div>
-                </div>
-              )}
-
-              {(graphChips.length > 0 || graphContext) && (
-                <div className="mt-8 border-t border-[rgba(255,255,255,0.06)] pt-6">
-                  <p className="section-kicker !tracking-[0.18em]">Graph seed context</p>
-                  {graphChips.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {graphChips.map((chip) => (
-                        <Badge key={`${report.id}-${chip}`} tone="soft">
-                          {chip}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-6 flex flex-wrap gap-8">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Attack vector</p>
-                      <p className="mt-1.5 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.attackVector || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Root cause</p>
-                      <p className="mt-1.5 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.rootCause || 'Not provided'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Prerequisites</p>
-                      <p className="mt-1.5 text-sm leading-7 text-[var(--text-soft)]">{graphContext?.prerequisites || 'None listed'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {primaryVulnerability && (primaryVulnerability.errorLocation || primaryVulnerability.codeSnippet) && (
-                <div className="mt-8">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="section-kicker !tracking-[0.18em]">Primary code context</p>
-                    {primaryVulnerability.errorLocation && <Badge tone="soft">{primaryVulnerability.errorLocation}</Badge>}
-                  </div>
-                  {primaryVulnerability.codeSnippet && (
-                    <pre className="mt-3 overflow-x-auto border-l-2 border-[rgba(255,255,255,0.1)] bg-[rgba(9,18,27,0.4)] px-4 py-3 text-sm leading-6 text-[var(--text)]">
-                      <code>{primaryVulnerability.codeSnippet}</code>
-                    </pre>
-                  )}
-                </div>
-              )}
-
-              {awaitingValidation && onValidate && (
-                <div className="mt-8 border-t border-[rgba(15,202,138,0.2)] pt-6">
-                  <p className="section-kicker !tracking-[0.18em] text-[#0fca8a]">Human validator action</p>
-
-                  <div className="mt-4 space-y-6">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Final criticality</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map((severity) => {
-                          const isSelected = currentSeverity === severity
-                          return (
-                            <button
-                              key={severity}
-                              type="button"
-                              onClick={() => setValidationSeverity((current) => ({ ...current, [report.id]: severity }))}
-                              className={[
-                                'border-b-2 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors',
-                                isSelected
-                                  ? 'border-[var(--accent)] text-[var(--accent)] bg-[rgba(15,202,138,0.03)]'
-                                  : 'border-transparent text-[var(--text-soft)] hover:bg-[rgba(255,255,255,0.02)] hover:text-[var(--text)]'
-                              ].join(' ')}
-                            >
-                              {severity}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="field-label">Decision notes</label>
-                      <textarea
-                        value={validationNotes[report.id] || ''}
-                        onChange={(event) => setValidationNotes((current) => ({ ...current, [report.id]: event.target.value }))}
-                        className="field-area !min-h-[90px]"
-                        placeholder="Add guidance, payout rationale, or next-step details for the reporter."
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap gap-3">
-                      <Button variant="primary" size="sm" onClick={() => handleValidation(report.id, 'ACCEPT')} disabled={activeValidationId === report.id}>
-                        {activeValidationId === report.id ? 'Saving...' : 'Accept report'}
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleValidation(report.id, 'ESCALATE')} disabled={activeValidationId === report.id}>
-                        Escalate
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleValidation(report.id, 'REJECT')} disabled={activeValidationId === report.id}>
-                        Reject
-                      </Button>
-                    </div>
-                  </div>
+              {report.nextAction && (
+                <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.04)]">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent-strong)]">Next Action</p>
+                  <p className="mt-1 text-xs text-[var(--text-soft)] line-clamp-1">{report.nextAction}</p>
                 </div>
               )}
             </article>

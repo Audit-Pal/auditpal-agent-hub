@@ -70,6 +70,16 @@ agentRoutes.post('/', authMiddleware, requireRole('BOUNTY_HUNTER', 'ADMIN'), zVa
     const { sub } = c.get('user')
     const body = c.req.valid('json') as any
     const slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    
+    const existingAgent = await prisma.agent.findUnique({
+        where: { slug },
+        select: { id: true },
+    })
+    
+    if (existingAgent) {
+        return errorResponse(c, 409, `Agent with name "${body.name}" already exists`)
+    }
+
     const owner = await prisma.user.findUnique({
         where: { id: sub },
         select: { walletAddress: true },
