@@ -62,10 +62,14 @@ def fetch_github_code(url: str) -> str:
     raise ValueError("Unsupported GitHub URL format. Must be a raw file, /blob/, or /tree/ link.")
 
 def parse_explorer_url(url: str):
-    """Parses an Etherscan/Basescan URL and determines the API chain ID and address for V2 API."""
+    """Parses an Etherscan/Basescan URL or raw address and determines the API chain ID and address."""
+    # Check if it's just a raw address
+    if re.fullmatch(r'0x[a-fA-F0-9]{40}', url):
+        return 1, url
+        
     match = re.search(r'https?://([^/]+)/(?:address|token)/(0x[a-fA-F0-9]{40})', url)
     if not match:
-        raise ValueError("Invalid explorer URL. Expected format: https://[domain]/address/0x... or https://[domain]/token/0x...")
+        raise ValueError("Invalid explorer URL or address. Expected format: https://[domain]/address/0x... or raw 0x... address")
     
     domain = match.group(1)
     address = match.group(2)

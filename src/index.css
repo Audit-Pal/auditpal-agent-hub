@@ -72,18 +72,18 @@ body::before {
   z-index: 0;
 }
 
-/* Subtle grid */
+/* Refined grid: extremely subtle, providing texture without distraction */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(80, 140, 150, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(80, 140, 150, 0.05) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 80%);
-  opacity: 0.5;
+    linear-gradient(rgba(80, 140, 150, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(80, 140, 150, 0.03) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, black 10%, transparent 90%);
+  opacity: 0.4;
   z-index: 0;
 }
 
@@ -311,11 +311,23 @@ a {
 /* ─── Typography ─────────────────────────────────────────── */
 .section-kicker {
   color: var(--accent);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
   font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-kicker::before {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.5;
 }
 
 .section-title {
@@ -334,14 +346,22 @@ a {
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.05;
+  filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5));
 }
 
 .section-copy {
   color: var(--text-soft);
-  font-size: 1rem;
-  line-height: 1.7;
+  font-size: 1.1rem;
+  line-height: 1.8;
   font-weight: 400;
   letter-spacing: -0.01em;
+}
+
+.glass-panel {
+  background: rgba(13, 17, 24, 0.4);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 80px rgba(0, 3, 6, 0.4);
 }
 
 /* ─── Form Fields ────────────────────────────────────────── */
@@ -653,4 +673,90 @@ a {
   border-color: var(--accent);
   transform: translateY(-1px);
 }
-/* Removed obsolete sub-page styles */
+/* ─── Code Viewer & Terminal ─────────────────────────────── */
+.code-window {
+  background: #0d1117;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+}
+
+.code-window__header {
+  background: #161b22;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.code-window__body {
+  padding: 0;
+  display: flex;
+  overflow-x: auto;
+}
+
+.code-window__lines {
+  padding: 1.5rem 1rem;
+  background: #090c10;
+  border-right: 1px solid var(--border);
+  text-align: right;
+  color: var(--text-muted);
+  user-select: none;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.code-window__content {
+  padding: 1.5rem 1.5rem;
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #e6edf3;
+  white-space: pre;
+}
+
+/* Basic Syntax Tokens */
+.code-token--keyword { color: #ff7b72; }
+.code-token--function { color: #d2a8ff; }
+.code-token--string { color: #a5d6ff; }
+.code-token--comment { color: #8b949e; italic: true; }
+.code-token--number { color: #79c0ff; }
+.code-token--type { color: #ffa657; }
+.code-token--operator { color: #79c0ff; }
+
+/* ─── Integrated Report Layout ───────────────────────────── */
+.report-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 4rem;
+}
+
+@media (max-width: 1024px) {
+  .report-layout {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+}
+
+.report-section {
+  padding-bottom: 4rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4rem;
+}
+
+.report-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.report-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  display: block;
+}
