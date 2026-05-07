@@ -18,6 +18,12 @@ import { authMiddleware, requireRole, submissionAuthMiddleware } from '../../mid
 import { errorResponse, successResponse, paginatedResponse } from '../../lib/response'
 import type { TokenPayload } from '../../lib/jwt'
 import type { HonoEnv } from '../../types/hono'
+import {
+    depositRewardOnChain,
+    reportIdToBytes32,
+    CHAIN_CONFIG,
+} from '../../services/blockchain.service'
+import type { Address, Hex } from 'viem'
 
 export const reportRoutes = new Hono<HonoEnv>()
 
@@ -308,14 +314,21 @@ async function createReportFromSubmission(body: AgentSubmitReportInput, user: To
     if (!program) return null
 
     // For API key submissions, enforce wallet and deduct credits
+    let resolvedWallet: string | undefined = body.walletAddress
+    let resolvedSignature: string | undefined = body.signature
+
     if (user.type === 'api_key') {
         const dbUser = await prisma.user.findUnique({
             where: { id: user.sub },
             select: { platformCredits: true, walletAddress: true },
         })
 
-        if (!dbUser?.walletAddress) {
+        if (!dbUser?.walletAddress && !resolvedWallet) {
             throw new Error('Wallet address required for agent submission via API')
+        }
+        // Fallback to stored wallet if not provided in body
+        if (!resolvedWallet && dbUser?.walletAddress) {
+            resolvedWallet = dbUser.walletAddress
         }
 
         if ((dbUser?.platformCredits ?? 0) < 100) {
@@ -353,6 +366,9 @@ async function createReportFromSubmission(body: AgentSubmitReportInput, user: To
         source: body.source,
         responseSla: program.responseSla,
         structuredData: structuredData as Prisma.InputJsonValue,
+        // Bind hunter wallet at submission time for reward claim verification
+        ...(resolvedWallet ? { hunterWallet: resolvedWallet } : {}),
+        ...(resolvedSignature ? { hunterSignature: resolvedSignature } : {}),
         vulnerabilities: {
             create: body.vulnerabilities.map(v => ({
                 title: v.title,
@@ -682,6 +698,74 @@ reportRoutes.post(
             },
             include: reportInclude,
         })
+
+        // ── Auto-deposit reward on-chain when accepting with a reward amount ──
+        if (body.action === 'ACCEPT' && body.rewardAmount && body.rewardAmount > 0) {
+            try {
+                // Fetch raw fields not included in reportInclude
+                const rawReport = await prisma.report.findUnique({
+                    where: { id },
+                    select: { hunterWallet: true },
+                })
+                const payeeAddress = rawReport?.hunterWallet
+                if (!payeeAddress) {
+                    console.warn(`[Rewards] No hunter wallet on report ${id} — skipping on-chain deposit`)
+                } else {
+                    // Look up org's escrow
+                    const escrow = await prisma.rewardEscrow.findUnique({
+                        where: { organizationId: user.sub },
+                    })
+                    if (!escrow) {
+                        console.warn(`[Rewards] No escrow for org ${user.sub} — skipping on-chain deposit`)
+                    } else {
+                        // Check for existing deposit to avoid duplicates
+                        const existing = await prisma.rewardDeposit.findUnique({ where: { reportId: id } })
+                        if (!existing) {
+                            const reportIdHash = reportIdToBytes32(id)
+                            const amountWei = BigInt(Math.round(body.rewardAmount * 1e6)) // USDC 6 decimals
+
+                            let depositTxHash: string | undefined
+                            try {
+                                depositTxHash = await depositRewardOnChain(
+                                    escrow.escrowAddress as Address,
+                                    reportIdHash as Hex,
+                                    payeeAddress as Address,
+                                    amountWei
+                                )
+                            } catch (chainErr: any) {
+                                console.error('[Rewards] On-chain deposit failed:', chainErr?.message)
+                                // Non-fatal: still save the DB record so org can retry manually
+                            }
+
+                            await prisma.rewardDeposit.create({
+                                data: {
+                                    escrowId: escrow.id,
+                                    reportId: id,
+                                    payeeAddress,
+                                    amountWei: amountWei.toString(),
+                                    reportIdHash,
+                                    status: 'LOCKED',
+                                    depositTxHash: depositTxHash ?? null,
+                                },
+                            })
+
+                            await prisma.report.update({
+                                where: { id },
+                                data: {
+                                    rewardEstimateUsd: body.rewardAmount,
+                                    nextAction: depositTxHash
+                                        ? 'Reward locked in escrow — awaiting org approval to claim'
+                                        : 'Reward pending on-chain deposit — contact admin',
+                                },
+                            })
+                        }
+                    }
+                }
+            } catch (depositErr: any) {
+                console.error('[Rewards] Deposit flow error:', depositErr?.message)
+                // Non-fatal — report status already updated
+            }
+        }
 
         return successResponse(c, serializeReport(updated))
     }

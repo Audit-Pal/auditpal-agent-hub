@@ -106,6 +106,14 @@ enum ReportStatus {
   CLOSED
 }
 
+enum RewardStatus {
+  LOCKED
+  CLAIMABLE
+  CLAIMED
+  EXPIRED
+  REFUNDED
+}
+
 enum ReportSource {
   CROWD_REPORT
   EXPLOIT_FEED
@@ -154,6 +162,7 @@ model User {
   gatekeptPrograms  Program[]      @relation("ProgramGatekeeper")
   validatedPrograms Program[]      @relation("ProgramValidator")
   ownedAgents       Agent[]        @relation("AgentOwner")
+  rewardEscrow      RewardEscrow?
 
   @@map("users")
 }
@@ -336,6 +345,10 @@ model Report {
 
   structuredData  Json?        // For future Knowledge Graph construction
 
+  // Hunter wallet binding (set at submission time)
+  hunterWallet    String?      // wallet address the hunter claims to own
+  hunterSignature String?      // eth_sign of "AuditPal report submission: <reportId>"
+
   // New triage fields
   aiScore         Float?
   aiSummary       String?      @db.Text
@@ -348,6 +361,7 @@ model Report {
   reporter        User?        @relation(fields: [reporterId], references: [id])
 
   vulnerabilities Vulnerability[]
+  rewardDeposit   RewardDeposit?
 
   @@index([programId])
   @@index([reporterId])
@@ -498,4 +512,44 @@ model ProgramAgentLink {
 
   @@unique([programId, agentId])
   @@map("program_agent_links")
+}
+
+// ─────────────────────────────────────────────
+// ON-CHAIN REWARD ESCROW
+// ─────────────────────────────────────────────
+
+model RewardEscrow {
+  id                String         @id @default(cuid())
+  organizationId    String         @unique
+  escrowAddress     String         @unique
+  tokenAddress      String
+  chainId           Int            @default(84532)
+  deployTxHash      String
+  createdAt         DateTime       @default(now())
+
+  organization      User           @relation(fields: [organizationId], references: [id])
+  rewards           RewardDeposit[]
+
+  @@map("reward_escrows")
+}
+
+model RewardDeposit {
+  id              String       @id @default(cuid())
+  escrowId        String
+  reportId        String       @unique
+  payeeAddress    String
+  amountWei       String
+  reportIdHash    String?      // keccak256 of reportId for on-chain key
+  status          RewardStatus @default(LOCKED)
+  depositTxHash   String?
+  claimTxHash     String?
+  claimedAt       DateTime?
+  createdAt       DateTime     @default(now())
+
+  escrow          RewardEscrow @relation(fields: [escrowId], references: [id])
+  report          Report       @relation(fields: [reportId], references: [id])
+
+  @@index([escrowId])
+  @@index([payeeAddress])
+  @@map("reward_deposits")
 }

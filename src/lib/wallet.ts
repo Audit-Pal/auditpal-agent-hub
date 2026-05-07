@@ -1,6 +1,6 @@
 import { createAppKit } from '@reown/appkit/react'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { mainnet, sepolia } from '@reown/appkit/networks'
+import { mainnet, sepolia, baseSepolia } from '@reown/appkit/networks'
 import type { AppKitNetwork } from '@reown/appkit/networks'
 
 // ─── Project ID ──────────────────────────────────────────────────────────────
@@ -9,8 +9,8 @@ import type { AppKitNetwork } from '@reown/appkit/networks'
 const projectId: string = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? 'YOUR_PROJECT_ID'
 
 // ─── Networks ─────────────────────────────────────────────────────────────────
-// Mutable tuple required by AppKitNetwork[] — don't use `as const` here.
-const networks: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, sepolia]
+// Base Sepolia is the primary network for reward escrow operations.
+const networks: [AppKitNetwork, ...AppKitNetwork[]] = [baseSepolia, mainnet, sepolia]
 
 // ─── Wagmi Adapter ────────────────────────────────────────────────────────────
 export const wagmiAdapter = new WagmiAdapter({
@@ -47,3 +47,8 @@ createAppKit({
 })
 
 export const wagmiConfig = wagmiAdapter.wagmiConfig
+
+// ─── Reward Escrow Constants ──────────────────────────────────────────────────
+export const BASE_SEPOLIA_CHAIN_ID = 84532
+export const BASE_SEPOLIA_BLOCK_EXPLORER = 'https://sepolia.basescan.org'
+

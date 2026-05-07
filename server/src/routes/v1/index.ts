@@ -6,6 +6,7 @@ import { agentRoutes } from './agents.routes'
 import { metricsRoutes } from './metrics.routes'
 import { auditRoutes } from './audit.routes'
 import { paymentsRoutes } from './payments.routes'
+import { rewardsRoutes } from './rewards.routes'
 
 const v1 = new Hono()
 
@@ -16,5 +17,6 @@ v1.route('/agents', agentRoutes)
 v1.route('/metrics', metricsRoutes)
 v1.route('/audit', auditRoutes)
 v1.route('/payments', paymentsRoutes)
+v1.route('/rewards', rewardsRoutes)
 
 export { v1 }

@@ -8,6 +8,8 @@ import { PageLoader } from '../common/PageLoader'
 import { formatEnum } from '../../utils/formatters'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
+import { RewardClaimPanel } from '../rewards/RewardClaimPanel'
+import { EscrowDeployPanel } from '../rewards/EscrowDeployPanel'
 
 function getStatusTone(status: string) {
   switch (status) {
@@ -372,6 +374,20 @@ export function ReportDetailPage() {
               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-blue-400 mb-3">AI Intelligence</p>
               <p className="text-[12px] text-[var(--text-soft)] leading-relaxed">{report.aiSummary}</p>
             </div>
+          )}
+
+          {/* ── Reward Panel — hunter claim or org escrow ───────────────── */}
+          {(report.status === 'ACCEPTED' || report.status === 'RESOLVED') && (
+            <RewardClaimPanel
+              reportId={report.id}
+              reportStatus={report.status}
+              canClaim={user?.role === 'BOUNTY_HUNTER' && report.reporterId === user.id}
+            />
+          )}
+
+          {/* Org Escrow Management */}
+          {user?.role === 'ORGANIZATION' && report.program?.ownerId === user.id && (
+            <EscrowDeployPanel userId={user.id} />
           )}
         </aside>
       </div>

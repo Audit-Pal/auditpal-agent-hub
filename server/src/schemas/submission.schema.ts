@@ -65,6 +65,9 @@ export const agentSubmitReportSchema = z.object({
     vulnerabilities: z.array(vulnerabilityItemSchema).min(1),
     graphContext: graphContextSchema.optional(),
     knowledgeGraph: knowledgeGraphSchema.optional(),
+    // Reward claim binding — hunter signs their wallet address at submission
+    walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid wallet address').optional(),
+    signature: z.string().regex(/^0x[a-fA-F0-9]+$/, 'Invalid signature hex').optional(),
 })
 
 export const validateReportSchema = z.object({
