@@ -838,10 +838,31 @@ reportRoutes.patch(
             return errorResponse(c, 400, 'Edit window has closed (1 hour limit)')
         }
 
+        // If signature is provided, verify it
+        if (body.signature) {
+            const wallet = body.walletAddress || report.hunterWallet
+            if (!wallet) {
+                return errorResponse(c, 400, 'Wallet address required to verify signature')
+            }
+
+            const { verifySubmissionSignature } = await import('../../services/blockchain.service')
+            const isValid = await verifySubmissionSignature(
+                id,
+                body.signature as Hex,
+                wallet as Address
+            )
+
+            if (!isValid) {
+                return errorResponse(c, 400, 'Invalid signature for this report')
+            }
+        }
+
         const updated = await prisma.report.update({
             where: { id },
             data: {
-                title: body.title,
+                ...(body.title ? { title: body.title } : {}),
+                ...(body.walletAddress ? { hunterWallet: body.walletAddress } : {}),
+                ...(body.signature ? { hunterSignature: body.signature } : {}),
             },
             include: reportInclude,
         })

@@ -8,7 +8,7 @@ from google import genai
 from google.genai import types
 
 # Import our modular fetching tools
-from utils import fetch_github_code, parse_explorer_url, fetch_contract_source
+from utils import fetch_github_code, parse_explorer_url, fetch_contract_source, sign_report_id
 
 # Load environment variables from .env file
 load_dotenv()
@@ -24,6 +24,7 @@ client = genai.Client(api_key=api_key)
 # AuditPal Credentials
 AUDITPAL_API_KEY = os.getenv("AUDITPAL_API_KEY")
 SERVICE_URL = os.getenv("SERVICE_URL", "http://localhost:3001/api/v1")
+WALLET_PRIVATE_KEY = os.getenv("WALLET_PRIVATE_KEY")
 
 def submit_to_auditpal(report_json: dict):
     if not AUDITPAL_API_KEY:
@@ -40,11 +41,14 @@ def submit_to_auditpal(report_json: dict):
     try:
         response = requests.post(url, headers=headers, json=report_json)
         if response.status_code == 200 or response.status_code == 201:
+            resp_data = response.json()
             print("✅ Successfully submitted report to AuditPal!")
-            print(f"Response: {response.json()}")
+            print(f"Response: {resp_data}")
+            return resp_data.get("data", {}).get("id")
         else:
             print(f"❌ Failed to submit. Status code: {response.status_code}")
             print(f"Error: {response.text}")
+            return None
     except Exception as e:
         print(f"Exception during submission: {e}")
 
@@ -368,7 +372,38 @@ def main():
             print(f"- [{v.get('severity')}] {v.get('title')}")
         
         # Submit to API
-        submit_to_auditpal(report_json)
+        report_id = submit_to_auditpal(report_json)
+        
+        # ── Cryptographic Binding (New) ───────────────────────────────────────
+        if report_id and WALLET_PRIVATE_KEY:
+            print("\nSigning report ID for secure reward escrow...")
+            try:
+                wallet_address, signature = sign_report_id(report_id, WALLET_PRIVATE_KEY)
+                print(f"✍️  Signed with wallet: {wallet_address}")
+                
+                # Bind signature to report via PATCH /reports/:id
+                bind_url = f"{SERVICE_URL}/reports/{report_id}"
+                bind_headers = {
+                    "Content-Type": "application/json",
+                    "X-API-Key": AUDITPAL_API_KEY
+                }
+                bind_data = {
+                    "title": report_json.get("title"),
+                    "walletAddress": wallet_address,
+                    "signature": signature
+                }
+                
+                bind_resp = requests.patch(bind_url, headers=bind_headers, json=bind_data)
+                if bind_resp.status_code == 200:
+                    print("✅ Successfully bound wallet signature to report!")
+                    print("   This report is now eligible for automated escrow rewards.")
+                else:
+                    print(f"⚠️  Failed to bind signature: {bind_resp.text}")
+            except Exception as e:
+                print(f"❌ Error during signing/binding: {e}")
+        elif not WALLET_PRIVATE_KEY:
+            print("\nℹ️  Skipping cryptographic binding (WALLET_PRIVATE_KEY not set).")
+            print("   Rewards will require manual wallet verification.")
 
 if __name__ == "__main__":
     main()

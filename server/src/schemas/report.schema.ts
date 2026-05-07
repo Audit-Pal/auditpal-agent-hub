@@ -40,7 +40,9 @@ export const updateReportStatusSchema = z.object({
 })
 
 export const editReportSchema = z.object({
-    title: z.string().min(5),
+    title: z.string().min(5).optional(),
+    walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid wallet address').optional(),
+    signature: z.string().regex(/^0x[a-fA-F0-9]+$/, 'Invalid signature hex').optional(),
 })
 
 export const reportQuerySchema = z.object({

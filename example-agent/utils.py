@@ -2,6 +2,8 @@ import json
 import os
 import re
 import requests
+from eth_account import Account
+from eth_account.messages import encode_defunct
 
 # Mapping of common explorer domains to their chain IDs for Etherscan V2 API
 CHAIN_ID_MAP = {
@@ -116,3 +118,21 @@ def fetch_contract_source(chain_id: int, address: str, api_key: str = None) -> s
             pass
             
     return source_code
+
+def sign_report_id(report_id: str, private_key: str):
+    """
+    Signs the message 'AuditPal report submission: <report_id>' 
+    using the provided Ethereum private key.
+    Returns (address, signature_hex).
+    """
+    if not private_key.startswith("0x"):
+        private_key = "0x" + private_key
+        
+    account = Account.from_key(private_key)
+    message = f"AuditPal report submission: {report_id}"
+    
+    # EIP-191 personal_sign (standard for metamask/eth_sign)
+    encoded_message = encode_defunct(text=message)
+    signed_message = account.sign_message(encoded_message)
+    
+    return account.address, signed_message.signature.hex()
