@@ -37,12 +37,15 @@ contract RewardEscrow {
     address public factory; // deploying factory
     IERC20 public token; // payout token (USDC)
     uint256 public refundTimeout; // seconds before admin can reclaim
+    uint256 public totalAllocated;
 
     mapping(bytes32 => Reward) public rewards;
     mapping(address => uint256) public nonces; // replay protection per payee
     bytes32[] public rewardIds;
 
     // ── Events ───────────────────────────────────────────────────────────────
+    event EscrowInitialized(address admin, address token);
+    event ProgramFunded(address indexed admin, uint256 amount);
     event RewardDeposited(bytes32 indexed reportId, address indexed payee, uint256 amount);
     event RewardClaimed(bytes32 indexed reportId, address indexed payee, uint256 amount);
     event RewardRefunded(bytes32 indexed reportId, uint256 amount);
@@ -98,8 +101,18 @@ contract RewardEscrow {
 
     // ── Deposit ──────────────────────────────────────────────────────────────
     /**
+     * @notice Allows the organization to pre-fund the escrow with USDC.
+     */
+    function fundProgram(uint256 amount) external {
+        if (amount == 0) revert RewardNotFound();
+        bool ok = token.transferFrom(msg.sender, address(this), amount);
+        if (!ok) revert TransferFailed();
+        emit ProgramFunded(msg.sender, amount);
+    }
+
+    /**
      * @notice Deposit a reward for a specific report + payee.
-     * @dev Caller must have approved this contract for `amount` of `token`.
+     * @dev Caller must have approved this contract for `amount` of `token` if the contract lacks unallocated funds.
      */
     function depositReward(bytes32 reportId, address payee, uint256 amount) external onlyAdminOrFactory {
         if (amount == 0) revert RewardNotFound(); // reuse error — zero amount
@@ -123,8 +136,14 @@ contract RewardEscrow {
             r.amount += amount;
         }
 
-        bool ok = token.transferFrom(msg.sender, address(this), amount);
-        if (!ok) revert TransferFailed();
+        uint256 unallocated = token.balanceOf(address(this)) - totalAllocated;
+        if (unallocated < amount) {
+            uint256 needed = amount - unallocated;
+            bool ok = token.transferFrom(msg.sender, address(this), needed);
+            if (!ok) revert TransferFailed();
+        }
+
+        totalAllocated += amount;
 
         emit RewardDeposited(reportId, payee, amount);
     }
@@ -172,6 +191,7 @@ contract RewardEscrow {
         // Effects
         r.claimed = true;
         nonces[r.payee] = currentNonce + 1;
+        totalAllocated -= r.amount;
 
         // Transfer
         bool ok = token.transfer(r.payee, r.amount);
@@ -189,6 +209,7 @@ contract RewardEscrow {
         if (block.timestamp < r.depositedAt + refundTimeout) revert RefundTooEarly();
 
         r.refunded = true;
+        totalAllocated -= r.amount;
 
         bool ok = token.transfer(admin, r.amount);
         if (!ok) revert TransferFailed();

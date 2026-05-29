@@ -96,7 +96,7 @@ export function BountyRegistration() {
         accentTone: 'mint',
         logoMark: form.company.substring(0, 1).toUpperCase(),
         startedAt: new Date(form.scheduledPublish).toISOString(),
-        maxBountyUsd: form.criticalReward,
+        maxBountyUsd: Math.round(form.criticalReward),
         responseSla: '48 hours',
         payoutCurrency: 'USDC',
         payoutWindow: '7 days',
@@ -108,10 +108,10 @@ export function BountyRegistration() {
         summaryHighlights: form.summaryHighlights.split('\n').map((item) => item.trim()).filter(Boolean),
         submissionChecklist: form.submissionChecklist.split('\n').map((item) => item.trim()).filter(Boolean),
         rewardTiers: [
-          { severity: 'CRITICAL', maxRewardUsd: form.criticalReward, triageSla: '24h', payoutWindow: '7d', examples: ['Remote code execution'] },
-          { severity: 'HIGH', maxRewardUsd: form.highReward, triageSla: '48h', payoutWindow: '7d', examples: ['Unauthorized access'] },
-          { severity: 'MEDIUM', maxRewardUsd: form.mediumReward, triageSla: '72h', payoutWindow: '7d', examples: ['Sensitive info leak'] },
-          { severity: 'LOW', maxRewardUsd: form.lowReward, triageSla: '7 days', payoutWindow: '7d', examples: ['Missing security headers'] },
+          { severity: 'CRITICAL', maxRewardUsd: Math.round(form.criticalReward), triageSla: '24h', payoutWindow: '7d', examples: ['Remote code execution'] },
+          { severity: 'HIGH', maxRewardUsd: Math.round(form.highReward), triageSla: '48h', payoutWindow: '7d', examples: ['Unauthorized access'] },
+          { severity: 'MEDIUM', maxRewardUsd: Math.round(form.mediumReward), triageSla: '72h', payoutWindow: '7d', examples: ['Sensitive info leak'] },
+          { severity: 'LOW', maxRewardUsd: Math.round(form.lowReward), triageSla: '7 days', payoutWindow: '7d', examples: ['Missing security headers'] },
         ],
         scopeTargets: [
           {

@@ -51,7 +51,7 @@ contract RewardFactory {
      * @param orgAdmin  The wallet that will administer the escrow.
      * @param token     The ERC-20 token used for payouts (e.g. USDC).
      */
-    function deployEscrow(address orgAdmin, address token) external onlyOwner returns (address) {
+    function deployEscrow(address orgAdmin, address token) external returns (address) {
         if (escrows[orgAdmin] != address(0)) revert EscrowAlreadyExists();
 
         RewardEscrow escrow = new RewardEscrow(orgAdmin, token, defaultRefundTimeout);

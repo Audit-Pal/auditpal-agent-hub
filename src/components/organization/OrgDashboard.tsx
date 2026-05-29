@@ -9,6 +9,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { api } from '../../lib/api'
 import type { Program } from '../../types/platform'
 import { useAuth } from '../../contexts/AuthContext'
+import { FundProgramModal } from './FundProgramModal'
 
 const stagger: { container: Variants; item: Variants } = {
   container: { 
@@ -38,8 +39,12 @@ export function OrgDashboard() {
   const { success, error } = useToast()
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
-  const [fundAmounts, setFundAmounts] = useState<Record<string, number>>({})
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set())
+  const [fundModal, setFundModal] = useState<{ isOpen: boolean; programId: string; maxBountyUsd: number }>({
+    isOpen: false,
+    programId: '',
+    maxBountyUsd: 0,
+  })
   
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean;
@@ -70,33 +75,6 @@ export function OrgDashboard() {
       setLoading(false)
     }
   }
-
-  const handleFund = useCallback(async (id: string) => {
-    const amount = fundAmounts[id]
-    if (!amount || amount <= 0) {
-      error('Please enter a valid funding amount.')
-      return
-    }
-    setProcessingIds((prev) => new Set(prev).add(id))
-    try {
-      const res = await api.post(`/programs/${id}/fund`, { amount })
-      if (res.success) {
-        success('Program funded and activated!')
-        fetchPrograms()
-      } else {
-        error(res.error || 'Funding failed')
-      }
-    } catch (err) {
-      error('An error occurred while funding the program')
-      console.error(err)
-    } finally {
-      setProcessingIds((prev) => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
-    }
-  }, [fundAmounts, success, error])
 
   const handleDelete = useCallback((id: string) => {
     setConfirmState({
@@ -298,30 +276,15 @@ export function OrgDashboard() {
                   <div className="flex flex-col gap-3 lg:w-[420px]">
                     {program.status !== 'ACTIVE' && program.status !== 'CLOSED' && (
                       <div className="pt-4 border-t border-[rgba(255,255,255,0.06)] mb-2">
-                        <label className="field-label">Fund to activate</label>
-                        <div className="flex flex-wrap items-center gap-3 mt-2">
-                          <div className="relative min-w-[160px] flex-1">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[var(--text-muted)]">$</span>
-                            <input
-                              type="number"
-                              placeholder="Amount"
-                              value={fundAmounts[program.id] || ''}
-                              onChange={(event) => setFundAmounts((current) => ({ ...current, [program.id]: Number(event.target.value) }))}
-                              className="field !pl-8"
-                              disabled={isProcessing}
-                            />
-                          </div>
-                          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                            <Button
-                              variant="primary"
-                              size="md"
-                              onClick={() => handleFund(program.id)}
-                              disabled={isProcessing}
-                            >
-                              {isProcessing ? 'Processing...' : 'Activate'}
-                            </Button>
-                          </motion.div>
-                        </div>
+                        <Button
+                          variant="primary"
+                          size="md"
+                          className="w-full"
+                          onClick={() => setFundModal({ isOpen: true, programId: program.id, maxBountyUsd: program.maxBountyUsd })}
+                          disabled={isProcessing}
+                        >
+                          Fund & Activate Program
+                        </Button>
                       </div>
                     )}
 
@@ -382,6 +345,17 @@ export function OrgDashboard() {
         isDestructive={confirmState.isDestructive}
         onConfirm={confirmState.onConfirm}
         onClose={() => setConfirmState((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      <FundProgramModal
+        isOpen={fundModal.isOpen}
+        programId={fundModal.programId}
+        maxBountyUsd={fundModal.maxBountyUsd}
+        onClose={() => setFundModal((prev) => ({ ...prev, isOpen: false }))}
+        onSuccess={() => {
+          fetchPrograms()
+          setFundModal((prev) => ({ ...prev, isOpen: false }))
+        }}
       />
     </motion.div>
   )
