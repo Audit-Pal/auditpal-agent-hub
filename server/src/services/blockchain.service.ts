@@ -155,6 +155,27 @@ export const REWARD_ESCROW_ABI = [
     },
     {
         type: 'function',
+        name: 'factory',
+        inputs: [],
+        outputs: [{ name: '', type: 'address' }],
+        stateMutability: 'view',
+    },
+    {
+        type: 'function',
+        name: 'fundProgram',
+        inputs: [{ name: 'amount', type: 'uint256' }],
+        outputs: [],
+        stateMutability: 'nonpayable',
+    },
+    {
+        type: 'function',
+        name: 'totalAllocated',
+        inputs: [],
+        outputs: [{ name: '', type: 'uint256' }],
+        stateMutability: 'view',
+    },
+    {
+        type: 'function',
         name: 'totalRewards',
         inputs: [],
         outputs: [{ name: '', type: 'uint256' }],
@@ -418,4 +439,5 @@ export const CHAIN_CONFIG = {
     rpcUrl: RPC_URL,
     blockExplorer: 'https://sepolia.basescan.org',
     factoryAddress: FACTORY_ADDRESS,
+    mockUsdcAddress: process.env.MOCK_USDC_ADDRESS,
 }

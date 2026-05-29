@@ -2,11 +2,13 @@ import { createAppKit } from '@reown/appkit/react'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { mainnet, sepolia, baseSepolia } from '@reown/appkit/networks'
 import type { AppKitNetwork } from '@reown/appkit/networks'
+import { http } from 'wagmi'
 
 // ─── Project ID ──────────────────────────────────────────────────────────────
 // Get a free Project ID from https://cloud.reown.com and set it in .env as:
 //   VITE_WALLETCONNECT_PROJECT_ID=your_project_id_here
 const projectId: string = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? 'YOUR_PROJECT_ID'
+const baseSepoliaRpcUrl: string = import.meta.env.VITE_BASE_SEPOLIA_RPC_URL ?? 'https://sepolia.base.org'
 
 // ─── Networks ─────────────────────────────────────────────────────────────────
 // Base Sepolia is the primary network for reward escrow operations.
@@ -17,6 +19,11 @@ export const wagmiAdapter = new WagmiAdapter({
   networks,
   projectId,
   ssr: false,
+  transports: {
+    [baseSepolia.id]: http(baseSepoliaRpcUrl),
+    [mainnet.id]: http(),
+    [sepolia.id]: http(),
+  },
 })
 
 // ─── AppKit ───────────────────────────────────────────────────────────────────
@@ -51,4 +58,3 @@ export const wagmiConfig = wagmiAdapter.wagmiConfig
 // ─── Reward Escrow Constants ──────────────────────────────────────────────────
 export const BASE_SEPOLIA_CHAIN_ID = 84532
 export const BASE_SEPOLIA_BLOCK_EXPLORER = 'https://sepolia.basescan.org'
-

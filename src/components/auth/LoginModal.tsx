@@ -54,7 +54,7 @@ export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRol
     setPassword(defaultPassword)
     setName(defaultName)
     setRole(defaultUserRole)
-    setOrganizationName('')
+    setOrganizationName(isOrgRole ? defaultName : '')
     setMode('login')
     setError(null)
     setShowPassword(false)
@@ -89,9 +89,9 @@ export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRol
         : await register({
           email,
           password,
-          name,
+          name: role === 'ORGANIZATION' ? organizationName.trim() : name.trim(),
           role,
-          organizationName: role === 'ORGANIZATION' ? organizationName || name : undefined,
+          organizationName: role === 'ORGANIZATION' ? organizationName.trim() : undefined,
         })
 
     setLoading(false)
@@ -229,7 +229,7 @@ export const LoginModal = memo(function LoginModal({ isOpen, onClose, initialRol
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === 'register' && (
+              {mode === 'register' && role !== 'ORGANIZATION' && (
                 <div>
                   <label className="field-label">Name</label>
                   <input type="text" value={name} onChange={(event: ChangeEvent<HTMLInputElement>) => setName(event.target.value)} className="field" required />

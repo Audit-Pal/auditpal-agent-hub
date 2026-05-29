@@ -26,6 +26,16 @@ const deployEscrowSchema = z.object({
     tokenAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid token address'),
 })
 
+const txHashSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'Invalid transaction hash')
+const evmAddressSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid address')
+
+const registerEscrowSchema = z.object({
+    escrowAddress: evmAddressSchema,
+    tokenAddress: evmAddressSchema,
+    deployTxHash: txHashSchema.optional(),
+    chainId: z.number().int().positive().optional(),
+})
+
 const depositRewardSchema = z.object({
     reportId: z.string().min(1),
     payeeAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid payee address'),
@@ -105,6 +115,87 @@ rewardsRoutes.post(
         } catch (error: any) {
             console.error('[Rewards] Deploy escrow error:', error)
             return errorResponse(c, 500, error.message || 'Failed to deploy escrow')
+        }
+    }
+)
+
+// ── POST /rewards/register-escrow ───────────────────────────────────────────
+rewardsRoutes.post(
+    '/register-escrow',
+    authMiddleware,
+    requireRole('ORGANIZATION', 'ADMIN'),
+    zValidator('json', registerEscrowSchema),
+    async (c) => {
+        const user = c.get('user')
+        const { escrowAddress, tokenAddress, deployTxHash, chainId } = c.req.valid('json')
+
+        try {
+            const orgUser = await prisma.user.findUnique({
+                where: { id: user.sub },
+                select: { walletAddress: true },
+            })
+            if (!orgUser?.walletAddress) {
+                return errorResponse(c, 400, 'Organisation must connect a wallet first')
+            }
+
+            const [escrowAdmin, escrowToken] = await Promise.all([
+                publicClient.readContract({
+                    address: escrowAddress as Address,
+                    abi: REWARD_ESCROW_ABI,
+                    functionName: 'admin',
+                } as any),
+                publicClient.readContract({
+                    address: escrowAddress as Address,
+                    abi: REWARD_ESCROW_ABI,
+                    functionName: 'token',
+                } as any),
+            ])
+
+            if (String(escrowAdmin).toLowerCase() !== orgUser.walletAddress.toLowerCase()) {
+                return errorResponse(c, 400, 'Connected wallet is not the admin of this escrow')
+            }
+            if (String(escrowToken).toLowerCase() !== tokenAddress.toLowerCase()) {
+                return errorResponse(c, 400, 'Escrow token does not match the selected payout token')
+            }
+
+            const existingByAddress = await prisma.rewardEscrow.findUnique({
+                where: { escrowAddress },
+            })
+            if (existingByAddress && existingByAddress.organizationId !== user.sub) {
+                return errorResponse(c, 409, 'Escrow contract is already linked to another organisation')
+            }
+
+            const escrow = await prisma.rewardEscrow.upsert({
+                where: { organizationId: user.sub },
+                update: {
+                    escrowAddress,
+                    tokenAddress,
+                    chainId: chainId ?? CHAIN_CONFIG.chainId,
+                    deployTxHash: deployTxHash ?? '0x0000000000000000000000000000000000000000000000000000000000000000',
+                },
+                create: {
+                    organizationId: user.sub,
+                    escrowAddress,
+                    tokenAddress,
+                    chainId: chainId ?? CHAIN_CONFIG.chainId,
+                    deployTxHash: deployTxHash ?? '0x0000000000000000000000000000000000000000000000000000000000000000',
+                },
+            })
+
+            await prisma.user.update({
+                where: { id: user.sub },
+                data: { escrowContractAddress: escrowAddress },
+            })
+
+            return successResponse(c, {
+                escrowAddress: escrow.escrowAddress,
+                tokenAddress: escrow.tokenAddress,
+                chainId: escrow.chainId,
+                blockExplorer: `${CHAIN_CONFIG.blockExplorer}/address/${escrow.escrowAddress}`,
+            }, existingByAddress ? 200 : 201)
+        } catch (error: any) {
+            console.error('[Rewards] Register escrow error:', error)
+            return errorResponse(c, 500, error.message || 'Failed to register escrow')
         }
     }
 )

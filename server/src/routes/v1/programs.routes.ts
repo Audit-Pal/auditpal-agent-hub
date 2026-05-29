@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { prisma } from '../../db/client'
 import {
@@ -8,7 +9,9 @@ import {
 } from '../../schemas/program.schema'
 import { authMiddleware, requireRole } from '../../middleware/auth'
 import { errorResponse, successResponse, paginatedResponse } from '../../lib/response'
+import { CHAIN_CONFIG, publicClient, REWARD_ESCROW_ABI, REWARD_FACTORY_ABI } from '../../services/blockchain.service'
 import { Prisma } from '@prisma/client'
+import type { Address, Hex } from 'viem'
 import type { HonoEnv } from '../../types/hono'
 
 export const programRoutes = new Hono<HonoEnv>()
@@ -22,6 +25,55 @@ const programDetail = {
     reports: { take: 10, orderBy: { submittedAt: 'desc' as const } },
     linkedAgents: { include: { agent: { select: { id: true, name: true, logoMark: true, accentTone: true, headline: true, recentExecutions: { orderBy: { timestamp: 'desc' as const }, take: 5 } } } } },
 } satisfies Prisma.ProgramInclude
+
+const evmAddressSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid address')
+const txHashSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'Invalid transaction hash')
+const zeroTxHash = `0x${'0'.repeat(64)}`
+
+const registerProgramEscrowSchema = z.object({
+    escrowAddress: evmAddressSchema,
+    tokenAddress: evmAddressSchema,
+    deployTxHash: txHashSchema.optional(),
+    approvalTxHash: txHashSchema.optional(),
+    fundingTxHash: txHashSchema,
+    chainId: z.number().int().positive().optional(),
+})
+
+const fundProgramSchema = z.object({
+    amount: z.number().positive(),
+    escrowAddress: evmAddressSchema.optional(),
+    approvalTxHash: txHashSchema.optional(),
+    fundingTxHash: txHashSchema.optional(),
+}).superRefine((value, ctx) => {
+    if (value.escrowAddress && !value.fundingTxHash) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['fundingTxHash'],
+            message: 'Funding transaction hash is required when activating with an escrow',
+        })
+    }
+})
+
+async function getTransactionValidationError(hash: string, expectedTo: string, label: string) {
+    try {
+        const [transaction, receipt] = await Promise.all([
+            publicClient.getTransaction({ hash: hash as Hex }),
+            publicClient.getTransactionReceipt({ hash: hash as Hex }),
+        ])
+
+        if (receipt.status !== 'success') {
+            return `${label} transaction did not succeed`
+        }
+
+        if (expectedTo && transaction.to?.toLowerCase() !== expectedTo.toLowerCase()) {
+            return `${label} transaction was not sent to the expected contract`
+        }
+
+        return null
+    } catch {
+        return `Unable to verify ${label} transaction`
+    }
+}
 
 // ── GET /programs ─────────────────────────────────────────────────────────────
 programRoutes.get('/', zValidator('query', programQuerySchema), async (c) => {
@@ -260,14 +312,162 @@ programRoutes.delete(
     }
 )
 
+// ── POST /programs/:id/register-escrow ───────────────────────────────────────
+programRoutes.post(
+    '/:id/register-escrow',
+    authMiddleware,
+    requireRole('ORGANIZATION', 'ADMIN'),
+    zValidator('json', registerProgramEscrowSchema),
+    async (c) => {
+        const { id } = c.req.param()
+        const user = c.get('user')
+        const body = c.req.valid('json')
+
+        const program = await prisma.program.findUnique({
+            where: { id },
+            select: { id: true, ownerId: true },
+        })
+        if (!program) return errorResponse(c, 404, 'Program not found')
+
+        if (user.role !== 'ADMIN' && program.ownerId !== user.sub) {
+            return errorResponse(c, 403, 'You do not own this program')
+        }
+
+        const orgUser = await prisma.user.findUnique({
+            where: { id: user.sub },
+            select: { walletAddress: true },
+        })
+        if (!orgUser?.walletAddress) {
+            return errorResponse(c, 400, 'Organisation must connect a wallet first')
+        }
+
+        const expectedFactoryAddress = CHAIN_CONFIG.factoryAddress
+        if (!expectedFactoryAddress) {
+            return errorResponse(c, 500, 'Reward factory address is not configured')
+        }
+
+        let escrowAdmin: unknown
+        let escrowToken: unknown
+        let escrowFactory: unknown
+        let factoryEscrow: unknown
+
+        try {
+            [escrowAdmin, escrowToken, escrowFactory, factoryEscrow] = await Promise.all([
+                publicClient.readContract({
+                    address: body.escrowAddress as Address,
+                    abi: REWARD_ESCROW_ABI,
+                    functionName: 'admin',
+                } as any),
+                publicClient.readContract({
+                    address: body.escrowAddress as Address,
+                    abi: REWARD_ESCROW_ABI,
+                    functionName: 'token',
+                } as any),
+                publicClient.readContract({
+                    address: body.escrowAddress as Address,
+                    abi: REWARD_ESCROW_ABI,
+                    functionName: 'factory',
+                } as any),
+                publicClient.readContract({
+                    address: expectedFactoryAddress,
+                    abi: REWARD_FACTORY_ABI,
+                    functionName: 'escrows',
+                    args: [orgUser.walletAddress as Address],
+                } as any),
+                publicClient.readContract({
+                    address: body.escrowAddress as Address,
+                    abi: REWARD_ESCROW_ABI,
+                    functionName: 'totalAllocated',
+                } as any),
+            ])
+        } catch {
+            return errorResponse(c, 400, 'Escrow does not match the current RewardEscrow funding contract')
+        }
+
+        if (String(escrowAdmin).toLowerCase() !== orgUser.walletAddress.toLowerCase()) {
+            return errorResponse(c, 400, 'Connected wallet is not the admin of this escrow')
+        }
+
+        if (String(escrowToken).toLowerCase() !== body.tokenAddress.toLowerCase()) {
+            return errorResponse(c, 400, 'Escrow token does not match the selected payout token')
+        }
+
+        if (String(escrowFactory).toLowerCase() !== expectedFactoryAddress.toLowerCase()) {
+            return errorResponse(c, 400, 'Escrow was not deployed by the configured reward factory')
+        }
+
+        if (String(factoryEscrow).toLowerCase() !== body.escrowAddress.toLowerCase()) {
+            return errorResponse(c, 400, 'Configured reward factory does not map this wallet to the submitted escrow')
+        }
+
+        if (body.deployTxHash && body.deployTxHash !== zeroTxHash) {
+            const deployError = await getTransactionValidationError(body.deployTxHash, expectedFactoryAddress, 'Deployment')
+            if (deployError) return errorResponse(c, 400, deployError)
+        }
+
+        if (body.approvalTxHash) {
+            const approvalError = await getTransactionValidationError(body.approvalTxHash, body.tokenAddress, 'Approval')
+            if (approvalError) return errorResponse(c, 400, approvalError)
+        }
+
+        const fundingError = await getTransactionValidationError(body.fundingTxHash, body.escrowAddress, 'Funding')
+        if (fundingError) return errorResponse(c, 400, fundingError)
+
+        const existingByAddress = await prisma.rewardEscrow.findUnique({
+            where: { escrowAddress: body.escrowAddress },
+        })
+        if (existingByAddress && existingByAddress.organizationId !== user.sub) {
+            return errorResponse(c, 409, 'Escrow contract is already linked to another organisation')
+        }
+
+        const deployTxHash = body.deployTxHash && body.deployTxHash !== zeroTxHash
+            ? body.deployTxHash
+            : existingByAddress?.deployTxHash ?? zeroTxHash
+
+        const escrow = await prisma.rewardEscrow.upsert({
+            where: { organizationId: user.sub },
+            update: {
+                escrowAddress: body.escrowAddress,
+                tokenAddress: body.tokenAddress,
+                chainId: body.chainId ?? CHAIN_CONFIG.chainId,
+                deployTxHash,
+            },
+            create: {
+                organizationId: user.sub,
+                escrowAddress: body.escrowAddress,
+                tokenAddress: body.tokenAddress,
+                chainId: body.chainId ?? CHAIN_CONFIG.chainId,
+                deployTxHash,
+            },
+        })
+
+        await prisma.user.update({
+            where: { id: user.sub },
+            data: { escrowContractAddress: body.escrowAddress },
+        })
+
+        return successResponse(c, {
+            programId: id,
+            escrowAddress: escrow.escrowAddress,
+            tokenAddress: escrow.tokenAddress,
+            chainId: escrow.chainId,
+            approvalTxHash: body.approvalTxHash,
+            fundingTxHash: body.fundingTxHash,
+            blockExplorer: `${CHAIN_CONFIG.blockExplorer}/address/${escrow.escrowAddress}`,
+        }, existingByAddress ? 200 : 201)
+    }
+)
+
 // ── POST /programs/:id/fund ──────────────────────────────────────────────────
 programRoutes.post(
     '/:id/fund',
     authMiddleware,
     requireRole('ORGANIZATION', 'ADMIN'),
+    zValidator('json', fundProgramSchema),
     async (c) => {
         const { id } = c.req.param()
         const user = c.get('user')
+        const body = c.req.valid('json')
 
         const program = await prisma.program.findUnique({ where: { id } })
         if (!program) return errorResponse(c, 404, 'Program not found')
@@ -280,15 +480,31 @@ programRoutes.post(
             return errorResponse(c, 400, `Cannot fund program in status ${program.status}`)
         }
 
-        const body = await c.req.json().catch(() => ({}))
-        const fundAmount = typeof body.amount === 'number' ? body.amount : 0
+        if (body.escrowAddress) {
+            const escrow = await prisma.rewardEscrow.findUnique({
+                where: { organizationId: user.sub },
+            })
+            if (!escrow || escrow.escrowAddress.toLowerCase() !== body.escrowAddress.toLowerCase()) {
+                return errorResponse(c, 400, 'Escrow contract is not linked to this organisation')
+            }
+
+            if (body.approvalTxHash) {
+                const approvalError = await getTransactionValidationError(body.approvalTxHash, escrow.tokenAddress, 'Approval')
+                if (approvalError) return errorResponse(c, 400, approvalError)
+            }
+
+            if (body.fundingTxHash) {
+                const fundingError = await getTransactionValidationError(body.fundingTxHash, body.escrowAddress, 'Funding')
+                if (fundingError) return errorResponse(c, 400, fundingError)
+            }
+        }
 
         const updated = await (prisma.program as any).update({
             where: { id },
             data: {
                 status: 'ACTIVE',
                 isPublished: true,
-                paidUsd: fundAmount,
+                paidUsd: Math.round(body.amount),
                 startedAt: new Date(),
                 publishedAt: new Date(),
             },

@@ -7,6 +7,27 @@ import { useToast } from '../../contexts/ToastContext'
 const ALL_CATEGORIES = ['WEB', 'SMART_CONTRACT', 'APPS', 'BLOCKCHAIN']
 const ALL_PLATFORMS = ['ETHEREUM', 'ARBITRUM', 'BASE', 'MONAD', 'SUI', 'SOLANA', 'OFFCHAIN']
 const ALL_LANGUAGES = ['SOLIDITY', 'RUST', 'TYPESCRIPT', 'SWIFT', 'GO', 'MOVE']
+type RewardField = 'criticalReward' | 'highReward' | 'mediumReward' | 'lowReward'
+
+const rewardInputs: { key: RewardField; label: string; accent: string }[] = [
+  { key: 'criticalReward', label: 'Critical max', accent: 'text-[var(--critical-text)]' },
+  { key: 'highReward', label: 'High max', accent: 'text-[var(--warning-text)]' },
+  { key: 'mediumReward', label: 'Medium max', accent: 'text-[#8d6b11]' },
+  { key: 'lowReward', label: 'Low max', accent: 'text-[var(--success-text)]' },
+]
+
+function formatApiError(error: unknown) {
+  if (typeof error === 'object' && error) {
+    const issues = (error as { issues?: { path?: (string | number)[]; message?: string }[] }).issues
+    if (Array.isArray(issues) && issues.length > 0) {
+      return issues
+        .map((issue) => `${issue.path?.join('.') || 'Field'}: ${issue.message || 'Invalid value'}`)
+        .join('\n')
+    }
+  }
+
+  return typeof error === 'string' ? error : 'Failed to register bounty'
+}
 
 export function BountyRegistration() {
   const { id: editId } = useParams<{ id: string }>()
@@ -90,6 +111,16 @@ export function BountyRegistration() {
     setLoading(true)
 
     try {
+      const invalidReward = rewardInputs.find((item) => {
+        const value = form[item.key]
+        return !Number.isFinite(value) || value <= 0
+      })
+
+      if (invalidReward) {
+        showToast(`${invalidReward.label} must be greater than 0.`, 'error')
+        return
+      }
+
       const payload = {
         ...form,
         kind: 'BUG_BOUNTY',
@@ -165,7 +196,7 @@ export function BountyRegistration() {
         showToast(isEditing ? 'Bounty updated successfully!' : 'Bounty registered! Please fund it to go active.', 'success')
         navigate('/org/dashboard')
       } else {
-        const errorMessage = typeof res.error === 'object' ? JSON.stringify(res.error, null, 2) : res.error || 'Failed to register bounty'
+        const errorMessage = formatApiError(res.error)
         showToast(errorMessage, 'error')
       }
     } catch (error: any) {
@@ -375,19 +406,17 @@ export function BountyRegistration() {
         <section className="py-8 border-b border-[rgba(255,255,255,0.06)]">
           <p className="section-kicker">4. Reward tiers</p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              { key: 'criticalReward', label: 'Critical max', accent: 'text-[var(--critical-text)]' },
-              { key: 'highReward', label: 'High max', accent: 'text-[var(--warning-text)]' },
-              { key: 'mediumReward', label: 'Medium max', accent: 'text-[#8d6b11]' },
-              { key: 'lowReward', label: 'Low max', accent: 'text-[var(--success-text)]' },
-            ].map((item) => (
+            {rewardInputs.map((item) => (
               <div key={item.key} className="border-b border-[rgba(255,255,255,0.06)] pb-4">
                 <label className={`field-label ${item.accent}`}>{item.label}</label>
                 <input
                   type="number"
                   className="field"
-                  value={form[item.key as keyof typeof form] as number}
+                  value={form[item.key] || ''}
                   onChange={(event) => setForm({ ...form, [item.key]: Number(event.target.value) })}
+                  min="1"
+                  step="1"
+                  required
                 />
               </div>
             ))}
