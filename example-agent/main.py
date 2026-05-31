@@ -2,6 +2,7 @@ import os
 import json
 import sys
 import requests
+import time
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from google import genai
@@ -26,10 +27,41 @@ AUDITPAL_API_KEY = os.getenv("AUDITPAL_API_KEY")
 SERVICE_URL = os.getenv("SERVICE_URL", "http://localhost:3001/api/v1")
 WALLET_PRIVATE_KEY = os.getenv("WALLET_PRIVATE_KEY")
 
+PROCESSED_FILE = "processed_bounties.json"
+
+def load_processed():
+    if os.path.exists(PROCESSED_FILE):
+        try:
+            with open(PROCESSED_FILE, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading {PROCESSED_FILE}: {e}")
+    return {"processed": {}}
+
+def save_processed(data):
+    try:
+        with open(PROCESSED_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"Error saving {PROCESSED_FILE}: {e}")
+
+def is_launched_today(program):
+    started_at = program.get("startedAt")
+    if not started_at:
+        return False
+    
+    # ISO-8601 usually is like "2026-05-31T08:25:54.000Z"
+    date_part = started_at.split('T')[0]
+    
+    today_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_local = datetime.now().strftime("%Y-%m-%d")
+    
+    return date_part == today_utc or date_part == today_local
+
 def submit_to_auditpal(report_json: dict):
     if not AUDITPAL_API_KEY:
         print("Warning: AUDITPAL_API_KEY is not set. Cannot submit to AuditPal.")
-        return
+        return None
         
     url = f"{SERVICE_URL}/reports/submit"
     headers = {
@@ -40,7 +72,7 @@ def submit_to_auditpal(report_json: dict):
     print(f"\nSubmitting report to {url}...")
     try:
         response = requests.post(url, headers=headers, json=report_json)
-        if response.status_code == 200 or response.status_code == 201:
+        if response.status_code in [200, 201]:
             resp_data = response.json()
             print("✅ Successfully submitted report to AuditPal!")
             print(f"Response: {resp_data}")
@@ -51,6 +83,7 @@ def submit_to_auditpal(report_json: dict):
             return None
     except Exception as e:
         print(f"Exception during submission: {e}")
+        return None
 
 def analyze_contract(contract_code: str, target_name: str, program_id: str):
     schema_instructions = """
@@ -104,7 +137,7 @@ def analyze_contract(contract_code: str, target_name: str, program_id: str):
     print("Analyzing contract with Gemini 2.5 Flash...")
     try:
         api_response = client.models.generate_content(
-            model='gemini-3.1-flash-lite-preview',
+            model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
@@ -206,7 +239,6 @@ def fetch_programs():
         "X-API-Key": AUDITPAL_API_KEY
     }
     
-    print(f"Fetching live programs...")
     try:
         response = requests.get(url, headers=headers)
         if response.status_code in [200, 201]:
@@ -221,27 +253,6 @@ def fetch_programs():
     except Exception as e:
         print(f"Exception fetching programs: {e}")
         return []
-
-def list_programs_and_select(programs):
-    if not programs:
-        print("No programs found.")
-        return input("Enter a valid Program ID manually: ").strip()
-
-    print("\n--- Live Bounty Programs ---")
-    for idx, p in enumerate(programs):
-        bounty = p.get('maxBountyUsd', 0)
-        print(f"{idx + 1}. {p.get('name')} (ID: {p.get('id')}) - Max Bounty: ${bounty:,}")
-    
-    while True:
-        choice = input(f"\nSelect a program (1-{len(programs)}) or type an ID directly: ").strip()
-        
-        if choice.isdigit():
-            idx = int(choice) - 1
-            if 0 <= idx < len(programs):
-                return programs[idx]['id']
-            
-        if choice:
-            return choice
 
 def fetch_program_scope(program_id):
     if not AUDITPAL_API_KEY:
@@ -260,150 +271,165 @@ def fetch_program_scope(program_id):
 
 def main():
     print("==============================================")
-    print("   AuditPal Sentinel Agent - CLI Interface    ")
+    print("   AuditPal Autonomous Agent - Continuous Mode ")
     print("==============================================")
     
     agent_id = create_agent()
     
-    programs = fetch_programs()
-    program_id = list_programs_and_select(programs)
+    processed_data = load_processed()
+    processed_map = processed_data.setdefault("processed", {})
     
-    scope_targets = fetch_program_scope(program_id)
-    contract_code = ""
-    target_name = ""
-    choice = ""
+    print("\nStarting continuous monitoring loop (checking every 10 seconds)...")
     
-    if scope_targets:
-        print(f"\n--- Found {len(scope_targets)} scope targets in program ---")
-        for idx, target in enumerate(scope_targets):
-            kind = target.get('referenceKind') or target.get('assetType') or 'Unknown'
-            print(f"{idx + 1}. [{kind}] {target.get('label')} -> {target.get('location')}")
-        print(f"{len(scope_targets) + 1}. [Manual] Enter a different source manually")
-        
-        scope_choice = input(f"\nSelect a target to analyze (1-{len(scope_targets) + 1}): ").strip()
-        
-        if scope_choice.isdigit() and 1 <= int(scope_choice) <= len(scope_targets):
-            selected = scope_targets[int(scope_choice) - 1]
-            location = selected.get('location', '')
-            kind = selected.get('referenceKind', '')
-            
-            if kind in ['GITHUB_REPO', 'GITHUB_ORG', 'SOURCE_FILE'] or 'github.com' in location:
-                print("Fetching source code from GitHub...")
-                contract_code = fetch_github_code(location)
-                target_name = selected.get('label', 'GitHub Repository')
-                choice = '3'
-                github_url = location
-            elif kind == 'CONTRACT_ADDRESS' or '0x' in location:
-                api_key = os.getenv("ETHERSCAN_API_KEY") or os.getenv("EXPLORER_API_KEY")
-                try:
-                    chain_id, address = parse_explorer_url(location)
-                    print("Fetching source code from Explorer API...")
-                    contract_code = fetch_contract_source(chain_id, address, api_key)
-                    target_name = f"Deployed Contract: {address}"
-                    choice = '2'
-                except Exception as e:
-                    print(f"Error parsing explorer URL: {e}")
-                    sys.exit(1)
-            else:
-                print(f"Unsupported target location: {location}")
-                sys.exit(1)
-    
-    if not contract_code:
-        print("\n==============================================")
-        print("1. Analyze Local Solidity File")
-        print("2. Analyze Deployed Contract (Explorer URL)")
-        print("3. Analyze GitHub Repository / File URL")
-        print("==============================================")
-        
-        choice = input("Enter your choice (1/2/3): ").strip()
-        
+    while True:
         try:
-            if choice == '1':
-                file_path = input("Enter the path to the local .sol file: ").strip()
-                with open(file_path, "r", encoding="utf-8") as f:
-                    contract_code = f.read()
-                target_name = os.path.basename(file_path)
-                
-            elif choice == '2':
-                explorer_url = input("Enter the verified contract explorer URL: ").strip()
-                api_key = os.getenv("ETHERSCAN_API_KEY") or os.getenv("EXPLORER_API_KEY")
-                chain_id, address = parse_explorer_url(explorer_url)
-                print("Fetching source code from Explorer API...")
-                contract_code = fetch_contract_source(chain_id, address, api_key)
-                target_name = f"Deployed Contract: {address}"
-                
-            elif choice == '3':
-                github_url = input("Enter the GitHub file or tree URL: ").strip()
-                print("Fetching source code from GitHub...")
-                contract_code = fetch_github_code(github_url)
-                target_name = "GitHub Repository Code"
-                
+            programs = fetch_programs()
+            
+            # Filter for programs launched today
+            today_programs = []
+            for p in programs:
+                if is_launched_today(p):
+                    today_programs.append(p)
+            
+            if today_programs:
+                print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Found {len(today_programs)} program(s) launched today.")
             else:
-                print("Invalid choice. Exiting.")
-                sys.exit(1)
+                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Listening for new programs (none launched today found in current batch)...")
                 
+            for p in today_programs:
+                program_id = p.get("id")
+                program_name = p.get("name", "Unknown Program")
+                
+                # Fetch scope targets for this program
+                scope_targets = fetch_program_scope(program_id)
+                if not scope_targets:
+                    continue
+                    
+                for target in scope_targets:
+                    location = target.get("location")
+                    kind = target.get("referenceKind") or target.get("assetType") or "Unknown"
+                    label = target.get("label", "Target")
+                    
+                    if not location:
+                        continue
+                        
+                    # Create a unique key for the processed queue
+                    queue_key = f"{program_id}:{location}"
+                    
+                    if queue_key in processed_map:
+                        continue
+                        
+                    print(f"\n🚀 Analyzing new target for program '{program_name}':")
+                    print(f"   [{kind}] {label} -> {location}")
+                    
+                    contract_code = ""
+                    choice_type = ""
+                    github_url = ""
+                    address = ""
+                    
+                    # Fetch code depending on the target type
+                    try:
+                        if kind in ['GITHUB_REPO', 'GITHUB_ORG', 'SOURCE_FILE'] or 'github.com' in location:
+                            print("   Fetching source code from GitHub...")
+                            contract_code = fetch_github_code(location)
+                            target_name = label if label else "GitHub Repository"
+                            choice_type = '3'
+                            github_url = location
+                            
+                        elif kind == 'CONTRACT_ADDRESS' or '0x' in location:
+                            api_key = os.getenv("ETHERSCAN_API_KEY") or os.getenv("EXPLORER_API_KEY")
+                            chain_id, address = parse_explorer_url(location)
+                            print(f"   Fetching source code from Explorer API (Chain ID: {chain_id}, Address: {address})...")
+                            contract_code = fetch_contract_source(chain_id, address, api_key)
+                            target_name = label if label else f"Deployed Contract: {address}"
+                            choice_type = '2'
+                            
+                        else:
+                            print(f"   ⚠️ Unsupported target kind '{kind}' or location format. Skipping.")
+                            continue
+                            
+                    except Exception as e:
+                        print(f"   ❌ Failed to fetch code: {e}")
+                        continue
+                        
+                    if not contract_code:
+                        print(f"   ⚠️ Fetched source code is empty. Skipping.")
+                        continue
+                        
+                    print(f"   ✅ Loaded {len(contract_code)} bytes of source code.")
+                    
+                    # Generate the vulnerability report
+                    report_json = analyze_contract(contract_code, target_name, program_id)
+                    
+                    if not report_json:
+                        print("   ❌ Failed to generate report from Gemini.")
+                        continue
+                        
+                    # Append context metadata
+                    if "graphContext" not in report_json:
+                        report_json["graphContext"] = {}
+                    report_json["graphContext"]["reporterAgent"] = agent_id
+                    
+                    if choice_type == '2':
+                        report_json["graphContext"]["contractAddresses"] = [address]
+                    elif choice_type == '3':
+                        report_json["graphContext"]["repositoryLinks"] = [github_url]
+                        
+                    # Submit to AuditPal API
+                    report_id = submit_to_auditpal(report_json)
+                    
+                    if not report_id:
+                        print("   ❌ Failed to submit report to AuditPal.")
+                        continue
+                        
+                    signature = None
+                    wallet_address = None
+                    
+                    # Cryptographic binding if private key is set
+                    if WALLET_PRIVATE_KEY:
+                        print("   Signing report ID for secure reward escrow...")
+                        try:
+                            wallet_address, signature = sign_report_id(report_id, WALLET_PRIVATE_KEY)
+                            print(f"   ✍️ Signed with wallet: {wallet_address}")
+                            
+                            bind_url = f"{SERVICE_URL}/reports/{report_id}"
+                            bind_headers = {
+                                "Content-Type": "application/json",
+                                "X-API-Key": AUDITPAL_API_KEY
+                            }
+                            bind_data = {
+                                "title": report_json.get("title"),
+                                "walletAddress": wallet_address,
+                                "signature": signature
+                            }
+                            
+                            bind_resp = requests.patch(bind_url, headers=bind_headers, json=bind_data)
+                            if bind_resp.status_code == 200:
+                                print("   ✅ Successfully bound wallet signature to report!")
+                            else:
+                                print(f"   ⚠️ Failed to bind signature: {bind_resp.text}")
+                        except Exception as e:
+                            print(f"   ❌ Error during signing/binding: {e}")
+                            
+                    # Save to processed queue
+                    processed_map[queue_key] = {
+                        "program_id": program_id,
+                        "program_name": program_name,
+                        "target_label": label,
+                        "location": location,
+                        "processed_at": datetime.now(timezone.utc).isoformat(),
+                        "status": "submitted",
+                        "report_id": report_id,
+                        "wallet_address": wallet_address,
+                        "signature": signature
+                    }
+                    save_processed(processed_data)
+                    print(f"   🎯 Successfully processed and recorded bounty: {queue_key}")
+                    
         except Exception as e:
-            print(f"Error fetching code: {e}")
-            sys.exit(1)
-
-    print(f"\n✅ Successfully loaded {len(contract_code)} bytes of source code.")
-    
-    # Generate the report
-    report_json = analyze_contract(contract_code, target_name, program_id)
-    
-    if report_json:
-        # Auto-append additional metadata to graphContext based on input type
-        if "graphContext" not in report_json:
-            report_json["graphContext"] = {}
+            print(f"Error in continuous listening loop: {e}")
             
-        report_json["graphContext"]["reporterAgent"] = agent_id
-        
-        if choice == '2':
-            report_json["graphContext"]["contractAddresses"] = [address]
-        elif choice == '3':
-            report_json["graphContext"]["repositoryLinks"] = [github_url]
-            
-        # Display summary
-        print("\n=== Audit Report Generated ===")
-        print(f"Title: {report_json.get('title')}")
-        vulnerabilities = report_json.get("vulnerabilities", [])
-        print(f"Found {len(vulnerabilities)} vulnerabilities.")
-        for v in vulnerabilities:
-            print(f"- [{v.get('severity')}] {v.get('title')}")
-        
-        # Submit to API
-        report_id = submit_to_auditpal(report_json)
-        
-        # ── Cryptographic Binding (New) ───────────────────────────────────────
-        if report_id and WALLET_PRIVATE_KEY:
-            print("\nSigning report ID for secure reward escrow...")
-            try:
-                wallet_address, signature = sign_report_id(report_id, WALLET_PRIVATE_KEY)
-                print(f"✍️  Signed with wallet: {wallet_address}")
-                
-                # Bind signature to report via PATCH /reports/:id
-                bind_url = f"{SERVICE_URL}/reports/{report_id}"
-                bind_headers = {
-                    "Content-Type": "application/json",
-                    "X-API-Key": AUDITPAL_API_KEY
-                }
-                bind_data = {
-                    "title": report_json.get("title"),
-                    "walletAddress": wallet_address,
-                    "signature": signature
-                }
-                
-                bind_resp = requests.patch(bind_url, headers=bind_headers, json=bind_data)
-                if bind_resp.status_code == 200:
-                    print("✅ Successfully bound wallet signature to report!")
-                    print("   This report is now eligible for automated escrow rewards.")
-                else:
-                    print(f"⚠️  Failed to bind signature: {bind_resp.text}")
-            except Exception as e:
-                print(f"❌ Error during signing/binding: {e}")
-        elif not WALLET_PRIVATE_KEY:
-            print("\nℹ️  Skipping cryptographic binding (WALLET_PRIVATE_KEY not set).")
-            print("   Rewards will require manual wallet verification.")
+        time.sleep(10)
 
 if __name__ == "__main__":
     main()
