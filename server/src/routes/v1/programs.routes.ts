@@ -307,7 +307,35 @@ programRoutes.delete(
             return errorResponse(c, 403, 'You do not own this program')
         }
 
-        await prisma.program.delete({ where: { id } })
+        await prisma.$transaction(async (tx) => {
+            // 1. Find all reports associated with this program
+            const reports = await tx.report.findMany({
+                where: { programId: id },
+                select: { id: true },
+            })
+            const reportIds = reports.map((r) => r.id)
+
+            if (reportIds.length > 0) {
+                // 2. Delete all reward deposits for these reports
+                await tx.rewardDeposit.deleteMany({
+                    where: { reportId: { in: reportIds } },
+                })
+
+                // 3. Delete all vulnerabilities for these reports
+                await tx.vulnerability.deleteMany({
+                    where: { reportId: { in: reportIds } },
+                })
+
+                // 4. Delete all reports
+                await tx.report.deleteMany({
+                    where: { id: { in: reportIds } },
+                })
+            }
+
+            // 5. Delete the program itself (this will cascade delete rewardTiers, scopeTargets, triageStages, policySections, evidenceFields, linkedAgents)
+            await tx.program.delete({ where: { id } })
+        })
+
         return successResponse(c, { deleted: true })
     }
 )
